@@ -1,0 +1,1354 @@
+/************ Custom Font ************/
+@font-face {
+	font-family: Centra;
+	src: url('./assets/font/CentraNo2-Bold.ttf');
+	font-weight: 700;
+}
+@font-face {
+	font-family: Centra;
+	src: url('./assets/font/CentraNo2-Medium.ttf');
+	font-weight: 500;
+}
+@font-face {
+	font-family: Centra;
+	src: url('./assets/font/CentraNo2-Book.ttf');
+	font-weight: 400;
+}
+
+/************ Default Css ************/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 75px;
+}
+
+body {
+  font-weight: 400;
+  overflow-x: hidden;
+  position: relative;
+  background-color: #121212 !important;
+  color: #fff !important;
+  font-family: 'Centra', sans-serif !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  padding: 0;
+  line-height: normal;
+}
+
+p, a, li, button, ul {
+  margin: 0;
+  padding: 0;
+  line-height: normal;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+img {
+  width: 100%;
+  height: auto;
+}
+
+button {
+  border: 0;
+  background-color: transparent;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+
+@media (min-width:1700px) {
+	main .container {
+		max-width: 100%;
+		padding: 0 150px;
+	}
+}
+
+p.success {
+	color: green;
+}
+
+p.danger {
+	color: red;
+}
+
+/************ Navbar Css ************/
+nav.navbar {
+  padding: 18px 0;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 9999;
+  transition: 0.32s ease-in-out;
+}
+
+nav.navbar.scrolled {
+  padding: 0px 0;
+  background-color: #121212;
+}
+
+.navbar-link.active {
+  color: #007bff;  /* Active link color */
+  font-weight: bold;
+}
+
+nav.navbar a.navbar-brand {
+  width: 9%;
+}
+
+nav.navbar .navbar-nav .nav-link.navbar-link {
+  font-weight: 400;
+  color: #fff !important;
+  letter-spacing: 0.8px;
+  padding: 0 25px;
+  font-size: 18px;
+  opacity: 0.75;
+}
+
+nav.navbar .navbar-nav a.nav-link.navbar-link:hover,
+nav.navbar .navbar-nav a.nav-link.navbar-link.active {
+  opacity: 1;
+  color: rgba(0, 139, 104, 0.8) !important;
+}
+
+span.navbar-text {
+  display: flex;
+  align-items: center;
+}
+
+.social-icon {
+  display: inline-block;
+  margin-left: 14px;
+}
+
+.social-icon a {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  border-radius: 50%;
+  margin-right: 6px;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1px solid white;
+}
+
+.social-icon a::before {
+  content: "";
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  background-color: rgba(0, 139, 104, 0.8);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 0.3s ease-in-out;
+}
+
+.social-icon a:hover::before {
+  transform: scale(1);
+}
+
+.social-icon a img {
+  width: 40%;
+  z-index: 1;
+  transition: 0.3s ease-in-out;
+}
+
+.social-icon a:hover img {
+  filter: brightness(0) saturate(100%) invert(0%) sepia(7%) saturate(98%) hue-rotate(346deg) brightness(95%) contrast(86%);
+}
+
+/* Shrinking the Reach Out Button */
+.navbar-text button {
+  font-weight: 700;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 12px 40px;  /* Increased padding for a wider button */
+  font-size: 16px;
+  margin-left: 12px;
+  position: relative;
+  background-color: transparent;
+  border-radius: 20px;  /* Round edges */
+  transition: 0.3s ease-in-out, background 0.3s ease, color 0.3s ease;
+  overflow: hidden; /* Contain effects */
+}
+
+/* Shine Effect for Button */
+.navbar-text button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Subtle shine effect */
+  transform: skewX(-45deg);
+  transition: left 0.5s ease;
+  z-index: 0;
+}
+
+/* Hover Effects */
+.navbar-text button:hover {
+  background: linear-gradient(90deg, rgba(0, 139, 104, 0.8), #00695c 111.58%);
+  color: black !important;  /* Change text color on hover */
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Shine Effect on Hover */
+.navbar-text button:hover::before {
+  left: 100%;  /* Shine moves across */
+}
+
+/* Hover Effect for Text */
+.navbar-text button:hover {
+  color: black;
+}
+
+nav.navbar .navbar-toggler:active,
+nav.navbar .navbar-toggler:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+nav.navbar .navbar-toggler-icon {
+  width: 24px;
+  height: 17px;
+  background-image: none;
+  position: relative;
+  border-bottom: 2px solid #fff;
+  transition: all 300ms linear;
+  top: -2px;
+}
+
+nav.navbar .navbar-toggler-icon:focus {
+  border-bottom: 2px solid #fff;
+}
+
+nav.navbar .navbar-toggler-icon:after,
+nav.navbar .navbar-toggler-icon:before {
+  width: 24px;
+  position: absolute;
+  height: 2px;
+  background-color: #fff;
+  top: 0;
+  left: 0;
+  content: '';
+  z-index: 2;
+  transition: all 300ms linear;
+}
+
+nav.navbar .navbar-toggler-icon:after {
+  top: 8px;
+}
+
+nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:after {
+  transform: rotate(45deg);
+  background-color: #fff;
+  height: 2px;
+}
+
+nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:before {
+  transform: translateY(8px) rotate(-45deg);
+  background-color: #fff;
+  height: 2px;
+}
+
+nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+  border-color: transparent;
+}
+
+
+/************ Banner CSS ************/
+
+/* Banner Section */
+.banner {
+  position: relative;
+  padding: 260px 0 100px;
+  background: linear-gradient(to bottom, #2e2e48, #343333); /* Starry sky gradient */
+  overflow: hidden;
+  color: white;
+}
+
+/* Starfield Effect */
+.starfield {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* Full coverage */
+  pointer-events: none;
+  z-index: 1;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: starTwinkle 2s ease-in-out infinite, starFloat 3s linear infinite; /* Increased speed */
+}
+
+/* Twinkling Effect */
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Floating Movement for Stars */
+@keyframes starFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100px); /* Faster upward movement */
+  }
+}
+
+/* Tagline Styling */
+.banner .tagline {
+  font-size: 1.5rem;
+  color: azure;
+}
+
+h1 {
+  font-size: 3rem;
+  margin: 20px 0;
+}
+
+.typing-effect {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Button Styling */
+.banner button {
+  background: linear-gradient(90deg, #00695c -5.91%, rgba(0, 139, 104, 0.5) 111.58%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px !important;
+  transition: background 0.3s ease, color 0.3s ease;
+  z-index: 10; /* Keeps button on top */
+  position: relative;
+  overflow: hidden; /* Contain effects */
+}
+
+/* Shine Effect for Button */
+.banner button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Subtle shine effect */
+  transform: skewX(-45deg);
+  transition: left 0.5s ease;
+  z-index: 0;
+}
+
+/* Hover Effects for Button */
+.banner button:hover {
+  background: linear-gradient(90deg, rgba(0, 139, 104, 0.8), #00695c 111.58%);
+  color: black !important; /* Force text color change */
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Shine Effect on Hover for Button */
+.banner button:hover::before {
+  left: 100%; /* Shine moves across */
+}
+
+/* Tagline with Gradient Background */
+.banner .tagline {
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 20px; /* Adjust padding */
+  background: linear-gradient(90deg, #00695c -5.91%, rgba(0, 139, 104, 0.5) 111.58%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px !important;
+  font-size: 20px;
+  margin-bottom: 16px;
+  display: inline-block;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden; /* Contain effects */
+  z-index: 1;
+  color: white;
+}
+
+/* Shine Effect for Tagline */
+.banner .tagline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Subtle shine effect */
+  transform: skewX(-45deg);
+  transition: left 0.5s ease;
+  z-index: 0;
+}
+
+.banner .tagline:hover::before {
+  left: 100%; /* Shine moves across */
+}
+
+/* Hover Effect for Tagline */
+.banner .tagline:hover {
+  background: linear-gradient(90deg, rgba(0, 139, 104, 0.8), #00695c 111.58%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: black; /* Change text color on hover */
+}
+
+
+/* Title Styling */
+.banner h1 {
+  font-size: 65px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  color: azure;
+}
+
+/* Paragraph Styling */
+.banner p {
+  color: #B8B8B8;
+  font-size: 18px;
+  letter-spacing: 1px;
+  line-height: 1.5em;
+  width: 96%;
+  text-align: justify;
+}
+
+/* Button with Icon */
+.banner button {
+  color: #fff;
+  font-weight: 700;
+  font-size: 20px;
+  margin-top: 60px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+/* Icon Inside Button */
+.banner button svg {
+  font-size: 25px;
+  margin-left: 10px;
+  transition: margin-left 0.3s ease;
+}
+
+.banner button:hover svg {
+  margin-left: 25px;
+  transform: scale(1.1); /* Slightly larger icon on hover */
+}
+
+/* Image Animation */
+.banner img {
+
+  animation: updown 3s linear infinite;
+}
+
+/* Image Up-Down Animation */
+@keyframes updown {
+  0% {
+    transform: translateY(-20px);
+  }
+  50% {
+    transform: translateY(20px);
+  }
+  100% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Typing Effect Cursor */
+.txt-rotate > .wrap {
+  border-right: 0.08em solid #666;
+}
+
+/* Typing Effect Styling */
+.typing-effect {
+  display: block;
+  margin-top: 10px;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #fff;
+}
+/************ Skills Css ************/
+.skill {
+  padding: 0 0 50px 0;
+  position: relative;
+  background: linear-gradient(180deg, #343333, #1a1a1a); /* Smooth starry sky gradient */
+  color: #f0f0f0; /* Light text for better contrast */
+}
+
+.skill-bx {
+  background: rgba(0, 0, 0, 0.85); /* Semi-transparent black background */
+  border-radius: 64px;
+  text-align: center;
+  padding: 60px 50px;
+  margin-top: -60px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
+}
+
+.skill h2 {
+  font-size: 48px;
+  font-weight: 700;
+  color: #ffffff; /* Bright heading */
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.skill p {
+  color: #cccccc; /* Softer light gray for text */
+  font-size: 18px;
+  letter-spacing: 1px;
+  line-height: 1.6em;
+  margin: 14px 0 75px 0;
+}
+
+.skill-slider {
+  width: 80%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.skill-slider .item {
+  text-align: center;
+}
+
+.skill-slider .item .meter-container {
+  width: 70%; /* Adjust size for better visibility */
+  margin: 0 auto 20px auto;
+}
+
+.skill-slider .item h5 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #f0f0f0;
+  margin-top: 15px;
+  text-transform: capitalize;
+}
+
+.background-image-left {
+  top: 20%;
+  position: absolute;
+  bottom: 0;
+  width: 35%;
+  z-index: -4;
+  opacity: 0.7; /* Subtle background image */
+}
+
+.meter-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.odometer-background {
+  fill: none;
+  stroke: #333333; /* Dark gray background stroke */
+  stroke-width: 18;
+}
+
+.odometer-progress {
+  fill: none;
+  stroke: url(#gradient); /* Use gradient for progress bar */
+  stroke-width: 18;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.5s ease-in-out; /* Smooth transition */
+}
+
+.odometer-text {
+  font-family: 'Arial', sans-serif;
+  font-size: 28px;
+  font-weight: bold;
+  fill: #ffffff;
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.6); /* Text shadow for visibility */
+}
+
+/************ Skill Responsive Adjustments ************/
+@media screen and (max-width: 1024px) {
+  .skill-bx {
+    padding: 40px 30px;
+  }
+  .skill h2 {
+    font-size: 38px;
+  }
+  .skill p {
+    font-size: 16px;
+  }
+  .skill-slider {
+    width: 90%;
+  }
+  .meter-container {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .skill h2 {
+    font-size: 32px;
+  }
+  .skill p {
+    font-size: 14px;
+  }
+  .meter-container {
+    width: 130px;
+    height: 130px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .skill h2 {
+    font-size: 28px;
+  }
+  .skill p {
+    font-size: 12px;
+  }
+  .meter-container {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* General Project Section */
+.project {
+  padding: 80px 0;
+  position: relative;
+  background: linear-gradient(to bottom, #1a1a1a, #111111); /* Gradient from dark gray to black */
+}
+
+.project h2 {
+  font-size: 45px;
+  font-weight: 700;
+  text-align: center;
+}
+a {
+  text-decoration: none !important; /* Removes the underline */
+}
+
+a:hover {
+  text-decoration: none !important; /* Ensures no underline on hover */
+}
+
+
+.project p {
+  color: #B8B8B8;
+  font-size: 18px;
+  letter-spacing: 0.8px;
+  line-height: 1.5em;
+  margin: 14px auto 30px;
+  text-align: justify; /* Changed from center to justify */
+  max-width: 80%; /* Increased max-width to make it larger */
+  width: 100%; /* Ensures the text uses available space */
+  padding: 0 15px; /* Optional padding to ensure text doesn't touch the sides */
+}
+
+
+/* Navigation Pills */
+.project .nav.nav-pills {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  background: none;
+  border-radius: 0;
+}
+
+/* Custom Button Styles for Navigation Pills */
+.project .nav.nav-pills .nav-link {
+  border-radius: 30px;
+  padding: 12px 40px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Shine Effect for Navigation Pills */
+.project .nav-pills .nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: skewX(-45deg);
+  transition: left 0.5s ease;
+  z-index: 0;
+}
+
+/* Hover Effects */
+.project .nav-pills .nav-link:hover {
+  background: linear-gradient(90deg, rgba(0, 139, 104, 0.8), #00695c 111.58%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: black !important;
+}
+
+.project .nav-pills .nav-link:hover::before {
+  left: 100%; /* Shine moves across */
+}
+
+/* Active Button Style */
+.project .nav-pills .nav-link.active {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(90deg, rgba(0, 139, 104, 0.8), #00695c 111.58%);
+}
+
+.project .nav-pills .nav-link:hover {
+  color: white;
+}
+
+.project .nav-pills .nav-link:hover::before {
+  left: 100%;
+}
+
+
+/* Container for the project cards */
+.scrollable-projects {
+  height: 400px;  /* Adjust this value to fit your design needs */
+  overflow-x: hidden;  /* Removes vertical scrollbar */
+  overflow-y: hidden;  /* Removes vertical scrollbar */
+  margin-bottom: 30px;
+  padding-right: 10px;  /* Prevent scrollbar overlap */
+  display: flex;
+  flex-direction: column;
+}
+/* Show the scrollbar when the user hovers over the section */
+.scrollable-projects:hover {
+  overflow-y: scroll;  /* Show the vertical scrollbar on hover */
+}
+
+/* Custom Scrollbar Styles */
+.scrollable-projects::-webkit-scrollbar {
+  width: 8px;  /* Narrow scrollbar */
+}
+
+.scrollable-projects::-webkit-scrollbar-thumb {
+  background-color:  grey;  /* Subtle, transparent thumb */
+  border-radius: 30px;  /* Rounded thumb */
+  transition: background-color 0.3s ease;  /* Smooth transition effect */
+}
+
+.scrollable-projects::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 139, 104, 0.8);  /* Darker thumb color on hover */
+}
+
+.scrollable-projects::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);  /* Light, subtle track color */
+  border-radius: 30px;  /* Rounded track */
+}
+
+/* Optional: Adding a shadow effect to the scrollbar for a more modern look */
+.scrollable-projects::-webkit-scrollbar {
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);  /* Shadow for depth */
+}
+.scroll-container {
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.scrollable-projects .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.scrollable-projects .col-md-4 {
+  flex: 0 0 32%;
+  max-width: 32%;
+  box-sizing: border-box;
+  margin-bottom: 30px;
+}
+@media (max-width: 768px) {
+  .scrollable-projects .col-md-4 {
+    flex: 0 0 48%;
+    max-width: 48%;
+  }
+}
+
+@media (max-width: 576px) {
+  .scrollable-projects .col-md-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* ---------------------- Cards Layout ---------------------- */
+.project .card-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+
+.project .card-row .proj-imgbx {
+  flex: 1 1 calc(33.33% - 20px);
+  max-width: calc(33.33% - 20px);
+  height: auto;
+  margin: 0 auto;
+}
+
+.project .card-row .proj-imgbx img {
+  width: 100%;
+  height: auto;
+}
+
+.project .card-row .proj-imgbx .proj-txtx h4 {
+  font-size: 2vw; /* Responsive font size */
+}
+
+.project .card-row .proj-imgbx .proj-txtx span {
+  font-size: 1.2vw; /* Responsive font size */
+}
+
+/* Responsive Design Adjustments */
+@media (max-width: 768px) {
+  .project .card-row .proj-imgbx {
+    flex: 1 1 calc(50% - 20px); /* 2 cards per row on smaller screens */
+  }
+
+}
+@media (max-width: 480px) {
+  .project .card-row .proj-imgbx {
+    flex: 1 1 100%; /* 1 card per row on very small screens */
+  }
+}
+
+/* Image Box (Card) Styles */
+.proj-imgbx {
+  position: relative;
+  border-radius: 30px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  transition: 0.5s ease-in-out;
+  flex: 1 1 0;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .proj-imgbx {
+    flex: 1 1 calc(50% - 20px);
+  }
+}
+
+@media (max-width: 480px) {
+  .proj-imgbx {
+    flex: 1 1 100%;
+  }
+}
+
+.proj-imgbx img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Text Overlay on Image */
+.proj-imgbx .proj-txtx {
+  position: absolute;
+  text-align: center;
+  padding: 8px 5px;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: 0.5s ease-in-out;
+  opacity: 0;
+  width: 100%;
+}
+
+.proj-imgbx .proj-txtx span {
+  color: white;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 0.8vw; /* Relative font size */
+  letter-spacing: 0.8px;
+}
+
+/* Overlay Gradient Effect */
+.proj-imgbx::before {
+  content: "";
+  background: linear-gradient(90deg, rgba(0, 139, 104, 0.8), #00695c 111.58%);
+  opacity: 0.85;
+  position: absolute;
+  width: 100%;
+  height: 0;
+  transition: 0.4s ease-in-out;
+}
+
+.proj-imgbx:hover::before {
+  height: 100%;
+}
+
+.proj-imgbx:hover .proj-txtx {
+  top: 50%;
+  opacity: 1;
+}
+/* Responsive Design Adjustments */
+@media (max-width: 768px) {
+  .proj-imgbx .proj-txtx span {
+    font-size: 0.9vw; /* Relative font size */
+  }
+
+}
+@media (max-width: 480px) {
+  .proj-imgbx .proj-txtx span {
+    font-size: 2.8vw; /* Relative font size */
+  }
+}
+
+/* --------------------- Style of Button --------------------- */
+
+.proj-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: fit-content;
+  height: fit-content;
+}
+
+/* Hover effect */
+.proj-btn:hover {
+  transform: scale(1.04);
+}
+
+/* Title inside the button */
+.proj-btn .col-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.proj-btn .col-title a {
+  text-decoration: none;
+}
+
+/* Column title styling */
+.proj-btn .col-title h4 {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.8px;
+  line-height: 1.2;
+  background-color: #2a2a2a;
+  padding: 8px 12px;
+  border-radius: 18px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  margin-top: 10px;
+  width: fit-content;
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect for title */
+.proj-btn .col-title h4:hover {
+  transform: scale(1.05);
+  background-color: rgba(0, 139, 104, 0.8);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* Focus effect for title */
+.proj-btn .col-title h4:focus {
+  outline: none;
+  box-shadow: 0 0 10px 2px rgba(0, 139, 104, 0.8);
+  background-color: rgba(0, 139, 104, 0.8);
+}
+
+.proj-btn.disabled {
+  pointer-events: none;
+  opacity: 0.5; /* Optional: Dim the button to show it's disabled */
+}
+
+
+/* Media Query for tablets and smaller screens */
+@media (max-width: 768px) {
+  .proj-btn {
+    padding: 8px 16px;  /* Adjust padding for smaller screens */
+  }
+
+  .proj-btn .col-title h4 {
+    font-size: 1.25rem;  /* Reduce font size for smaller screens */
+    padding: 6px 10px;   /* Adjust padding for smaller screens */
+  }
+
+  /* Hover effect for title */
+  .proj-btn .col-title h4:hover {
+    transform: scale(1.02); /* Slightly reduce hover scaling */
+  }
+}
+
+/* Media Query for mobile screens */
+@media (max-width: 480px) {
+  .proj-btn {
+    padding: 6px 12px;  /* Reduce padding for very small screens */
+  }
+
+  .proj-btn .col-title h4 {
+    font-size: 1.1rem;   /* Further reduce font size for mobile screens */
+    padding: 4px 8px;    /* Adjust padding for mobile screens */
+  }
+
+  /* Hover effect for title */
+  .proj-btn .col-title h4:hover {
+    transform: scale(1.01); /* Further reduce hover scaling */
+  }
+}
+
+
+
+/************ Contact Css ************/
+.contact {
+  background: linear-gradient(to bottom, #111111, #0d0d0d); /* Gradient from dark gray to black */
+  padding: 60px 0 50px 0;
+}
+.contact img {
+  width: 92%;
+}
+.contact h2 {
+	font-size: 45px;
+	font-weight: 700;
+  margin-bottom: 30px;
+}
+.contact form input, .contact form textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  color: #fff;
+  margin: 0 0 8px 0;
+  padding: 18px 26px;
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: 0.8px;
+  transition: 0.3s ease-in-out;
+}
+.contact form input:focus, .contact form textarea:focus {
+  background: rgba(255, 255, 255, 1);
+  color: #121212;
+}
+.contact form input::placeholder, .contact form textarea::placeholder {
+  font-size: 16px;
+  font-weight: 400;
+  color: #fff;
+}
+.contact form input:focus::placeholder, .contact form textarea:focus::placeholder {
+  color: #121212;
+  opacity: 0.8;
+}
+
+.contact form button {
+  font-weight: 700;
+  color: #fff; /* White text */
+  background-color: #2a2a2a; /* Button background color to match .prof-btn */
+  padding: 14px 48px;
+  font-size: 18px;
+  margin-top: 25px;
+  border: none; /* Remove border */
+  border-radius: 50px; /* Rounded corners */
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.contact form button span {
+  z-index: 1;
+  position: relative;
+}
+
+.contact form button:hover {
+  transform: scale(1.05); /* Slightly enlarge on hover */
+  background-color: rgba(0, 139, 104, 0.8); /* Hover background color to match .prof-btn */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Add hover shadow */
+}
+
+.contact form button::before {
+  content: "";
+  background: #121212; /* Dark background for the button before hover */
+  width: 0;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  transition: 0.3s ease-in-out;
+}
+
+
+
+/************ ProfessionalSection CSS ************/
+
+/************ Section Styles ************/
+.professional-section-container {
+  padding: 50px 20px; /* Padding around the section */
+  background: linear-gradient(to bottom, #0d0d0d, black); /* Gradient from dark gray to black */
+  display: flex;
+  justify-content: center; /* Center the content horizontally */
+  align-items: center; /* Center the content vertically */
+}
+
+/************ Box Styles ************/
+.professional-section-box {
+  padding: 20px; /* Add padding inside the box */
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 28px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 1240px; /* Max width to control the size of the box */
+  width: 100%; /* Ensures it takes up full width up to max-width */
+  margin-left: auto;
+  margin-right: auto; /* Center the box horizontally */
+}
+
+.professional-section-box h3 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  color: #fff; /* White text for the heading */
+  text-align: center;
+}
+
+.professional-section-box p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #ddd; /* Lighter text color for the description */
+  text-align: center;
+
+}
+
+.professional-section-box .m-2 {
+  margin: 10px;
+}
+
+.professional-section-box .row {
+  margin-top: 0;
+}
+
+/************ Button Styles ************/
+.buttons-container {
+  display: flex; /* Arrange buttons side by side */
+  justify-content: center; /* Center the buttons horizontally */
+  align-items: center; /* Align buttons vertically */
+  gap: 20px; /* Add space between the buttons */
+  margin: 20px auto; /* Center the container and add top margin */
+  width: 100%; /* Ensure the container spans the full width */
+}
+
+.prof-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 32px; /* Adjust padding for larger buttons */
+  background-color: #2a2a2a; /* Button background color */
+  border: none; /* Remove default border */
+  border-radius: 50px; /* Add rounded corners */
+  cursor: pointer;
+  transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.prof-btn a {
+  text-decoration: none; /* Remove underline from links */
+}
+
+.prof-btn h4 {
+  color: #fff;
+  font-size: 1.2rem; /* Adjust font size for larger buttons */
+  font-weight: 500;
+  margin: 0;
+}
+
+.prof-btn:hover {
+  transform: scale(1.05); /* Slightly enlarge on hover */
+  background-color: rgba(0, 139, 104, 0.8); /* Change background color on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Add hover shadow */
+}
+
+/************ Visume pop up ************/
+
+/* Styles for the modal overlay */
+.video-modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+/* Styles for the modal content */
+.video-modal {
+  border-radius: 10px;
+  max-width: 800px;
+  width: 100%;
+  position: relative;
+}
+/* Button to close the modal */
+.close-modal-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5); /* Slightly darker background */
+  border-radius: 50%; /* Circular button */
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 24px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.close-modal-btn:hover {
+  background-color: rgba(0, 0, 0, 0.7); /* Darker background on hover */
+  transform: scale(1.1); /* Slightly increase size on hover */
+}
+
+.close-modal-btn:active {
+  transform: scale(1.05); /* Slight reduction in size on click */
+}
+
+/* Add the "X" symbol */
+.close-modal-btn::before {
+  content: '×'; /* The "X" symbol */
+  font-size: 30px;
+  font-weight: bold;
+}
+
+/************ Responsive Adjustments ************/
+@media (max-width: 768px) {
+  .buttons-container {
+    flex-direction: column; /* Stack buttons vertically on smaller screens */
+    gap: 15px; /* Adjust spacing */
+  }
+
+  .prof-btn {
+    padding: 12px 24px; /* Adjust padding for smaller screens */
+  }
+
+  .prof-btn h4 {
+    font-size: 1rem; /* Adjust font size for smaller screens */
+  }
+}
+
+
+
+/************ Footer Css ************/
+.footer {
+  padding: 40px 0 30px 0;
+  background-color: #000;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  color: #fff;
+}
+
+.footer-logo {
+  width: 120px;  /* Adjust logo size */
+}
+
+.social-icon {
+  margin-top: 20px;
+}
+
+.social-icon-link {
+  margin: 0 10px;
+  transition: transform 0.3s ease;
+}
+
+.social-icon-link img {
+  width: 30px;
+  height: 30px;
+  transition: opacity 0.3s ease;
+}
+
+.social-icon-link:hover img {
+  opacity: 0.7; /* Light opacity on hover */
+  transform: scale(1.1); /* Slight zoom effect */
+}
+
+.footer-text {
+  font-weight: 400;
+  font-size: 14px;
+  color: #B8B8B8;
+  letter-spacing: 0.5px;
+  margin-top: 20px;
+}
+
+.footer-quote {
+  font-weight: 500;
+  font-size: 16px;
+  color: #F4F4F4;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+.footer .social-icon a {
+  text-decoration: none;
+}
+
+@media (max-width: 576px) {
+  .footer-logo {
+    width: 100px;
+  }
+  .social-icon img {
+    width: 25px;
+    height: 25px;
+  }
+  .footer-text, .footer-quote {
+    font-size: 12px;
+  }
+}
