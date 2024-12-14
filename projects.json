@@ -2,19 +2,19 @@
   {
     "title": "Project G.U.A.R.D",
     "description": "GUARD is an AI-powered accident detection system designed to monitor and alert authorities in real-time. By analyzing sensor data and visual inputs, it swiftly identifies accidents, triggering immediate notifications to ensure timely responses and enhanced safety.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/c_thumb,w_200,g_face/v1734129792/project-img1_aqylrs.png",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129791/project-img3_l7j7xx.png",
     "link": " "
   },
   {
     "title": "Project Robocop",
     "description": "Robocop is an advanced robotic system designed for automation and security. It integrates AI and robotics to perform surveillance, threat detection, and response, ensuring enhanced safety and efficiency in various environments.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129792/project-img2_iyi8sx.png",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129791/project-img2_vzxqj2.png",
     "link": " "
   },
   {
     "title": "Project O.C.G",
     "description": "Object Controlling Glasses (O.C.G.) enable users to control devices with eye movements and gestures, offering hands-free interaction for enhanced accessibility and convenience.",
-    "imgUrl": "/assets/projects/project-img3.png",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129792/project-img1_aqylrs.png",
     "link": "https://example.com/project2"
   },
   {
