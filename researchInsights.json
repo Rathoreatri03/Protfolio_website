@@ -1,0 +1,27 @@
+[
+  {
+    "title": "AI Research Breakthrough",
+    "description": "Exploring new methods of deep learning.",
+    "imgUrl": "/assets/projects/project-img1.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Quantum Computing",
+    "description": "Advancements in quantum algorithms and computing techniques.",
+    "imgUrl": "/assets/projects/project-img2.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "IoT in Healthcare",
+    "description": "Revolutionizing healthcare with IoT technologies.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "IoT in Healthcare",
+    "description": "Revolutionizing healthcare with IoT technologies.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
+  }
+
+]
