@@ -17,4 +17,10 @@
     "imgUrl": "/assets/projects/project-img3.png",
     "link": "https://example.com/project2"
   }
+   {
+    "title": "Full-Stack Web Developer",
+    "description": "Trained in full-stack web development technologies.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
+  }
 ]
