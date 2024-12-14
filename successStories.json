@@ -17,4 +17,10 @@
     "imgUrl": "/assets/projects/project-img3.png",
     "link": "https://example.com/project2"
   }
+   {
+    "title": "The Visionary",
+    "description": "Pioneering advancements in data science and machine learning.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
+  }
 ]
