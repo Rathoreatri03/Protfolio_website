@@ -34,5 +34,41 @@
     "description": "Trained in full-stack web development technologies.",
     "imgUrl": "/assets/projects/project-img3.png",
     "link": "https://example.com/project2"
+  },
+    {
+    "title": "Master's in AI",
+    "description": "Completed a Master’s in Artificial Intelligence from XYZ University.",
+    "imgUrl": "/assets/projects/project-img1.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Certified Data Scientist",
+    "description": "Achieved certification in Data Science from ABC Institute.",
+    "imgUrl": "/assets/projects/project-img2.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Full-Stack Web Developer",
+    "description": "Trained in full-stack web development technologies.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Master's in AI",
+    "description": "Completed a Master’s in Artificial Intelligence from XYZ University.",
+    "imgUrl": "/assets/projects/project-img1.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Certified Data Scientist",
+    "description": "Achieved certification in Data Science from ABC Institute.",
+    "imgUrl": "/assets/projects/project-img2.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Full-Stack Web Developer",
+    "description": "Trained in full-stack web development technologies.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
   }
 ]
