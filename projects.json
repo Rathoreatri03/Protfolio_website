@@ -34,6 +34,18 @@
     "description": "MycoFibre is a sustainable project that utilizes fungal mycelium to create biodegradable materials. It offers an eco-friendly alternative to plastic, providing strong, durable, and environmentally safe fibers for various industries.",
     "imgUrl": "/assets/projects/project-img3.png",
     "link": "https://example.com/project2"
+  },
+    {
+    "title": "LifeMatrix",
+    "description": "LifeMatrix is a real-time hospital system that monitors vital signs and patient movements. It alerts medical staff to abnormalities and uses cameras to assess the patient's condition for better decision-making.",
+    "imgUrl": "/assets/projects/project-img2.png",
+    "link": "https://example.com/project2"
+  },
+  {
+    "title": "Mycofibre",
+    "description": "MycoFibre is a sustainable project that utilizes fungal mycelium to create biodegradable materials. It offers an eco-friendly alternative to plastic, providing strong, durable, and environmentally safe fibers for various industries.",
+    "imgUrl": "/assets/projects/project-img3.png",
+    "link": "https://example.com/project2"
   }
 
 ]
