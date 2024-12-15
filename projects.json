@@ -1,51 +1,35 @@
 [
   {
+    "title": "AstroTerra",
+    "description": "AstroTerra aims to detect and analyze boulders on the lunar surface using image processing and machine learning, providing crucial data for safe landing site selection and mission planning.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734272556/AsstroTerra_lc0fja.png",
+    "link": "https://github.com/Rathoreatri03/Moon_Creator"
+  },
+
+    {
     "title": "Project G.U.A.R.D",
     "description": "GUARD is an AI-powered accident detection system designed to monitor and alert authorities in real-time. By analyzing sensor data and visual inputs, it swiftly identifies accidents, triggering immediate notifications to ensure timely responses and enhanced safety.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129791/project-img3_l7j7xx.png",
-    "link": " "
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734272790/Guard_j1nltq.png",
+    "link": "https://github.com/Rathoreatri03/G.U.A.R.D"
   },
-  {
-    "title": "Project Robocop",
-    "description": "Robocop is an advanced robotic system designed for automation and security. It integrates AI and robotics to perform surveillance, threat detection, and response, ensuring enhanced safety and efficiency in various environments.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129791/project-img2_vzxqj2.png",
-    "link": " "
-  },
+  
   {
     "title": "Project O.C.G",
     "description": "Object Controlling Glasses (O.C.G.) enable users to control devices with eye movements and gestures, offering hands-free interaction for enhanced accessibility and convenience.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734129792/project-img1_aqylrs.png",
-    "link": "https://example.com/project2"
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734273749/OCG_hdosxj.png",
+    "link": "https://github.com/Rathoreatri03/Object-Detection-Glasses-OCG-"
   },
+     
   {
-    "title": "AstroTerra",
-    "description": "AstroTerra aims to detect and analyze boulders on the lunar surface using image processing and machine learning, providing crucial data for safe landing site selection and mission planning.",
-    "imgUrl": "/assets/projects/project-img1.png",
-    "link": "https://example.com/project2"
+    "title": "Project Robocop",
+    "description": "Robocop is an advanced robotic system designed for automation and security. It integrates AI and robotics to perform surveillance, threat detection, and response, ensuring enhanced safety and efficiency in various environments.",
+    "imgUrl": " ",
+    "link": " "
   },
   {
     "title": "LifeMatrix",
     "description": "LifeMatrix is a real-time hospital system that monitors vital signs and patient movements. It alerts medical staff to abnormalities and uses cameras to assess the patient's condition for better decision-making.",
-    "imgUrl": "/assets/projects/project-img2.png",
-    "link": "https://example.com/project2"
-  },
-  {
-    "title": "Mycofibre",
-    "description": "MycoFibre is a sustainable project that utilizes fungal mycelium to create biodegradable materials. It offers an eco-friendly alternative to plastic, providing strong, durable, and environmentally safe fibers for various industries.",
-    "imgUrl": "/assets/projects/project-img3.png",
-    "link": "https://example.com/project2"
-  },
-    {
-    "title": "LifeMatrix",
-    "description": "LifeMatrix is a real-time hospital system that monitors vital signs and patient movements. It alerts medical staff to abnormalities and uses cameras to assess the patient's condition for better decision-making.",
-    "imgUrl": "/assets/projects/project-img2.png",
-    "link": "https://example.com/project2"
-  },
-  {
-    "title": "Mycofibre",
-    "description": "MycoFibre is a sustainable project that utilizes fungal mycelium to create biodegradable materials. It offers an eco-friendly alternative to plastic, providing strong, durable, and environmentally safe fibers for various industries.",
-    "imgUrl": "/assets/projects/project-img3.png",
-    "link": "https://example.com/project2"
+    "imgUrl": " ",
+    "link": " "
   }
-
 ]
