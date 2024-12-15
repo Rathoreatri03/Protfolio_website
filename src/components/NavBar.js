@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navbar, Nav, Container } from "react-bootstrap";
-import logo from "../assets/img/logo.png";
+import axios from "axios"; // Import axios for fetching the JSON data
+
 import navIcon1 from "../assets/img/nav-icon1.svg";
 import navIcon2 from "../assets/img/nav-icon2.svg";
 import navIcon3 from "../assets/img/nav-icon3.svg";
@@ -11,8 +12,24 @@ export const NavBar = () => {
   const [activeLink, setActiveLink] = useState("home");
   const [scrolled, setScrolled] = useState(false);
   const [contactInView, setContactInView] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(""); // State to store the logo URL
 
   useEffect(() => {
+    // Fetch logo URL from the JSON
+    const fetchLogoData = async () => {
+      try {
+        const response = await axios.get(
+            "https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/logo.json"
+        );
+        setLogoUrl(response.data.logo_url); // Set the logo URL from the JSON
+      } catch (error) {
+        console.error("Error fetching logo data: ", error);
+      }
+    };
+
+    fetchLogoData();
+
+    // Scroll event handler
     const onScroll = () => {
       if (window.scrollY > 50) {
         setScrolled(true);
@@ -63,7 +80,12 @@ export const NavBar = () => {
       <Navbar expand="md" className={`navbar-custom ${scrolled ? "scrolled" : ""}`}>
         <Container>
           <Navbar.Brand href="/">
-            <img src={logo} alt="Logo" className="navbar-logo" />
+            {/* Use the dynamically loaded logo */}
+            {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="navbar-logo" />
+            ) : (
+                <p>Loading...</p> // Display loading text if the logo URL is not yet loaded
+            )}
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav">
             <span className="navbar-toggler-icon"></span>

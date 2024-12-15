@@ -1,5 +1,5 @@
+import { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
-import logo from "../assets/img/logo.png";
 import navIcon1 from "../assets/img/nav-icon1.svg";
 import navIcon2 from "../assets/img/nav-icon2.svg";
 import navIcon3 from "../assets/img/nav-icon3.svg";
@@ -7,12 +7,26 @@ import navIcon4 from "../assets/img/nav-icon4.svg";
 import navIcon5 from "../assets/img/nav-icon5.svg";
 
 export const Footer = () => {
+  const [logoUrl, setLogoUrl] = useState("");
+
+  useEffect(() => {
+    // Fetch logo URL from the JSON file
+    fetch("https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/logo.json")
+        .then((response) => response.json())
+        .then((data) => setLogoUrl(data.logo_url))
+        .catch((error) => console.error("Error fetching logo URL:", error));
+  }, []);
+
   return (
       <footer className="footer">
         <Container>
           <Row className="align-items-center">
             <Col size={12} sm={6}>
-              <img src={logo} alt="Your Brand Logo" className="footer-logo" />
+              {logoUrl ? (
+                  <img src={logoUrl} alt="Your Brand Logo" className="footer-logo" />
+              ) : (
+                  <p>Loading...</p>
+              )}
             </Col>
             <Col size={12} sm={6} className="text-center text-sm-end">
               <div className="social-icon">
@@ -65,7 +79,6 @@ export const Footer = () => {
               <p className="footer-text">Copyright 2024. All Rights Reserved</p>
               <p className="footer-quote">"Let's innovate and build the future, together."</p>
             </Col>
-
           </Row>
         </Container>
       </footer>

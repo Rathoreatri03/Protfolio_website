@@ -1,11 +1,28 @@
-import React, { useState } from 'react';
 import Carousel from 'react-multi-carousel';
 import 'react-multi-carousel/lib/styles.css';
 import { Meter } from './Meter';
-import skillsData from '../assets/json_data/skillsData.json'; // Importing the JSON data
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export const Skills = () => {
-  const [skills, setSkills] = useState(skillsData.skills);
+  const [skills, setSkills] = useState([]); // State for skills data
+
+  // Fetch skills data from GitHub
+  useEffect(() => {
+    const fetchSkillsData = async () => {
+      try {
+        // Fetch the skillsData.json file directly from the raw URL
+        const url = "https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/skillsData.json";
+        const response = await axios.get(url);
+
+        setSkills(response.data.skills); // Set the state with the fetched skills data
+      } catch (err) {
+        console.error('Error fetching data from GitHub', err);
+      }
+    };
+
+    fetchSkillsData();
+  }, []);
 
   const addSkill = (name, progress) => {
     setSkills([...skills, { name, progress }]);

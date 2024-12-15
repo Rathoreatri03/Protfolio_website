@@ -1,42 +1,57 @@
 import { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
-import headerImg from "../assets/img/header-img.svg";
 import { ArrowRightCircle } from "react-bootstrap-icons";
 import "animate.css";
 import TrackVisibility from "react-on-screen";
+import axios from "axios";
 
 export const Banner = () => {
   const [loopNum, setLoopNum] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [text, setText] = useState("");
   const [delta, setDelta] = useState(150); // Typing speed
+  // eslint-disable-next-line
   const [index, setIndex] = useState(1);
-  const toRotate = [
-    "Computer Vision Engineer",
-    "Data Analyst",
-    "Business Analyst",
-    "ML Engineer",
-    "ML Developer",
-    "Model Trainer",
-    "Blender Artist",
-  ];
-  const period = 1500; // Transition period between roles
+  const [data, setData] = useState({}); // State for banner data
+  const [loading, setLoading] = useState(true); // Loading state for the data
+
+  // Fetch Banner Data
+  useEffect(() => {
+    const fetchBannerData = async () => {
+      try {
+        // Fetch the BannerDetails.json file directly from the raw URL
+        const url = "https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/BannerDetails.json";
+        const response = await axios.get(url);
+
+        setData(response.data); // Set the state with fetched data
+        setLoading(false); // Set loading to false once data is fetched
+      } catch (err) {
+        console.error('Error fetching data from GitHub', err);
+        setLoading(false); // Handle error and stop loading
+      }
+    };
+
+    fetchBannerData();
+  }, []); // Empty dependency array to fetch data only once when the component mounts
 
   useEffect(() => {
-    const ticker = setInterval(() => {
-      tick();
-    }, delta);
+    if (data && data.titles && data.titles.length > 0) {
+      const ticker = setInterval(() => {
+        tick();
+      }, delta);
 
-    return () => clearInterval(ticker);
-  }, [text]);
-
-  useEffect(() => {
-    createStars();
-  }, []); // Initialize stars on mount
+      return () => clearInterval(ticker);
+    }
+  },  // eslint-disable-next-line
+      [text, delta, data.titles]); // Dependency on text, delta, and titles
 
   const tick = () => {
-    const i = loopNum % toRotate.length;
-    const fullText = toRotate[i];
+    if (!data || !data.titles || data.titles.length === 0) {
+      return; // Prevent accessing data if titles are not available
+    }
+
+    const i = loopNum % data.titles.length;
+    const fullText = data.titles[i];
     const updatedText = isDeleting
         ? fullText.substring(0, text.length - 1)
         : fullText.substring(0, text.length + 1);
@@ -52,9 +67,10 @@ export const Banner = () => {
       setIndex(1);
     }
 
-    setDelta(150); // Typing and deleting speed
+    setDelta(isDeleting ? 100 : 150); // Faster typing when deleting
   };
 
+  // Create Stars in the Background
   const createStars = () => {
     const starField = document.querySelector(".starfield");
     if (!starField) return;
@@ -69,6 +85,12 @@ export const Banner = () => {
     }
   };
 
+  // Initialize stars on mount
+  useEffect(() => {
+    createStars();
+  }, []);
+
+  // Render Loading or Content
   return (
       <section className="banner" id="home">
         <Container>
@@ -76,30 +98,25 @@ export const Banner = () => {
             <Col xs={12} md={6} xl={7}>
               <TrackVisibility>
                 {({ isVisible }) => (
-                    <div
-                        className={
-                          isVisible ? "animate__animated animate__fadeIn" : ""
-                        }
-                    >
+                    <div className={isVisible ? "animate__animated animate__fadeIn" : ""}>
                       <span className="tagline">Let's Innovate the Future</span>
                       <h1 className="display-4">Hi! I'm Atri Rathore</h1>
                       <div className="typing-effect">
-                        <span
-                            className="txt-rotate"
-                            dataPeriod="500"
-                            data-rotate='[ "Computer Vision Engineer", "Data Analyst", "Business Analyst", "ML Engineer", "ML Developer", "Model Trainer", "Blender Artist" ]'
-                            style={{ color: '#D3D3D3' }}  /* Inline style to change text color */
-                        >
-                          <span className="wrap">{text}</span>
-                        </span>
+                    <span
+                        className="txt-rotate"
+                        dataPeriod="500"
+                        data-rotate='[ "Computer Vision Engineer", "Data Analyst", "Business Analyst", "ML Engineer", "ML Developer", "Model Trainer", "Blender Artist" ]'
+                        style={{ color: '#D3D3D3' }}  /* Inline style to change text color */
+                    >
+                      <span className="wrap">{text}</span>
+                    </span>
                       </div>
-                      <p className="lead">
-                        As deeply passionate about leveraging cutting-edge technologies in artificial intelligence, machine learning, and computer vision to solve real-world problems. With hands-on experience in building and training machine learning models, designing innovative AI systems, and creating impactful solutions, I focus on driving efficiency and enhancing user experiences across various domains. From developing autonomous systems to working with complex data analytics and 3D modeling, I thrive in tackling diverse challenges and pushing the boundaries of what’s possible. My approach is always centered around continuous learning, creativity, and a drive to make a meaningful impact through technology.
-                      </p>
+                      <p className="lead">{loading ? "Loading..." : data.description}</p>
                       <button
                           className="btn btn-outline-light btn-lg"
-                          onClick={() => window.open('https://www.linkedin.com/in/rathoreatri03/', '_blank')}>
-                        Let’s Connect <ArrowRightCircle size={25}/>
+                          onClick={() => window.open('https://www.linkedin.com/in/rathoreatri03/', '_blank')}
+                      >
+                        Let’s Connect <ArrowRightCircle size={25} />
                       </button>
                     </div>
                 )}
@@ -108,10 +125,8 @@ export const Banner = () => {
             <Col xs={12} md={6} xl={5}>
               <TrackVisibility>
                 {({ isVisible }) => (
-                    <div
-                        className={isVisible ? "animate__animated animate__zoomIn" : ""}
-                    >
-                      <img src={headerImg} alt="Header Img" className="img-fluid" />
+                    <div className={isVisible ? "animate__animated animate__zoomIn" : ""}>
+                      <img src={data.imgUrl} alt="Header Img" className="img-fluid" />
                     </div>
                 )}
               </TrackVisibility>
