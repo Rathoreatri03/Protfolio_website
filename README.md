@@ -165,5 +165,3 @@ Feel free to reach out to me:
 ### 🌟 Additional Sections (Optional)
 - **FAQ**: Address frequently asked questions about your projects.
 - **Changelog**: Track updates and new features added to your portfolio.
-
-This README is now optimized to professionally represent your portfolio repository. Let me know if you’d like to include any other details! 🚀
