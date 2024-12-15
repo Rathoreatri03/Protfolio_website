@@ -1,20 +1,44 @@
 [
   {
-    "title": "Story of Excellence",
+    "title": "INNOV8",
     "description": "Achieved high performance and success in various tech fields.",
-    "imgUrl": "/assets/projects/project-img1.png",
-    "link": "https://example.com/project2"
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278770/INNOV8_werudo.jpg",
+    "link": ""
   },
   {
-    "title": "Tech Innovator",
-    "description": "Leading innovation in AI and robotics.",
-    "imgUrl": "/assets/projects/project-img2.png",
-    "link": "https://example.com/project2"
-  },
-  {
-    "title": "The Visionary",
+    "title": "Smart Tech ",
     "description": "Pioneering advancements in data science and machine learning.",
-    "imgUrl": "/assets/projects/project-img3.png",
-    "link": "https://example.com/project2"
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278304/Smartech_hxookq.jpg",
+    "link": ""
+  },
+  {
+    "title": "VIHAN 007",
+    "description": "Leading innovation in AI and robotics.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278307/Vihan007_ukz7wt.jpg",
+    "link": ""
+  },
+  {
+    "title": "HIS 2.0",
+    "description": "Pioneering advancements in data science and machine learning.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278308/HIS2.0_fpxhyg.jpg",
+    "link": ""
+  },
+    {
+    "title": "Think'IN Green",
+    "description": "Pioneering advancements in data science and machine learning.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278304/ThinNgreen_waluit.jpg",
+    "link": ""
+  },
+    {
+    "title": "Bihar Innovation Chalenge 2024",
+    "description": "Pioneering advancements in data science and machine learning.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278771/BiharInnovation_my24pq.png",
+    "link": ""
+  },
+    {
+    "title": "VIHAAN 6.0",
+    "description": "Pioneering advancements in data science and machine learning.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734278306/VIHAAN6.0_lhgnac.jpg",
+    "link": ""
   }
 ]
