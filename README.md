@@ -146,7 +146,7 @@ Want to improve or customize this portfolio? Contributions are welcome!
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/Rathoreatri03/Protfolio_website/blob/main/LICENCE) file for details.
 
 ---
 
