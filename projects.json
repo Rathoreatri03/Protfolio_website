@@ -2,21 +2,21 @@
   {
     "title": "AstroTerra",
     "description": "AstroTerra aims to detect and analyze boulders on the lunar surface using image processing and machine learning, providing crucial data for safe landing site selection and mission planning.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734272556/AsstroTerra_lc0fja.png",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/AsstroTerra_oo1cew.png",
     "link": "https://github.com/Rathoreatri03/Moon_Creator"
   },
 
     {
     "title": "Project G.U.A.R.D",
     "description": "GUARD is an AI-powered accident detection system designed to monitor and alert authorities in real-time. By analyzing sensor data and visual inputs, it swiftly identifies accidents, triggering immediate notifications to ensure timely responses and enhanced safety.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734272790/Guard_j1nltq.png",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/Guard_e8fr8x.png",
     "link": "https://github.com/Rathoreatri03/G.U.A.R.D"
   },
   
   {
     "title": "Project O.C.G",
     "description": "Object Controlling Glasses (O.C.G.) enable users to control devices with eye movements and gestures, offering hands-free interaction for enhanced accessibility and convenience.",
-    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734273749/OCG_hdosxj.png",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/OCG_sfbkvb.png",
     "link": "https://github.com/Rathoreatri03/Object-Detection-Glasses-OCG-"
   },
      
