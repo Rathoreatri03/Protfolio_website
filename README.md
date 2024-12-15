@@ -116,7 +116,7 @@ Deploy your portfolio to GitHub Pages:
    npm run deploy
    ```
 
-   Your portfolio will be live at `https://rathoreatri03.github.io/Protfolio_website/`.
+   Your portfolio will be live at `https://<your-username>.github.io/portfolio`.
 
 For alternative deployment platforms like Netlify or Firebase, follow their respective documentation.
 
