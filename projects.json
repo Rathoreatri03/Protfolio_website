@@ -23,13 +23,13 @@
   {
     "title": "Project Robocop",
     "description": "Robocop is an advanced robotic system designed for automation and security. It integrates AI and robotics to perform surveillance, threat detection, and response, ensuring enhanced safety and efficiency in various environments.",
-    "imgUrl": " ",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734284893/Robocop_xkurfc.jpg",
     "link": " "
   },
   {
     "title": "LifeMatrix",
     "description": "LifeMatrix is a real-time hospital system that monitors vital signs and patient movements. It alerts medical staff to abnormalities and uses cameras to assess the patient's condition for better decision-making.",
-    "imgUrl": " ",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734284910/lifematix_g75wzz.png",
     "link": " "
   }
 ]
