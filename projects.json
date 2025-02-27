@@ -27,6 +27,12 @@
     "link": " "
   },
   {
+    "title": "Murphy Systum",
+    "description": "A comprehensive Medical Diagnosis System that includes multiple disease detection modules using Machine Learning and Deep Learning models. The system currently supports: ✅ Brain Tumor Detection ✅ Breast Cancer Classification ✅ General Disease Prediction based on symptoms",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1740683019/Murphy_Systum_tgzxv3.png",
+    "link": "https://garvkumar68.github.io/Murphy-System/"
+  },
+  {
     "title": "LifeMatrix",
     "description": "LifeMatrix is a real-time hospital system that monitors vital signs and patient movements. It alerts medical staff to abnormalities and uses cameras to assess the patient's condition for better decision-making.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734284910/lifematix_g75wzz.png",
