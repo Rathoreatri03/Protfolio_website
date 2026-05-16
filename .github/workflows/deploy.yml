@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - atri
   workflow_dispatch:
 
 permissions:
