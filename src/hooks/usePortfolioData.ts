@@ -4,44 +4,94 @@ const GH = "https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Js
 
 export type Banner = { titles: string[]; description: string; imgUrl: string };
 export type Skill = { name: string; progress: number };
+export type SkillCategory = { title: string; skills: Skill[] };
 export type Project = { title: string; description: string; imgUrl: string; link: string };
-export type Experience = Project;
-export type Links = { resume_PDF: string; visume_video: string };
+export type Experience = Project & { duration?: string; ref?: string };
+export type SuccessStory = Project;
+export type Links = { 
+  resume_PDF: string; 
+  visume_video: string;
+  github: string;
+  email: string;
+  formspree_ID: string;
+};
+export type SystemMetadata = {
+  version: string;
+  systemID: string;
+  userName: string;
+  terminalUser: string;
+  kernel: string;
+  status: string;
+  efficiency: string;
+  uptime: string;
+  latency: string;
+  deployment_tag: string;
+  intelligence_tag: string;
+  achievement_tag: string;
+  operational_log_tag: string;
+  pages?: {
+    work: { title1: string; title2: string };
+    skills: { title1: string; title2: string };
+    achievements: { title1: string; title2: string; subtitle: string };
+    log: { title1: string; title2: string; subtitle: string };
+  };
+  footer?: { copyright_text: string };
+};
+export type Logo = { logo_url: string };
 
 const FALLBACK = {
   banner: {
-    titles: [
-      "Computer Vision Engineer", "Python Developer", "Data Analyst",
-      "ML Engineer", "Model Trainer", "Blender Artist",
-    ],
-    description:
-      "I leverage cutting-edge AI, machine learning and computer vision to solve real-world problems — from autonomous perception to medical diagnostics.",
+    titles: ["AI Architect Engineer"],
+    description: "Solving real-world problems with AI.",
     imgUrl: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1740682112/header-img_wq7c5m.svg",
   } as Banner,
-  skills: [
-    { name: "Python Development", progress: 85 },
-    { name: "Image Processing", progress: 90 },
-    { name: "Object Detection", progress: 95 },
-    { name: "Model Training", progress: 85 },
-    { name: "ML Research", progress: 90 },
-    { name: "Data Analysis", progress: 85 },
-    { name: "3D Modeling", progress: 80 },
-    { name: "Statistics", progress: 85 },
-  ] as Skill[],
+  skills: [] as SkillCategory[],
   projects: [] as Project[],
   experience: [] as Experience[],
+  successStories: [] as SuccessStory[],
   links: {
-    resume_PDF: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf",
-    visume_video: "https://res.cloudinary.com/dxh9tugzx/video/upload/v1734293129/Visume_io0vmq.mp4",
+    resume_PDF: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf", 
+    visume_video: "https://res.cloudinary.com/dxh9tugzx/video/upload/v1734293129/Visume_io0vmq.mp4", 
+    github: "https://github.com/Rathoreatri03", 
+    email: "rathoreatri03@gmail.com", 
+    formspree_ID: "xpwzelbd"
   } as Links,
+  metadata: {
+    version: "STABLE",
+    systemID: "Atri_Rathore",
+    userName: "Atri Rathore",
+    terminalUser: "rathoreatri03@lab",
+    kernel: "X-Matrix_64",
+    status: "OPTIMAL",
+    efficiency: "98.4%",
+    uptime: "99.99%",
+    latency: "12ms",
+    deployment_tag: "Deployment_Stream",
+    intelligence_tag: "Tactical_Intelligence",
+    achievement_tag: "Achievement_Stream",
+    operational_log_tag: "Operational_Log",
+    pages: {
+      work: { title1: "Experiments in", title2: "Motion" },
+      skills: { title1: "The", title2: "Matrix" },
+      achievements: { title1: "Victory", title2: "Archives", subtitle: "A CHRONOLOGICAL LOG OF HACKATHON WINS AND INNOVATION CHALLENGES" },
+      log: { title1: "Neural", title2: "Milestones", subtitle: "CHRONOLOGICAL ARCHIVE OF ACHIEVEMENTS AND SYSTEM UPGRADES" }
+    },
+    footer: { copyright_text: "ALL_SYSTEMS_DODO" }
+  } as SystemMetadata,
+  techStack: ["AI", "ML", "CV", "PYTHON", "PYTORCH"],
+  logo: { logo_url: "" } as Logo
 };
 
 export function usePortfolioData() {
   const [banner, setBanner] = useState<Banner>(FALLBACK.banner);
-  const [skills, setSkills] = useState<Skill[]>(FALLBACK.skills);
+  const [skills, setSkills] = useState<SkillCategory[]>(FALLBACK.skills);
   const [projects, setProjects] = useState<Project[]>(FALLBACK.projects);
   const [experience, setExperience] = useState<Experience[]>(FALLBACK.experience);
+  const [successStories, setSuccessStories] = useState<SuccessStory[]>(FALLBACK.successStories);
   const [links, setLinks] = useState<Links>(FALLBACK.links);
+  const [metadata, setMetadata] = useState<SystemMetadata>(FALLBACK.metadata);
+  const [techStack, setTechStack] = useState<string[]>(FALLBACK.techStack);
+  const [logo, setLogo] = useState<Logo>(FALLBACK.logo);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -54,23 +104,40 @@ export function usePortfolioData() {
       } catch { return null; }
     };
     (async () => {
-      const [b, sk, pr, ex, li] = await Promise.all([
-        j<Banner>(`${GH}/BannerDetails.json`),
-        j<{ skills: Skill[] }>(`${GH}/skillsData.json`),
-        j<Project[]>(`${GH}/projects.json`),
-        j<Experience[]>(`${GH}/experience.json`),
-        j<Links>(`${GH}/professionalLinks.json`),
+      const v = Date.now();
+      const [b, sk, pr, ex, ss, li, md, ts, lg] = await Promise.all([
+        j<Banner>(`${GH}/BannerDetails.json?v=${v}`),
+        j<{ categories: SkillCategory[] }>(`${GH}/skillsData.json?v=${v}`),
+        j<Project[]>(`${GH}/projects.json?v=${v}`),
+        j<Experience[]>(`${GH}/experience.json?v=${v}`),
+        j<SuccessStory[]>(`${GH}/successStories.json?v=${v}`),
+        j<Links>(`${GH}/professionalLinks.json?v=${v}`),
+        j<SystemMetadata>(`${GH}/systemMetadata.json?v=${v}`),
+        j<string[]>(`${GH}/techstack.json?v=${v}`),
+        j<Logo>(`${GH}/logo.json?v=${v}`),
       ]);
       if (cancel) return;
+      
       if (b) setBanner(b);
-      if (sk?.skills) setSkills(sk.skills);
+      
+      const skData = sk as any;
+      if (skData?.categories) {
+        setSkills(skData.categories);
+      } else if (skData?.skills) {
+        setSkills([{ title: "CORE_TECH", skills: skData.skills }]);
+      }
+      
       if (pr) setProjects(pr);
       if (ex) setExperience(ex);
+      if (ss) setSuccessStories(ss);
       if (li) setLinks(li);
+      if (md) setMetadata(md);
+      if (ts) setTechStack(ts);
+      if (lg) setLogo(lg);
       setLoaded(true);
     })();
     return () => { cancel = true; };
   }, []);
 
-  return { banner, skills, projects, experience, links, loaded };
+  return { banner, skills, projects, experience, successStories, links, metadata, techStack, logo, loaded };
 }

@@ -1,67 +1,40 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TypingRoles } from "@/components/TypingRoles";
-import { DodoAI } from "@/components/DodoAI";
 import { usePortfolioData } from "@/hooks/usePortfolioData";
-import avatarImg from "@/assets/avatar.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Atri Rathore — AI / Computer Vision Engineer" },
-      {
-        name: "description",
-        content:
-          "Portfolio of Atri Rathore — AI engineer, computer vision researcher and Python developer building intelligent real-world systems.",
-      },
-      { property: "og:title", content: "Atri Rathore — AI Research Lab" },
-      {
-        property: "og:description",
-        content: "AI / ML / Computer Vision portfolio and research log.",
-      },
-    ],
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap",
-      },
+      { title: "Portfolio — AI / Computer Vision Engineer" },
+      { name: "description", content: "AI / ML / Computer Vision portfolio and research log." },
     ],
   }),
   component: Index,
 });
 
 function Index() {
-  const { banner, links } = usePortfolioData();
-  const STACK = [
-    "PYTHON", "PYTORCH", "TENSORFLOW", "OPENCV", "YOLO", "TRANSFORMERS",
-    "PANDAS", "NUMPY", "SCIKIT-LEARN", "CUDA", "DOCKER", "BLENDER",
-    "LANGCHAIN", "HUGGING-FACE", "GIT", "LINUX",
-  ];
+  const { banner, links, metadata, techStack } = usePortfolioData();
 
   return (
-    <div className="h-full flex flex-col justify-center gap-20 py-12">
+    <div className="h-full flex flex-col justify-center gap-8 py-8 -mt-8">
       {/* HERO */}
-      <section className="max-w-6xl mx-auto w-full animate-fade-up grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
+      <section className="max-w-6xl mx-auto w-full animate-fade-up grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center pt-8">
         <div>
-          <div className="mb-6 font-display text-primary flex items-center justify-center lg:justify-start gap-2 text-xs sm:text-[11px] opacity-60">
-            <span className="size-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
-            MODEL_LOADED :: NEURAL_NET_ONLINE
-          </div>
 
-          <h1 className="font-display text-6xl md:text-8xl font-bold tracking-tighter leading-[0.85] mb-6">
-            ARCHITECTING<br />
-            <span className="text-primary text-glow">INTELLIGENT</span><br />
-            SYSTEMS<span className="text-primary">.</span>
+
+
+          <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9] mb-6 text-white uppercase">
+            {metadata.userName.split(" ")[0]}<br />
+            <span className="text-primary text-glow">{metadata.userName.split(" ").slice(1).join(" ")}</span><span className="text-primary">.</span>
           </h1>
 
-          <div className="font-display text-xl md:text-3xl mb-8 min-h-[1.5em]">
+          <div className="font-display text-xl md:text-2xl mb-6 min-h-[1.2em]">
             <span className="text-muted-foreground">&gt;_ role: </span>
             <TypingRoles roles={banner.titles} />
           </div>
 
-          <p className="max-w-xl text-base md:text-lg text-muted-foreground leading-relaxed mb-10">
-            I'm <span className="text-foreground font-medium">Atri Rathore</span> — {banner.description.slice(0, 260)}…
+          <p className="max-w-2xl text-xs md:text-sm text-muted-foreground leading-relaxed mb-8 opacity-80 text-justify">
+            I'm <span className="text-foreground font-medium">{metadata.userName}</span> — {banner.description}
           </p>
 
           <div className="flex flex-wrap gap-4">
@@ -76,26 +49,24 @@ function Index() {
             <a
               href={links.visume_video}
               target="_blank" rel="noreferrer"
-              className="inline-flex items-center justify-center h-12 px-6 border border-border bg-white/5 backdrop-blur font-display text-xs hover:bg-primary/10 hover:border-primary/60 transition-colors"
+              className="inline-flex items-center justify-center h-12 px-6 border border-border bg-white/5 backdrop-blur font-display text-xs hover:bg-primary/10 hover:border-primary/60 transition-colors text-white/60"
             >
               ▶ WATCH_VISUME.MOV
             </a>
             <a
-              href="mailto:rathoreatri03@gmail.com"
-              className="inline-flex items-center justify-center h-12 px-6 border border-border font-display text-xs hover:bg-primary/10 hover:border-primary/60 transition-colors"
+              href={`mailto:${links.email}`}
+              className="inline-flex items-center justify-center h-12 px-6 border border-border font-display text-xs hover:bg-primary/10 hover:border-primary/60 transition-colors text-white/60"
             >
               ⇄ ESTABLISH_CONTACT
             </a>
           </div>
         </div>
 
-        {/* Empty div to preserve grid spacing for persistent DodoAI in Layout */}
         <div className="hidden lg:block h-[450px]" />
       </section>
 
-      {/* Marquee Strip with Integrated Label */}
+      {/* Marquee Strip */}
       <div className="relative w-full shrink-0 mt-auto">
-        {/* Centered Line-Join Label */}
         <div className="flex items-center gap-4 w-full">
           <div className="flex-1 h-[1px] bg-white/10" />
           <div className="flex items-center gap-3 px-2">
@@ -108,22 +79,15 @@ function Index() {
           <div className="flex-1 h-[1px] bg-white/10" />
         </div>
 
-        {/* Marquee content */}
         <div className="overflow-hidden border-b border-white/10 py-8 animate-fade-up delay-700">
-          {/* Spotlight Glow Overlay */}
           <div className="absolute inset-0 pointer-events-none flex justify-center items-center">
-            <div className="w-1/4 h-full bg-primary/10 blur-[40px] rounded-full" />
+            <div className="w-1/4 h-full bg-primary/5 blur-[40px] rounded-full" />
           </div>
-          
-          {/* Edge Fading Mask */}
           <div className="absolute inset-0 pointer-events-none [background:linear-gradient(to_right,var(--background)_0%,transparent_20%,transparent_80%,var(--background)_100%)]" />
 
           <div className="flex gap-16 animate-marquee whitespace-nowrap font-display text-[11px] tracking-[0.4em] text-muted-foreground uppercase">
-            {[...STACK, ...STACK].map((s, i) => (
-              <span 
-                key={i} 
-                className="hover:text-primary transition-all cursor-default relative group"
-              >
+            {[...techStack, ...techStack].map((s, i) => (
+              <span key={i} className="hover:text-primary transition-all cursor-default relative group">
                 <span className="group-hover:text-glow">▸ {s}</span>
               </span>
             ))}

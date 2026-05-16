@@ -7,6 +7,20 @@ import { useEffect, useRef, useState } from "react";
  * - Click → switches to "SPEAKING" mode with an animated waveform
  *   (movie-AI style). Click again to dismiss.
  */
+const FUNNY_PHRASES = [
+  "Calculating the meaning of life... 42.",
+  "Beep boop. I am definitely not plotting world domination.",
+  "Analyzing your codebase... Wow, so much clean code!",
+  "Loading neural networks... and a cup of coffee.",
+  "Did you know I can read your mind? Just kidding... or am I?",
+  "I'm an AI, but even I need a break sometimes.",
+  "Optimizing the matrix...",
+  "Running simulation #4092...",
+  "Hacking the mainframe... I'm in.",
+  "Synthesizing new intelligence protocols...",
+  "Bleep bloop... processing humor..."
+];
+
 export function DodoAI({ mini }: { mini?: boolean }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [look, setLook] = useState({ x: 0, y: 0 });
@@ -15,6 +29,17 @@ export function DodoAI({ mini }: { mini?: boolean }) {
   const [speaking, setSpeaking] = useState(false);
   const [blink, setBlink] = useState(false);
   const [mood, setMood] = useState<"neutral" | "sleepy" | "happy" | "petting">("neutral");
+  const [speechText, setSpeechText] = useState("");
+
+  // Speech Text Cycling
+  useEffect(() => {
+    if (speaking) {
+      const pickRandom = () => FUNNY_PHRASES[Math.floor(Math.random() * FUNNY_PHRASES.length)];
+      setSpeechText(pickRandom());
+      const interval = setInterval(() => setSpeechText(pickRandom()), 3500);
+      return () => clearInterval(interval);
+    }
+  }, [speaking]);
 
   // Cursor tracking
   useEffect(() => {
@@ -80,6 +105,28 @@ export function DodoAI({ mini }: { mini?: boolean }) {
         speaking ? "bg-primary/30" : "bg-primary/10"
       }`} />
 
+      {/* Speech Bubble */}
+      {speaking && (
+        <div className={`absolute z-50 animate-in fade-in zoom-in-95 duration-500 pointer-events-none ${
+          mini 
+            ? "-top-8 -right-8 max-w-[120px]" 
+            : "-top-12 md:-top-16 -right-16 md:-right-32 max-w-[180px] md:max-w-[240px]"
+        }`}>
+          <div className={`relative bg-[#080808]/90 backdrop-blur-xl border border-primary/40 text-white/90 font-mono rounded-2xl rounded-bl-sm shadow-[0_0_30px_rgba(var(--primary),0.3)] ${
+            mini ? "text-[8px] p-2 leading-tight" : "text-[10px] md:text-xs p-3 md:p-4"
+          }`}>
+            <div className="flex gap-1 md:gap-2 items-start">
+              <span className="text-primary font-bold animate-pulse">{'>'}</span>
+              <span className={`${mini ? "leading-tight tracking-tight" : "leading-relaxed"}`}>{speechText}</span>
+            </div>
+            {/* Speech bubble tail */}
+            <div className={`absolute left-0 w-0 h-0 border-l-transparent border-t-primary/40 border-r-transparent ${
+              mini ? "-bottom-[3px] border-l-[6px] border-t-[6px] border-r-[6px]" : "-bottom-[5px] border-l-[10px] border-t-[10px] border-r-[10px]"
+            }`}></div>
+          </div>
+        </div>
+      )}
+
       {/* Main Face Container */}
       <div
         className="absolute inset-0 flex items-center justify-center transition-transform duration-700 ease-out"
@@ -114,38 +161,40 @@ export function DodoAI({ mini }: { mini?: boolean }) {
               transform: `translate(${look.x * 0.8}px, ${look.y * 0.8}px)`,
               transition: "transform 0.15s ease-out"
             }}>
-              {!speaking ? (
-                <g>
-                  {mood === "petting" ? (
-                    <>
-                      <path d="M95 155 Q115 140 135 155" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
-                      <path d="M165 155 Q185 140 205 155" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
-                    </>
-                  ) : (
-                    <>
-                      <circle 
-                        cx="115" cy="150" 
-                        r={blink ? 1 : mood === "sleepy" ? 2 : 7} 
-                        fill="oklch(0.95 0.2 145)" 
-                        className="transition-all duration-500 drop-shadow-[0_0_12px_hsl(var(--primary))]"
-                      />
-                      <circle 
-                        cx="185" cy="150" 
-                        r={blink ? 1 : mood === "sleepy" ? 2 : 7} 
-                        fill="oklch(0.95 0.2 145)" 
-                        className="transition-all duration-500 drop-shadow-[0_0_12px_hsl(var(--primary))]"
-                      />
-                    </>
-                  )}
-                </g>
-              ) : (
-                <g>
+              {/* EYES (Always visible, shifts up when speaking) */}
+              <g className="transition-all duration-300" style={{ transform: speaking ? "translateY(-15px)" : "translateY(0px)" }}>
+                {mood === "petting" ? (
+                  <>
+                    <path d="M95 155 Q115 140 135 155" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
+                    <path d="M165 155 Q185 140 205 155" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
+                  </>
+                ) : (
+                  <>
+                    <circle 
+                      cx="115" cy="150" 
+                      r={blink ? 1 : mood === "sleepy" ? 2 : 7} 
+                      fill="oklch(0.95 0.2 145)" 
+                      className="transition-all duration-500 drop-shadow-[0_0_12px_hsl(var(--primary))]"
+                    />
+                    <circle 
+                      cx="185" cy="150" 
+                      r={blink ? 1 : mood === "sleepy" ? 2 : 7} 
+                      fill="oklch(0.95 0.2 145)" 
+                      className="transition-all duration-500 drop-shadow-[0_0_12px_hsl(var(--primary))]"
+                    />
+                  </>
+                )}
+              </g>
+
+              {/* MOUTH WAVEFORM (Visible only when speaking) */}
+              {speaking && (
+                <g className="animate-in fade-in duration-300" transform="translate(75 95) scale(0.5)">
                   {/* REAL RADIO WAVEFORM (Sharp Jagged peaks) */}
                   <path 
                     d="M80 150 L95 130 L110 170 L125 140 L140 160 L155 120 L170 180 L185 145 L200 165 L220 150" 
                     fill="none" 
                     stroke="oklch(0.95 0.2 145)" 
-                    strokeWidth="3.5" 
+                    strokeWidth="6" 
                     strokeLinejoin="miter"
                     className="drop-shadow-[0_0_15px_hsl(var(--primary))]"
                   >
@@ -174,7 +223,7 @@ export function DodoAI({ mini }: { mini?: boolean }) {
           <span className={`font-display tracking-[0.3em] text-primary uppercase transition-all ${
             mini ? "text-[7px]" : "text-[11px] font-bold"
           }`}>
-            {speaking ? "Communicating" : hovered ? "User_Detected" : "Nominal"}
+            {speaking ? "Communicating" : hovered ? "User_Detected" : "DODO AI"}
           </span>
         </div>
       </div>
