@@ -11,5 +11,28 @@
   "deployment_tag": "Deployment_Stream",
   "intelligence_tag": "Tactical_Intelligence",
   "achievement_tag": "Achievement_Stream",
-  "operational_log_tag": "Operational_Log"
+  "operational_log_tag": "Operational_Log",
+  "pages": {
+    "work": {
+      "title1": "Experiments in",
+      "title2": "Motion"
+    },
+    "skills": {
+      "title1": "The",
+      "title2": "Matrix"
+    },
+    "achievements": {
+      "title1": "Victory",
+      "title2": "Archives",
+      "subtitle": "A CHRONOLOGICAL LOG OF HACKATHON WINS AND INNOVATION CHALLENGES"
+    },
+    "log": {
+      "title1": "Neural",
+      "title2": "Milestones",
+      "subtitle": "CHRONOLOGICAL ARCHIVE OF ACHIEVEMENTS AND SYSTEM UPGRADES"
+    }
+  },
+  "footer": {
+    "copyright_text": "ALL_SYSTEMS_DODO"
+  }
 }
