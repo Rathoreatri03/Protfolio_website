@@ -27,13 +27,44 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build (Client only for static hosting)
+      - name: Build
         run: npm run build
         env:
           NODE_ENV: production
 
-      - name: Add SPA 404 fallback
-        run: cp dist/client/index.html dist/client/404.html
+      - name: List dist/client to debug
+        run: |
+          echo "=== dist/client contents ==="
+          ls -la dist/client/ || echo "dist/client not found"
+          echo "=== dist/client/assets ==="
+          ls -la dist/client/assets/ || echo "no assets dir"
+
+      - name: Generate static index.html from server
+        run: |
+          # Start the SSR server in background on port 3000
+          node dist/server/server.js &
+          SERVER_PID=$!
+          echo "Server PID: $SERVER_PID"
+
+          # Wait for server to be ready (up to 10s)
+          for i in {1..10}; do
+            if curl -s --fail http://localhost:3000 > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            echo "Waiting... ($i)"
+            sleep 1
+          done
+
+          # Fetch the rendered HTML from the server
+          curl -s http://localhost:3000 -o dist/client/index.html
+          echo "index.html generated, size: $(wc -c < dist/client/index.html) bytes"
+
+          # Copy as 404 fallback for SPA routing
+          cp dist/client/index.html dist/client/404.html
+
+          # Kill the server
+          kill $SERVER_PID 2>/dev/null || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
