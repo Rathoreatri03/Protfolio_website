@@ -406,31 +406,46 @@ function Index() {
         </section>
 
         {/* CONTACT */}
-        <section className="max-w-5xl mx-auto mt-32 border-t border-border pt-16">
-          <div className="grid md:grid-cols-2 gap-10 items-end">
+        <section id="contact" className="max-w-6xl mx-auto mt-32 border-t border-border pt-16">
+          <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 items-start">
             <div>
               <h2 className="font-display text-xs text-primary mb-4 uppercase tracking-[0.3em]">
                 $ ./contact --init
               </h2>
-              <p className="font-display text-3xl md:text-5xl font-bold tracking-tight leading-[0.95]">
+              <p className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-[0.95] mb-6">
                 Let's build the <span className="text-primary text-glow">future</span>.
               </p>
-              <p className="text-muted-foreground mt-4 max-w-md">
+              <p className="text-muted-foreground mb-10 max-w-md leading-relaxed">
                 Open to AI research collaborations, freelance ML engineering and ambitious computer-vision work.
+                Drop a packet on the right — or ping me on any channel below.
               </p>
+
+              <div className="font-display text-sm space-y-1">
+                {[
+                  ["MAIL", "rathoreatri03@gmail.com", "mailto:rathoreatri03@gmail.com", "✉"],
+                  ["GITHUB", "@Rathoreatri03", "https://github.com/Rathoreatri03", "◆"],
+                  ["LINKEDIN", "/in/rathoreatri03", "https://www.linkedin.com/in/rathoreatri03/", "▣"],
+                ].map(([k, v, h, icon]) => (
+                  <a
+                    key={k}
+                    href={h}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between border-b border-border py-4 group hover:border-primary/60 hover:px-2 transition-all"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-primary text-base">{icon}</span>
+                      <span className="text-muted-foreground tracking-widest text-xs">{k}</span>
+                    </span>
+                    <span className="group-hover:text-primary text-foreground transition-all group-hover:translate-x-1 inline-block">
+                      {v} <span className="text-primary">→</span>
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="font-display text-sm space-y-3">
-              {[
-                ["MAIL", "rathoreatri03@gmail.com", "mailto:rathoreatri03@gmail.com"],
-                ["GITHUB", "@Rathoreatri03", "https://github.com/Rathoreatri03"],
-                ["LINKEDIN", "/in/atri-rathore", "https://www.linkedin.com/in/atri-rathore"],
-              ].map(([k, v, h]) => (
-                <a key={k} href={h} target="_blank" rel="noreferrer" className="flex justify-between items-center border-b border-border py-3 group hover:border-primary/60 transition-colors">
-                  <span className="text-muted-foreground">{k}</span>
-                  <span className="group-hover:text-primary transition-colors group-hover:translate-x-1 inline-block">{v} →</span>
-                </a>
-              ))}
-            </div>
+
+            <ContactTerminal />
           </div>
         </section>
       </main>
