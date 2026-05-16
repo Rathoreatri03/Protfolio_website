@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TypingRoles } from "@/components/TypingRoles";
 import { NeuralBackground } from "@/components/NeuralBackground";
+import { AICore } from "@/components/AICore";
+import { ContactTerminal } from "@/components/ContactTerminal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
