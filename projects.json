@@ -1,40 +1,38 @@
 [
   {
     "title": "AstroTerra",
-    "description": "AstroTerra aims to detect and analyze boulders on the lunar surface using image processing and machine learning, providing crucial data for safe landing site selection and mission planning.",
+    "description": "High-precision lunar boulder detection and analysis system for safe landing site selection. Integrates real-time image processing pipelines with machine learning to generate landing safety diagnostics.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/AsstroTerra_oo1cew.png",
     "link": "https://github.com/Rathoreatri03/Moon_Creator"
   },
-
-    {
+  {
     "title": "Project G.U.A.R.D",
-    "description": "GUARD is an AI-powered accident detection system designed to monitor and alert authorities in real-time. By analyzing sensor data and visual inputs, it swiftly identifies accidents, triggering immediate notifications to ensure timely responses and enhanced safety.",
+    "description": "An automated accident detection and response ecosystem. Utilizes multi-sensor fusion and visual neural networks to monitor environments and alert authorities in real-time.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/Guard_e8fr8x.png",
     "link": "https://github.com/Rathoreatri03/G.U.A.R.D"
   },
-  
   {
     "title": "Project O.C.G",
-    "description": "Object Controlling Glasses (O.C.G.) enable users to control devices with eye movements and gestures, offering hands-free interaction for enhanced accessibility and convenience.",
+    "description": "Object Controlling Glasses for hands-free device interaction. Features advanced eye-tracking algorithms and gesture-based control logic for seamless system interaction.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/OCG_sfbkvb.png",
     "link": "https://github.com/Rathoreatri03/Object-Detection-Glasses-OCG-"
   },
      
   {
     "title": "Project Robocop",
-    "description": "Robocop is an advanced robotic system designed for automation and security. It integrates AI and robotics to perform surveillance, threat detection, and response, ensuring enhanced safety and efficiency in various environments.",
+    "description": "Autonomous security and surveillance robotic platform. Integrates automated threat detection protocols and real-time surveillance for maximum response efficiency in complex environments.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734284893/Robocop_xkurfc.jpg",
-    "link": " "
+    "link": "https://github.com/Rathoreatri03/Robocop"
   },
   {
     "title": "Murphy Systum",
-    "description": "A comprehensive Medical Diagnosis System that includes multiple disease detection modules using Machine Learning and Deep Learning models. The system currently supports: ✅ Brain Tumor Detection ✅ Breast Cancer Classification ✅ General Disease Prediction based on symptoms",
+    "description": "Advanced medical diagnostic ecosystem utilizing deep learning for multi-disease detection. Supports automated brain tumor identification, breast cancer classification, and predictive symptom analysis.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1740683019/Murphy_Systum_tgzxv3.png",
     "link": "https://garvkumar68.github.io/Murphy-System/"
   },
   {
     "title": "LifeMatrix",
-    "description": "LifeMatrix is a real-time hospital system that monitors vital signs and patient movements. It alerts medical staff to abnormalities and uses cameras to assess the patient's condition for better decision-making.",
+    "description": "Mission-critical patient monitoring system for hospital environments. Features real-time vital tracking and automated triage alerts based on visual and sensor-driven condition assessments.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734284910/lifematix_g75wzz.png",
     "link": " "
   }

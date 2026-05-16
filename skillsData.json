@@ -1,40 +1,16 @@
 {
   "skills": [
-    {
-      "name": "Python Development",
-      "progress": 85
-    },
-    {
-      "name": "Image Processing",
-      "progress": 90
-    },
-    {
-      "name": "Model Training",
-      "progress": 85
-    },
-    {
-      "name": "ML Research",
-      "progress": 90
-    },
-    {
-      "name": "Model Architecture Design",
-      "progress": 85
-    },
-    {
-      "name": "Object Detection",
-      "progress": 95
-    },
-    {
-      "name": "Data Analysis",
-      "progress": 85
-    },
-    {
-      "name": "Statistics",
-      "progress": 85
-    },
-    {
-      "name": "3D Modeling",
-      "progress": 80
-    }
+    { "name": "Python & PyTorch", "progress": 95 },
+    { "name": "TensorFlow & Keras", "progress": 90 },
+    { "name": "OpenCV (Computer Vision)", "progress": 95 },
+    { "name": "YOLO & Object Detection", "progress": 95 },
+    { "name": "Transformers (NLP/LLMs)", "progress": 90 },
+    { "name": "CUDA & GPU Optimization", "progress": 85 },
+    { "name": "ML Research & Architecture", "progress": 90 },
+    { "name": "Data Analysis & Statistics", "progress": 85 },
+    { "name": "3D Modeling (Blender)", "progress": 85 },
+    { "name": "Docker & Deployment", "progress": 80 },
+    { "name": "LangChain & Agents", "progress": 85 },
+    { "name": "Hugging Face Ecosystem", "progress": 90 }
   ]
 }
