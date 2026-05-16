@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TypingRoles } from "@/components/TypingRoles";
 import { NeuralBackground } from "@/components/NeuralBackground";
-import { AICore } from "@/components/AICore";
+import { DodoAI } from "@/components/DodoAI";
 import { ContactTerminal } from "@/components/ContactTerminal";
 import avatarImg from "@/assets/avatar.jpg";
 
@@ -193,9 +193,9 @@ function Index() {
             </div>
           </div>
 
-          {/* Hero visual — interactive AI Core */}
+          {/* Hero visual — DODO AI companion */}
           <div className="relative animate-fade-in delay-300 hidden lg:block">
-            <AICore />
+            <DodoAI />
           </div>
         </section>
 
