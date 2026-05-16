@@ -1,6 +1,8 @@
 {
   "version": "v4.2.0_STABLE",
   "systemID": "Atri_Rathore",
+  "userName": "Atri Rathore",
+  "terminalUser": "rathoreatri03@lab",
   "kernel": "X-Matrix_64",
   "status": "OPTIMAL",
   "efficiency": "98.4%",
