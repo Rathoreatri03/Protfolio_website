@@ -139,6 +139,7 @@ function Index() {
             <a href="#work" className="hover:text-primary transition-colors">WORK</a>
             <a href="#skills" className="hover:text-primary transition-colors">STACK</a>
             <a href="#log" className="hover:text-primary transition-colors">LOG</a>
+            <a href="#contact" className="hover:text-primary transition-colors">CONTACT</a>
             <a href="https://github.com/Rathoreatri03" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GITHUB</a>
           </nav>
         </div>
