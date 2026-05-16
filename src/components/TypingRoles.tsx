@@ -1,30 +1,21 @@
 import { useEffect, useState } from "react";
 
-const ROLES = [
-  "Computer Vision Engineer",
-  "Python Developer",
-  "Data Analyst",
-  "Business Analyst",
-  "ML Engineer",
-  "Model Trainer",
-  "Blender Artist",
-];
+type Titles = string[];
 
-export function TypingRoles() {
+export function TypingRoles({ roles }: { roles?: Titles }) {
+  const ROLES = roles && roles.length ? roles : ["AI Engineer"];
   const [idx, setIdx] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const current = ROLES[idx];
-    const speed = deleting ? 40 : 80;
+    const current = ROLES[idx % ROLES.length];
+    const speed = deleting ? 35 : 75;
     const timer = setTimeout(() => {
       if (!deleting) {
         const next = current.slice(0, text.length + 1);
         setText(next);
-        if (next === current) {
-          setTimeout(() => setDeleting(true), 1400);
-        }
+        if (next === current) setTimeout(() => setDeleting(true), 1300);
       } else {
         const next = current.slice(0, text.length - 1);
         setText(next);
@@ -35,7 +26,7 @@ export function TypingRoles() {
       }
     }, speed);
     return () => clearTimeout(timer);
-  }, [text, deleting, idx]);
+  }, [text, deleting, idx, ROLES]);
 
   return (
     <span className="text-primary">
