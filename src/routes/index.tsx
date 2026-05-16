@@ -335,15 +335,16 @@ function Index() {
 
         {/* ABOUT */}
         <section className="max-w-5xl mx-auto mt-32 border-t border-border pt-16 grid md:grid-cols-[280px_1fr] gap-12 items-start">
-          <div className="relative animate-float">
+          <div className="relative animate-float group/avatar">
             <div className="aspect-square overflow-hidden border border-border bg-card relative scanlines">
               <img
-                src={banner.imgUrl}
+                src={avatarImg}
                 alt="Atri Rathore"
                 loading="lazy"
-                className="w-full h-full object-contain p-6"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
+              <div className="absolute inset-0 border border-primary/0 group-hover/avatar:border-primary/40 transition-colors" />
             </div>
             <div className="absolute -bottom-3 -right-3 px-3 py-1 bg-primary text-primary-foreground font-display text-[10px] font-bold tracking-widest animate-glow-pulse">
               ● ONLINE
