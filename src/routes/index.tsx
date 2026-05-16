@@ -4,6 +4,7 @@ import { TypingRoles } from "@/components/TypingRoles";
 import { NeuralBackground } from "@/components/NeuralBackground";
 import { AICore } from "@/components/AICore";
 import { ContactTerminal } from "@/components/ContactTerminal";
+import avatarImg from "@/assets/avatar.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
