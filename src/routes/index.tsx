@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TypingRoles } from "@/components/TypingRoles";
 import { NeuralBackground } from "@/components/NeuralBackground";
+import { AICore } from "@/components/AICore";
+import { ContactTerminal } from "@/components/ContactTerminal";
+import avatarImg from "@/assets/avatar.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -136,6 +139,7 @@ function Index() {
             <a href="#work" className="hover:text-primary transition-colors">WORK</a>
             <a href="#skills" className="hover:text-primary transition-colors">STACK</a>
             <a href="#log" className="hover:text-primary transition-colors">LOG</a>
+            <a href="#contact" className="hover:text-primary transition-colors">CONTACT</a>
             <a href="https://github.com/Rathoreatri03" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GITHUB</a>
           </nav>
         </div>
@@ -189,36 +193,9 @@ function Index() {
             </div>
           </div>
 
-          {/* Hero visual */}
+          {/* Hero visual — interactive AI Core */}
           <div className="relative animate-fade-in delay-300 hidden lg:block">
-            <div className="relative aspect-square">
-              <div className="absolute inset-0 border border-primary/30 rounded-full animate-rotate-slow" />
-              <div className="absolute inset-4 border border-primary/20 rounded-full animate-rotate-slow" style={{ animationDirection: "reverse", animationDuration: "45s" }} />
-              <div className="absolute inset-10 border border-dashed border-primary/30 rounded-full animate-rotate-slow" style={{ animationDuration: "60s" }} />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-3/4 aspect-square animate-float">
-                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-                  <img
-                    src={banner.imgUrl}
-                    alt="AI"
-                    className="relative w-full h-full object-contain"
-                    loading="eager"
-                  />
-                </div>
-              </div>
-              {/* corner markers */}
-              {[
-                "top-0 left-0",
-                "top-0 right-0 rotate-90",
-                "bottom-0 left-0 -rotate-90",
-                "bottom-0 right-0 rotate-180",
-              ].map((c) => (
-                <div key={c} className={`absolute ${c} w-6 h-6 border-t-2 border-l-2 border-primary`} />
-              ))}
-              <div className="absolute -bottom-4 left-0 right-0 text-center font-display text-[10px] tracking-[0.3em] text-primary/70">
-                NEURAL_CORE · ACTIVE
-              </div>
-            </div>
+            <AICore />
           </div>
         </section>
 
@@ -275,53 +252,81 @@ function Index() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(projects.length ? projects : Array.from({ length: 6 })).map((p, i) => {
+          <div className="space-y-4">
+            {(projects.length ? projects : Array.from({ length: 4 })).map((p, i) => {
               const proj = p as Project | undefined;
               const idStr = String(i + 1).padStart(3, "0");
+              const reverse = i % 2 === 1;
               return (
                 <a
                   key={i}
                   href={proj?.link?.trim() || "#"}
                   target={proj?.link?.trim() ? "_blank" : undefined}
                   rel="noreferrer"
-                  className="group relative gradient-border p-5 hover:-translate-y-1 transition-all duration-500 flex flex-col animate-fade-up"
-                  style={{ animationDelay: `${i * 80}ms` }}
+                  className={`group relative grid md:grid-cols-[1.1fr_1fr] gap-0 border border-border hover:border-primary/60 bg-card/30 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:bg-primary/[0.04] hover:shadow-[0_20px_60px_-20px] hover:shadow-primary/30 hover:-translate-y-1 animate-fade-up ${
+                    reverse ? "md:[&>*:first-child]:order-2" : ""
+                  }`}
+                  style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {/* Top accent line */}
+                  <span className="absolute top-0 left-0 h-[2px] w-0 bg-primary group-hover:w-full transition-all duration-700" />
 
-                  <div className="flex items-center justify-between mb-3 font-display text-[10px] tracking-widest">
-                    <span className="text-primary">PROJ_{idStr}</span>
-                    <span className="text-muted-foreground">CV · ML</span>
-                  </div>
-
-                  <div className="relative aspect-[16/10] overflow-hidden border border-white/5 mb-4 bg-black/40 scanlines">
+                  {/* Image side */}
+                  <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[280px] overflow-hidden bg-black/60 scanlines">
                     {proj ? (
                       <img
                         src={proj.imgUrl}
                         alt={proj.title}
                         loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.2"; }}
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-[1.2s] group-hover:scale-105 group-hover:rotate-[0.4deg]"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full animate-pulse bg-primary/5" />
                     )}
-                    {/* scan line */}
-                    <div className="absolute inset-x-0 h-[2px] bg-primary/60 animate-scan opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/10 to-transparent md:bg-gradient-to-l opacity-90 group-hover:opacity-60 transition-opacity" />
+                    {/* Scan beam */}
+                    <div className="absolute inset-x-0 h-[2px] bg-primary/70 shadow-[0_0_12px] shadow-primary animate-scan opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Hover crosshair */}
+                    <div className="absolute top-3 right-3 size-8 border border-primary/0 group-hover:border-primary/60 transition-all duration-500 rotate-45" />
                   </div>
 
-                  <h3 className="font-display text-lg font-bold mb-2 group-hover:text-primary transition-colors uppercase tracking-tight">
-                    {proj?.title || "loading…"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                    {proj?.description?.slice(0, 160) || ""}
-                    {proj && proj.description.length > 160 ? "…" : ""}
-                  </p>
-
-                  <div className="mt-4 pt-3 border-t border-border flex justify-between items-center font-display text-[10px] tracking-widest">
-                    <span className="text-muted-foreground">$ open --proj</span>
-                    <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
+                  {/* Content side */}
+                  <div className="relative p-6 md:p-8 flex flex-col justify-between min-h-[220px]">
+                    <div>
+                      <div className="flex items-center justify-between mb-4 font-display text-[10px] tracking-widest">
+                        <span className="text-primary">{`>_ PROJ_${idStr}`}</span>
+                        <div className="flex gap-1.5">
+                          {["AI", "CV", "PY"].map((t) => (
+                            <span
+                              key={t}
+                              className="px-2 py-0.5 border border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary transition-colors"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <h3 className="font-display text-2xl md:text-3xl font-bold mb-3 group-hover:text-primary transition-colors uppercase tracking-tight leading-tight">
+                        {proj?.title || "loading…"}
+                      </h3>
+                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                        {proj?.description?.slice(0, 220) || ""}
+                        {proj && proj.description.length > 220 ? "…" : ""}
+                      </p>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-border flex justify-between items-center font-display text-[11px] tracking-widest">
+                      <span className="text-muted-foreground">$ git clone --open</span>
+                      <span className="inline-flex items-center gap-2 text-primary">
+                        <span className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-500">
+                          LAUNCH
+                        </span>
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </span>
+                    </div>
                   </div>
                 </a>
               );
@@ -331,15 +336,16 @@ function Index() {
 
         {/* ABOUT */}
         <section className="max-w-5xl mx-auto mt-32 border-t border-border pt-16 grid md:grid-cols-[280px_1fr] gap-12 items-start">
-          <div className="relative animate-float">
+          <div className="relative animate-float group/avatar">
             <div className="aspect-square overflow-hidden border border-border bg-card relative scanlines">
               <img
-                src={banner.imgUrl}
+                src={avatarImg}
                 alt="Atri Rathore"
                 loading="lazy"
-                className="w-full h-full object-contain p-6"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
+              <div className="absolute inset-0 border border-primary/0 group-hover/avatar:border-primary/40 transition-colors" />
             </div>
             <div className="absolute -bottom-3 -right-3 px-3 py-1 bg-primary text-primary-foreground font-display text-[10px] font-bold tracking-widest animate-glow-pulse">
               ● ONLINE
@@ -401,31 +407,46 @@ function Index() {
         </section>
 
         {/* CONTACT */}
-        <section className="max-w-5xl mx-auto mt-32 border-t border-border pt-16">
-          <div className="grid md:grid-cols-2 gap-10 items-end">
+        <section id="contact" className="max-w-6xl mx-auto mt-32 border-t border-border pt-16">
+          <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 items-start">
             <div>
               <h2 className="font-display text-xs text-primary mb-4 uppercase tracking-[0.3em]">
                 $ ./contact --init
               </h2>
-              <p className="font-display text-3xl md:text-5xl font-bold tracking-tight leading-[0.95]">
+              <p className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-[0.95] mb-6">
                 Let's build the <span className="text-primary text-glow">future</span>.
               </p>
-              <p className="text-muted-foreground mt-4 max-w-md">
+              <p className="text-muted-foreground mb-10 max-w-md leading-relaxed">
                 Open to AI research collaborations, freelance ML engineering and ambitious computer-vision work.
+                Drop a packet on the right — or ping me on any channel below.
               </p>
+
+              <div className="font-display text-sm space-y-1">
+                {[
+                  ["MAIL", "rathoreatri03@gmail.com", "mailto:rathoreatri03@gmail.com", "✉"],
+                  ["GITHUB", "@Rathoreatri03", "https://github.com/Rathoreatri03", "◆"],
+                  ["LINKEDIN", "/in/rathoreatri03", "https://www.linkedin.com/in/rathoreatri03/", "▣"],
+                ].map(([k, v, h, icon]) => (
+                  <a
+                    key={k}
+                    href={h}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between border-b border-border py-4 group hover:border-primary/60 hover:px-2 transition-all"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-primary text-base">{icon}</span>
+                      <span className="text-muted-foreground tracking-widest text-xs">{k}</span>
+                    </span>
+                    <span className="group-hover:text-primary text-foreground transition-all group-hover:translate-x-1 inline-block">
+                      {v} <span className="text-primary">→</span>
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="font-display text-sm space-y-3">
-              {[
-                ["MAIL", "rathoreatri03@gmail.com", "mailto:rathoreatri03@gmail.com"],
-                ["GITHUB", "@Rathoreatri03", "https://github.com/Rathoreatri03"],
-                ["LINKEDIN", "/in/atri-rathore", "https://www.linkedin.com/in/atri-rathore"],
-              ].map(([k, v, h]) => (
-                <a key={k} href={h} target="_blank" rel="noreferrer" className="flex justify-between items-center border-b border-border py-3 group hover:border-primary/60 transition-colors">
-                  <span className="text-muted-foreground">{k}</span>
-                  <span className="group-hover:text-primary transition-colors group-hover:translate-x-1 inline-block">{v} →</span>
-                </a>
-              ))}
-            </div>
+
+            <ContactTerminal />
           </div>
         </section>
       </main>
