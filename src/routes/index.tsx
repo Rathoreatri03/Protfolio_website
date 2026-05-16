@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TypingRoles } from "@/components/TypingRoles";
 import { NeuralBackground } from "@/components/NeuralBackground";
-import { AICore } from "@/components/AICore";
+import { DodoAI } from "@/components/DodoAI";
 import { ContactTerminal } from "@/components/ContactTerminal";
 import avatarImg from "@/assets/avatar.jpg";
 
@@ -193,9 +193,9 @@ function Index() {
             </div>
           </div>
 
-          {/* Hero visual — interactive AI Core */}
+          {/* Hero visual — DODO AI companion */}
           <div className="relative animate-fade-in delay-300 hidden lg:block">
-            <AICore />
+            <DodoAI />
           </div>
         </section>
 
@@ -335,70 +335,129 @@ function Index() {
         </section>
 
         {/* ABOUT */}
-        <section className="max-w-5xl mx-auto mt-32 border-t border-border pt-16 grid md:grid-cols-[280px_1fr] gap-12 items-start">
-          <div className="relative animate-float group/avatar">
-            <div className="aspect-square overflow-hidden border border-border bg-card relative scanlines">
-              <img
-                src={avatarImg}
-                alt="Atri Rathore"
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
-              <div className="absolute inset-0 border border-primary/0 group-hover/avatar:border-primary/40 transition-colors" />
+        <section className="max-w-6xl mx-auto mt-32 border-t border-border pt-16">
+          <div className="grid md:grid-cols-[1fr_320px] gap-12 items-center">
+            <div>
+              <h2 className="font-display text-xs text-primary mb-4 uppercase tracking-[0.3em]">
+                $ ./about --verbose
+              </h2>
+              <p className="text-2xl md:text-4xl font-display font-bold tracking-tight leading-tight mb-6">
+                Building at the intersection of{" "}
+                <span className="text-primary text-glow">vision</span>,{" "}
+                <span className="text-primary text-glow">data</span> &amp;{" "}
+                <span className="text-primary text-glow">automation</span>.
+              </p>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-4 max-w-2xl">
+                Real-time accident detection, lunar-surface analysis, medical diagnostics —
+                turning raw signal into useful action.
+              </p>
+              <p className="text-muted-foreground leading-relaxed max-w-2xl">
+                Currently shipping open-source AI tooling, training perception models, and
+                exploring the edges of generative and analytical workflows.
+              </p>
             </div>
-            <div className="absolute -bottom-3 -right-3 px-3 py-1 bg-primary text-primary-foreground font-display text-[10px] font-bold tracking-widest animate-glow-pulse">
-              ● ONLINE
+
+            <div className="relative mx-auto w-full max-w-[280px] group/avatar">
+              <div className="aspect-square overflow-hidden border border-border bg-card relative scanlines">
+                <img
+                  src={avatarImg}
+                  alt="Atri Rathore"
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+                <div className="absolute inset-0 border border-primary/0 group-hover/avatar:border-primary/40 transition-colors" />
+              </div>
+              <div className="absolute -bottom-3 -right-3 px-3 py-1 bg-primary text-primary-foreground font-display text-[10px] font-bold tracking-widest animate-glow-pulse">
+                ● ONLINE
+              </div>
+              <div className="absolute -top-3 -left-3 px-3 py-1 border border-primary/40 bg-background font-display text-[10px] text-primary tracking-widest">
+                v3.0
+              </div>
             </div>
-            <div className="absolute -top-3 -left-3 px-3 py-1 border border-primary/40 bg-background font-display text-[10px] text-primary tracking-widest">
-              v3.0
-            </div>
-          </div>
-          <div>
-            <h2 className="font-display text-xs text-primary mb-4 uppercase tracking-[0.3em]">
-              $ ./about --verbose
-            </h2>
-            <p className="text-lg md:text-xl leading-relaxed mb-4">
-              I build at the intersection of <span className="text-primary">vision</span>,{" "}
-              <span className="text-primary">data</span> and <span className="text-primary">automation</span>.
-              Real-time accident-detection, lunar-surface analysis, medical-diagnostic models — turning raw signal into useful action.
-            </p>
-            <p className="text-muted-foreground leading-relaxed">
-              Currently shipping open-source AI tooling, training perception models, and exploring the edges of
-              generative and analytical workflows.
-            </p>
           </div>
         </section>
 
-        {/* EXPERIENCE */}
-        <section id="log" className="max-w-5xl mx-auto mt-32 border-t border-border pt-16">
-          <h2 className="font-display text-xs text-primary mb-12 uppercase tracking-[0.3em]">
-            $ ./system_history --tail
-          </h2>
-          <div className="space-y-6">
+        {/* EXPERIENCE / LOG — matched to Work styling */}
+        <section id="log" className="max-w-6xl mx-auto mt-32 border-t border-border pt-16">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <h2 className="font-display text-xs text-primary mb-3 uppercase tracking-[0.3em]">
+                $ ./system_history --tail
+              </h2>
+              <p className="text-2xl md:text-4xl font-display font-bold tracking-tight">
+                Mission <span className="text-primary">log</span>.
+              </p>
+            </div>
+            <span className="hidden md:block font-display text-xs text-muted-foreground">
+              [{experience.length || "…"} ENTRIES]
+            </span>
+          </div>
+
+          <div className="space-y-4">
             {(experience.length ? experience : Array.from({ length: 4 })).map((e, i) => {
               const ex = e as Experience | undefined;
+              const idStr = String(i + 1).padStart(3, "0");
+              const reverse = i % 2 === 1;
               return (
                 <a
                   key={i}
                   href={ex?.link?.trim() || "#"}
                   target={ex?.link?.trim() ? "_blank" : undefined}
                   rel="noreferrer"
-                  className="group grid md:grid-cols-[80px_1fr] gap-4 md:gap-8 border border-border hover:border-primary/50 p-5 transition-all hover:bg-primary/5 animate-fade-up"
+                  className={`group relative grid md:grid-cols-[1fr_1.4fr] gap-0 border border-border hover:border-primary/60 bg-card/30 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:bg-primary/[0.04] hover:shadow-[0_20px_60px_-20px] hover:shadow-primary/30 hover:-translate-y-1 animate-fade-up ${
+                    reverse ? "md:[&>*:first-child]:order-2" : ""
+                  }`}
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  {ex?.imgUrl ? (
-                    <div className="size-20 overflow-hidden border border-border bg-card">
-                      <img src={ex.imgUrl} alt={ex.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <span className="absolute top-0 left-0 h-[2px] w-0 bg-primary group-hover:w-full transition-all duration-700" />
+
+                  {/* Image side */}
+                  <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[200px] overflow-hidden bg-black/60 scanlines">
+                    {ex?.imgUrl ? (
+                      <img
+                        src={ex.imgUrl}
+                        alt={ex.title}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-[1.2s] group-hover:scale-105"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full animate-pulse bg-primary/5" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/10 to-transparent md:bg-gradient-to-l opacity-90 group-hover:opacity-60 transition-opacity" />
+                    <div className="absolute inset-x-0 h-[2px] bg-primary/70 shadow-[0_0_12px] shadow-primary animate-scan opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-3 right-3 size-7 border border-primary/0 group-hover:border-primary/60 transition-all duration-500 rotate-45" />
+                  </div>
+
+                  {/* Content side */}
+                  <div className="relative p-6 md:p-7 flex flex-col justify-between min-h-[180px]">
+                    <div>
+                      <div className="flex items-center justify-between mb-3 font-display text-[10px] tracking-widest">
+                        <span className="text-primary">{`>_ LOG_${idStr}`}</span>
+                        <span className="px-2 py-0.5 border border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                          MISSION
+                        </span>
+                      </div>
+                      <h4 className="font-display text-xl md:text-2xl font-bold mb-3 group-hover:text-primary transition-colors uppercase tracking-tight leading-tight">
+                        {ex?.title || "loading…"}
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {ex?.description?.slice(0, 220) || ""}
+                        {ex && ex.description.length > 220 ? "…" : ""}
+                      </p>
                     </div>
-                  ) : (
-                    <div className="size-20 bg-primary/5 animate-pulse" />
-                  )}
-                  <div>
-                    <h4 className="font-display font-bold text-base mb-2 group-hover:text-primary transition-colors">
-                      {ex?.title || "loading…"}
-                    </h4>
-                    <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">{ex?.description || ""}</p>
+                    <div className="mt-5 pt-3 border-t border-border flex justify-between items-center font-display text-[11px] tracking-widest">
+                      <span className="text-muted-foreground">$ cat log.md</span>
+                      <span className="inline-flex items-center gap-2 text-primary">
+                        <span className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-500">
+                          OPEN
+                        </span>
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </span>
+                    </div>
                   </div>
                 </a>
               );
