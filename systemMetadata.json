@@ -1,5 +1,5 @@
 {
-  "version": "v4.2.0_STABLE",
+  "version": "STABLE",
   "systemID": "Atri_Rathore",
   "userName": "Atri Rathore",
   "terminalUser": "rathoreatri03@lab",
@@ -8,8 +8,8 @@
   "efficiency": "98.4%",
   "uptime": "99.99%",
   "latency": "12ms",
-  "deployment_tag": "Deployment_Stream_v4.2",
-  "intelligence_tag": "Tactical_Intelligence_v4",
-  "achievement_tag": "Achievement_Stream_v1.0",
-  "operational_log_tag": "Operational_Log_v4.2"
+  "deployment_tag": "Deployment_Stream",
+  "intelligence_tag": "Tactical_Intelligence",
+  "achievement_tag": "Achievement_Stream",
+  "operational_log_tag": "Operational_Log"
 }
