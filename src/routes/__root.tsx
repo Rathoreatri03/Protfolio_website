@@ -109,12 +109,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { Layout } from "@/components/Layout";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <Layout />
       <Toaster theme="dark" position="bottom-right" />
     </QueryClientProvider>
   );

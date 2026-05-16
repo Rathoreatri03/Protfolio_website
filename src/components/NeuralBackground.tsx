@@ -33,13 +33,13 @@ export function NeuralBackground() {
       canvas.height = h * dpr;
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const count = Math.min(90, Math.floor((w * h) / 18000));
+      const count = Math.min(40, Math.floor((w * h) / 30000));
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        r: Math.random() * 1.4 + 0.6,
+        vx: (Math.random() - 0.5) * 0.12,
+        vy: (Math.random() - 0.5) * 0.12,
+        r: Math.random() * 1.1 + 0.3,
       }));
     }
 

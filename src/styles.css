@@ -103,6 +103,32 @@
   .radial-fade {
     mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
   }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
+@keyframes marquee-v {
+  0% { transform: translateY(0) rotateY(35deg); }
+  100% { transform: translateY(-50%) rotateY(35deg); }
+}
+
+@keyframes float-particle {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+  50% { transform: translate(20px, -40px) scale(1.5); opacity: 0.8; }
 }
 
 @keyframes pulse-grid { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } }
