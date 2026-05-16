@@ -191,36 +191,9 @@ function Index() {
             </div>
           </div>
 
-          {/* Hero visual */}
+          {/* Hero visual — interactive AI Core */}
           <div className="relative animate-fade-in delay-300 hidden lg:block">
-            <div className="relative aspect-square">
-              <div className="absolute inset-0 border border-primary/30 rounded-full animate-rotate-slow" />
-              <div className="absolute inset-4 border border-primary/20 rounded-full animate-rotate-slow" style={{ animationDirection: "reverse", animationDuration: "45s" }} />
-              <div className="absolute inset-10 border border-dashed border-primary/30 rounded-full animate-rotate-slow" style={{ animationDuration: "60s" }} />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-3/4 aspect-square animate-float">
-                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-                  <img
-                    src={banner.imgUrl}
-                    alt="AI"
-                    className="relative w-full h-full object-contain"
-                    loading="eager"
-                  />
-                </div>
-              </div>
-              {/* corner markers */}
-              {[
-                "top-0 left-0",
-                "top-0 right-0 rotate-90",
-                "bottom-0 left-0 -rotate-90",
-                "bottom-0 right-0 rotate-180",
-              ].map((c) => (
-                <div key={c} className={`absolute ${c} w-6 h-6 border-t-2 border-l-2 border-primary`} />
-              ))}
-              <div className="absolute -bottom-4 left-0 right-0 text-center font-display text-[10px] tracking-[0.3em] text-primary/70">
-                NEURAL_CORE · ACTIVE
-              </div>
-            </div>
+            <AICore />
           </div>
         </section>
 
