@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate static index.html from built assets
         run: |
-          BASE="/arcane-art-hub"
+          BASE="/DemoPortFolio"
 
           # Find CSS and JS filenames from the build output
           CSS_FILE=$(ls dist/client/assets/*.css 2>/dev/null | head -1 | xargs -I{} basename {} || echo "")

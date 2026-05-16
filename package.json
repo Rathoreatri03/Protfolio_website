@@ -3,7 +3,7 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "homepage": "https://Rathoreatri03.github.io/arcane-art-hub",
+  "homepage": "https://Rathoreatri03.github.io/DemoPortFolio",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
