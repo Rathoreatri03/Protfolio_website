@@ -13,20 +13,29 @@
     {
       "title": "GEOSPATIAL_&_3D",
       "skills": [
-        { "name": "Geospatial Analysis", "progress": 85 },
-        { "name": "Mesh Rendering (CesiumJS)", "progress": 90 },
+        { "name": "Geospatial Analysis", "progress": 90 },
+        { "name": "Mesh Rendering (CesiumJS)", "progress": 85 },
         { "name": "3D Modeling (Blender)", "progress": 85 },
-        { "name": "CUDA Programming", "progress": 85 }
+        { "name": "CUDA Programming", "progress": 80 }
       ]
     },
     {
       "title": "AI_ARCHITECT",
       "skills": [
         { "name": "LlamaIndex (RAG)", "progress": 90 },
-        { "name": "Vector Databases", "progress": 85 },
-        { "name": "LangChain & Agents", "progress": 85 },
-        { "name": "Hugging Face Ecosystem", "progress": 90 },
-        { "name": "Docker & Deployment", "progress": 80 }
+        { "name": "Vector Databases", "progress": 90 },
+        { "name": "LangChain & Agents", "progress": 95 },
+        { "name": "Hugging Face Ecosystem", "progress": 85 },
+        { "name": "Docker & Deployment", "progress": 90 }
+      ]
+    },
+    {
+      "title": "Software Enginner Core",
+      "skills": [
+        { "name": "Git & Version Control", "progress": 95 },
+        { "name": "Linux (Ubuntu/Debian)", "progress": 90 },
+        { "name": "FastAPI & REST APIs", "progress": 85 },
+        { "name": "Data Structures & Algos", "progress": 75 }
       ]
     }
   ]
