@@ -251,53 +251,81 @@ function Index() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(projects.length ? projects : Array.from({ length: 6 })).map((p, i) => {
+          <div className="space-y-4">
+            {(projects.length ? projects : Array.from({ length: 4 })).map((p, i) => {
               const proj = p as Project | undefined;
               const idStr = String(i + 1).padStart(3, "0");
+              const reverse = i % 2 === 1;
               return (
                 <a
                   key={i}
                   href={proj?.link?.trim() || "#"}
                   target={proj?.link?.trim() ? "_blank" : undefined}
                   rel="noreferrer"
-                  className="group relative gradient-border p-5 hover:-translate-y-1 transition-all duration-500 flex flex-col animate-fade-up"
-                  style={{ animationDelay: `${i * 80}ms` }}
+                  className={`group relative grid md:grid-cols-[1.1fr_1fr] gap-0 border border-border hover:border-primary/60 bg-card/30 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:bg-primary/[0.04] hover:shadow-[0_20px_60px_-20px] hover:shadow-primary/30 hover:-translate-y-1 animate-fade-up ${
+                    reverse ? "md:[&>*:first-child]:order-2" : ""
+                  }`}
+                  style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {/* Top accent line */}
+                  <span className="absolute top-0 left-0 h-[2px] w-0 bg-primary group-hover:w-full transition-all duration-700" />
 
-                  <div className="flex items-center justify-between mb-3 font-display text-[10px] tracking-widest">
-                    <span className="text-primary">PROJ_{idStr}</span>
-                    <span className="text-muted-foreground">CV · ML</span>
-                  </div>
-
-                  <div className="relative aspect-[16/10] overflow-hidden border border-white/5 mb-4 bg-black/40 scanlines">
+                  {/* Image side */}
+                  <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[280px] overflow-hidden bg-black/60 scanlines">
                     {proj ? (
                       <img
                         src={proj.imgUrl}
                         alt={proj.title}
                         loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.2"; }}
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-[1.2s] group-hover:scale-105 group-hover:rotate-[0.4deg]"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full animate-pulse bg-primary/5" />
                     )}
-                    {/* scan line */}
-                    <div className="absolute inset-x-0 h-[2px] bg-primary/60 animate-scan opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/10 to-transparent md:bg-gradient-to-l opacity-90 group-hover:opacity-60 transition-opacity" />
+                    {/* Scan beam */}
+                    <div className="absolute inset-x-0 h-[2px] bg-primary/70 shadow-[0_0_12px] shadow-primary animate-scan opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Hover crosshair */}
+                    <div className="absolute top-3 right-3 size-8 border border-primary/0 group-hover:border-primary/60 transition-all duration-500 rotate-45" />
                   </div>
 
-                  <h3 className="font-display text-lg font-bold mb-2 group-hover:text-primary transition-colors uppercase tracking-tight">
-                    {proj?.title || "loading…"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                    {proj?.description?.slice(0, 160) || ""}
-                    {proj && proj.description.length > 160 ? "…" : ""}
-                  </p>
-
-                  <div className="mt-4 pt-3 border-t border-border flex justify-between items-center font-display text-[10px] tracking-widest">
-                    <span className="text-muted-foreground">$ open --proj</span>
-                    <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
+                  {/* Content side */}
+                  <div className="relative p-6 md:p-8 flex flex-col justify-between min-h-[220px]">
+                    <div>
+                      <div className="flex items-center justify-between mb-4 font-display text-[10px] tracking-widest">
+                        <span className="text-primary">{`>_ PROJ_${idStr}`}</span>
+                        <div className="flex gap-1.5">
+                          {["AI", "CV", "PY"].map((t) => (
+                            <span
+                              key={t}
+                              className="px-2 py-0.5 border border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary transition-colors"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <h3 className="font-display text-2xl md:text-3xl font-bold mb-3 group-hover:text-primary transition-colors uppercase tracking-tight leading-tight">
+                        {proj?.title || "loading…"}
+                      </h3>
+                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                        {proj?.description?.slice(0, 220) || ""}
+                        {proj && proj.description.length > 220 ? "…" : ""}
+                      </p>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-border flex justify-between items-center font-display text-[11px] tracking-widest">
+                      <span className="text-muted-foreground">$ git clone --open</span>
+                      <span className="inline-flex items-center gap-2 text-primary">
+                        <span className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-500">
+                          LAUNCH
+                        </span>
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </span>
+                    </div>
                   </div>
                 </a>
               );
