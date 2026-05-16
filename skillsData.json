@@ -1,16 +1,33 @@
 {
-  "skills": [
-    { "name": "Python & PyTorch", "progress": 95 },
-    { "name": "TensorFlow & Keras", "progress": 90 },
-    { "name": "OpenCV (Computer Vision)", "progress": 95 },
-    { "name": "YOLO & Object Detection", "progress": 95 },
-    { "name": "Transformers (NLP/LLMs)", "progress": 90 },
-    { "name": "CUDA & GPU Optimization", "progress": 85 },
-    { "name": "ML Research & Architecture", "progress": 90 },
-    { "name": "Data Analysis & Statistics", "progress": 85 },
-    { "name": "3D Modeling (Blender)", "progress": 85 },
-    { "name": "Docker & Deployment", "progress": 80 },
-    { "name": "LangChain & Agents", "progress": 85 },
-    { "name": "Hugging Face Ecosystem", "progress": 90 }
+  "categories": [
+    {
+      "title": "NEURAL_CORE",
+      "skills": [
+        { "name": "Python & PyTorch", "progress": 95 },
+        { "name": "TensorFlow & Keras", "progress": 90 },
+        { "name": "OpenCV (Computer Vision)", "progress": 95 },
+        { "name": "YOLO & Object Detection", "progress": 95 },
+        { "name": "Transformers (NLP/LLMs)", "progress": 90 }
+      ]
+    },
+    {
+      "title": "GEOSPATIAL_&_3D",
+      "skills": [
+        { "name": "Geospatial Analysis", "progress": 85 },
+        { "name": "Mesh Rendering (CesiumJS)", "progress": 90 },
+        { "name": "3D Modeling (Blender)", "progress": 85 },
+        { "name": "CUDA Programming", "progress": 85 }
+      ]
+    },
+    {
+      "title": "AI_ARCHITECT",
+      "skills": [
+        { "name": "LlamaIndex (RAG)", "progress": 90 },
+        { "name": "Vector Databases", "progress": 85 },
+        { "name": "LangChain & Agents", "progress": 85 },
+        { "name": "Hugging Face Ecosystem", "progress": 90 },
+        { "name": "Docker & Deployment", "progress": 80 }
+      ]
+    }
   ]
 }
