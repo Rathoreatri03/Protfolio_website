@@ -8,7 +8,7 @@ export default defineConfig({
   base: process.env.NODE_ENV === "production" ? "/DemoPortFolio/" : "/",
   plugins: [
     tanstackStart({
-      server: { entry: "server" },
+      spa: {},
     }),
     react(),
     tailwindcss(),

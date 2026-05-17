@@ -34,42 +34,10 @@ jobs:
 
       - name: Generate static index.html from built assets
         run: |
-          BASE="/DemoPortFolio"
-
-          # Find CSS and JS filenames from the build output
-          CSS_FILE=$(ls dist/client/assets/*.css 2>/dev/null | head -1 | xargs -I{} basename {} || echo "")
-          JS_FILE=$(ls dist/client/assets/index-*.js 2>/dev/null | head -1 | xargs -I{} basename {} || echo "")
-
-          echo "CSS: $CSS_FILE"
-          echo "JS:  $JS_FILE"
-
-          # Build the <link> tag for CSS (optional)
-          CSS_TAG=""
-          if [ -n "$CSS_FILE" ]; then
-            CSS_TAG="  <link rel=\"stylesheet\" crossorigin href=\"${BASE}/assets/${CSS_FILE}\" />"
-          fi
-
-          # Write the SPA shell index.html
-          cat > dist/client/index.html << HTML
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>Atri's Portfolio</title>
-            <link rel="icon" href="${BASE}/favicon.ico?v=2" />
-          ${CSS_TAG}
-            <script type="module" crossorigin src="${BASE}/assets/${JS_FILE}"></script>
-          </head>
-          <body>
-          </body>
-          </html>
-          HTML
-
-          echo "Generated index.html ($(wc -c < dist/client/index.html) bytes)"
-
-          # Copy as 404 fallback so all SPA routes work (e.g. /skills, /work)
-          cp dist/client/index.html dist/client/404.html
+          # Copy the automatically built SPA shell (_shell.html) to index.html and 404.html
+          cp dist/client/_shell.html dist/client/index.html
+          cp dist/client/_shell.html dist/client/404.html
+          echo "Copied _shell.html to index.html and 404.html successfully"
 
           # Make sure the favicon is included
           cp public/favicon.ico dist/client/favicon.ico 2>/dev/null || true
