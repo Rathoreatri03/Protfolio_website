@@ -77,7 +77,7 @@ app.post("/api/chat", async (c) => {
     // Fetch the latest system prompt dynamically from GitHub
     let dynamicSystemPrompt = promptFallback; // High-quality local static fallback compiled from portfolio JSONs!
     try {
-      const promptRes = await fetch("https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/dodo_prompt.json");
+      const promptRes = await fetch(`https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/dodo_prompt.json?t=${Date.now()}`);
       if (promptRes.ok) {
         const promptData = await promptRes.json() as { system_prompt?: string | string[] };
         if (promptData?.system_prompt) {
