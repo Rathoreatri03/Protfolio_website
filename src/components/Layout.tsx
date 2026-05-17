@@ -42,6 +42,13 @@ export function Layout() {
     setMobileMenuOpen(false);
   }, [cleanPathname]);
 
+  // Automatically redirect back to the home page on initial load / refresh
+  useEffect(() => {
+    if (cleanPathname !== "/") {
+      navigate({ to: "/", replace: true });
+    }
+  }, []);
+
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -137,7 +144,12 @@ export function Layout() {
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
             {NAV_LINKS.map(({ to, label }) => (
-              <Link key={to} to={to} className="hover:text-primary transition-colors [&.active]:text-primary flex items-center gap-2 group">
+              <Link 
+                key={to} 
+                to={to} 
+                activeOptions={{ exact: true }}
+                className="hover:text-primary transition-colors [&.active]:text-primary flex items-center gap-2 group"
+              >
                 {to === "/" && <span className="size-1 bg-current rounded-full group-[.active]:bg-primary" />}
                 {label}
               </Link>
@@ -166,6 +178,7 @@ export function Layout() {
               <Link
                 key={to}
                 to={to}
+                activeOptions={{ exact: true }}
                 className="text-2xl tracking-[0.3em] uppercase text-white/50 hover:text-primary [&.active]:text-primary transition-colors duration-300"
                 onClick={() => setMobileMenuOpen(false)}
               >
