@@ -106,7 +106,7 @@ export function DodoSpeechBubble({
           {/* Scrollable text container with guaranteed hidden scrollbar */}
           <div 
             ref={bubbleScrollRef}
-            className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[40vh] overflow-y-auto overflow-x-hidden dodo-no-scrollbar scroll-smooth w-full break-words select-text"
+            className="max-h-[12vh] lg:max-h-[18vh] overflow-y-auto overflow-x-hidden dodo-no-scrollbar scroll-smooth w-full break-words select-text"
           >
             <div className="flex gap-1 md:gap-2 items-start w-full">
               <span className="text-primary font-bold animate-pulse shrink-0">{'>'}</span>
