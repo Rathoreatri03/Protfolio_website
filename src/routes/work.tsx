@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { usePortfolioData, Project } from "@/hooks/usePortfolioData";
+import { usePortfolioData } from "@/hooks/usePortfolioData";
 
 export const Route = createFileRoute("/work")({
   component: Work,
@@ -9,30 +9,30 @@ function Work() {
   const { projects, metadata } = usePortfolioData();
 
   return (
-    <div className="max-w-7xl mx-auto flex flex-col h-[calc(100vh-140px)] animate-fade-up overflow-hidden py-2 px-6">
-      
+    <div className="max-w-7xl mx-auto flex flex-col min-h-[calc(100vh-140px)] animate-fade-up py-2 px-2 sm:px-6">
+
       {/* Header */}
-      <div className="flex flex-col items-center text-center mb-4 mt-4 px-4">
-        <div className="inline-flex items-center gap-3 px-3 py-1 bg-primary/5 rounded-full border border-primary/20 mb-4">
+      <div className="flex flex-col items-center text-center mb-6 sm:mb-4 mt-2 sm:mt-4 px-2 sm:px-4">
+        <div className="inline-flex items-center gap-3 px-3 py-1 bg-primary/5 rounded-full border border-primary/20 mb-3 sm:mb-4">
           <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-[10px] font-display text-primary tracking-[0.4em] uppercase">{metadata.deployment_tag}</span>
+          <span className="text-[9px] sm:text-[10px] font-display text-primary tracking-[0.3em] sm:tracking-[0.4em] uppercase">{metadata.deployment_tag}</span>
         </div>
-        <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tighter leading-[0.85] mb-4 text-white">
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-display font-bold tracking-tighter leading-[0.85] mb-3 sm:mb-4 text-white">
           {metadata.pages?.work.title1 || "Experiments in"} <span className="text-primary text-glow italic">{metadata.pages?.work.title2 || "Motion"}</span><span className="text-primary">.</span>
         </h2>
       </div>
 
-      <div className="flex justify-end w-full mb-4 pr-6">
-        <div className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase flex items-center gap-2">
+      <div className="flex justify-end w-full mb-3 sm:mb-4 pr-2 sm:pr-6">
+        <div className="text-[9px] sm:text-[10px] font-mono text-muted-foreground tracking-widest uppercase flex items-center gap-2">
           <span className="size-1.5 bg-primary/40 rounded-full" />
           Active Modules: <span className="text-primary font-bold">[{projects.length || "0"} entries]</span>
         </div>
       </div>
 
-      {/* Internal Scroll Grid */}
-      <div className="flex-1 overflow-y-auto pr-4 pb-20 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      {/* Grid — 1 col mobile, 2 col tablet, 3 col desktop */}
+      <div className="flex-1 overflow-y-auto pb-10 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <style dangerouslySetInnerHTML={{ __html: '.no-scrollbar::-webkit-scrollbar { display: none; }' }} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-8">
           {projects.map((proj, i) => {
             const idStr = String(i + 1).padStart(3, "0");
             return (
@@ -57,14 +57,14 @@ function Work() {
                   </div>
                 </div>
 
-                <div className="relative flex-1 p-5 flex flex-col">
+                <div className="relative flex-1 p-4 sm:p-5 flex flex-col">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="size-1 rounded-full bg-primary" />
                     <span className="font-display text-[8px] text-primary/70 tracking-[0.2em] uppercase">
                       Neural_Module :: 0{i + 1}
                     </span>
                   </div>
-                  <h3 className="font-display text-xl font-bold mb-2 tracking-tighter group-hover:text-primary transition-all duration-500 text-white">{proj.title}</h3>
+                  <h3 className="font-display text-lg sm:text-xl font-bold mb-2 tracking-tighter group-hover:text-primary transition-all duration-500 text-white">{proj.title}</h3>
                   <p className="text-[11px] text-muted-foreground leading-relaxed mb-6 line-clamp-3 group-hover:text-foreground/80 transition-colors duration-500 font-light opacity-60 group-hover:opacity-100">{proj.description}</p>
                   <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
                     <div className="flex flex-wrap gap-2">
@@ -85,9 +85,8 @@ function Work() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-4 pt-6 border-t border-white/5 flex items-center justify-between opacity-20 pointer-events-none">
-        <div className="flex gap-10">
+      <div className="mt-4 pt-4 sm:pt-6 border-t border-white/5 flex items-center justify-between opacity-20 pointer-events-none">
+        <div className="flex gap-6 sm:gap-10">
           <div className="flex items-center gap-2">
             <span className="text-[7px] font-mono text-primary uppercase">ID:</span>
             <span className="text-[9px] font-display font-bold tracking-widest uppercase text-white">{metadata.systemID}</span>
@@ -97,7 +96,7 @@ function Work() {
             <span className="text-[9px] font-display font-bold tracking-widest uppercase text-white">{metadata.kernel}</span>
           </div>
         </div>
-        <p className="text-[7px] font-mono tracking-[0.4em] text-white/60 uppercase">{metadata.version}</p>
+        <p className="text-[7px] font-mono tracking-[0.4em] text-white/60 uppercase hidden sm:block">{metadata.version}</p>
       </div>
     </div>
   );
