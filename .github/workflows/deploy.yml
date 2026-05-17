@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - atri
+      - frontend_code
   workflow_dispatch:
 
 permissions:
