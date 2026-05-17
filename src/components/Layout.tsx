@@ -20,18 +20,27 @@ export function Layout() {
   const { links, metadata, loaded, logo } = usePortfolioData();
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === "/";
+
+  // Resolve relative client path by stripping the base URL prefix (e.g. "/Protfolio_website")
+  const basepath = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+  const cleanPathname = basepath 
+    ? (location.pathname.startsWith(basepath) 
+        ? location.pathname.substring(basepath.length) 
+        : location.pathname) || "/" 
+    : location.pathname;
+
+  const isHome = cleanPathname === "/";
   const [scrollHint, setScrollHint] = useState<{ type: "next" | "prev"; active: boolean }>({ type: "next", active: false });
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollIntent = useRef(0);
   const [isTriggered, setIsTriggered] = useState(false);
-  const currentIndex = ROUTES.indexOf(location.pathname);
+  const currentIndex = ROUTES.indexOf(cleanPathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
-  }, [location.pathname]);
+  }, [cleanPathname]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -101,7 +110,7 @@ export function Layout() {
 
       {/* Mobile / Tablet (< md): always-visible compact widget, bottom-right */}
       <div className={`fixed z-[45] pointer-events-none transition-all duration-[1200ms] md:hidden
-        right-3 bottom-20 w-[90px] aspect-square opacity-95`}>
+        right-12 bottom-20 w-[90px] aspect-square opacity-95`}>
         <div className="size-full pointer-events-auto">
           <DodoAI mini={true} />
         </div>
