@@ -45,7 +45,7 @@ export function DodoAI({ mini }: { mini?: boolean }) {
   // Dynamic API routing (switch between local worker dev port and live production URL)
   const API_ENDPOINT = import.meta.env.DEV
     ? "http://localhost:8787/api/chat"
-    : "https://dodo-ai-agent.rathoreatri03.workers.dev/api/chat";
+    : "https://dodo-ai-agent.dodoai.workers.dev/api/chat";
 
   // Cycle introductory phrases when clicked but not chatting yet
   useEffect(() => {
