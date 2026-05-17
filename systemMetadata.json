@@ -7,7 +7,7 @@
   "status": "OPTIMAL",
   "efficiency": "98.4%",
   "uptime": "99.99%",
-  "latency": "10ms",
+  "latency": "15ms",
   "deployment_tag": "Deployment_Stream",
   "intelligence_tag": "Tactical_Intelligence",
   "achievement_tag": "Achievement_Stream",
