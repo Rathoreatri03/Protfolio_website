@@ -52,7 +52,7 @@ export function Layout() {
 
   // Automatically redirect back to the home page on initial load / refresh
   useEffect(() => {
-    if (cleanPathname !== "/") {
+    if (cleanPathname !== "/" && cleanPathname !== "/admin") {
       navigate({ to: "/", replace: true });
     }
   }, []);
@@ -178,6 +178,17 @@ export function Layout() {
   };
 
   const progress = isTriggered ? 1 : Math.min(Math.abs(scrollIntent.current) / 1200, 1);
+
+  if (cleanPathname === "/admin") {
+    return (
+      <div className="min-h-screen bg-[#050505] text-foreground relative overflow-y-auto selection:bg-primary/30 selection:text-primary-foreground">
+        <div className="fixed inset-0 grid-bg pointer-events-none z-0 radial-fade animate-in fade-in duration-700" />
+        <main className="relative z-10 size-full">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground relative overflow-hidden">
