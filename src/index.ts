@@ -35,10 +35,18 @@ app.use(
 
 // 2. Health & Diagnostic Check
 app.get("/api/health", (c) => {
+  const envKeys = c.env ? Object.keys(c.env) : [];
+  const keyType = typeof c.env.GENAI_KEY;
+  const keyLength = c.env.GENAI_KEY ? c.env.GENAI_KEY.length : 0;
+  const keyPrefix = c.env.GENAI_KEY ? c.env.GENAI_KEY.substring(0, 4) : "";
   return c.json({
     status: "online",
     system: "DODO Core Agent",
     uptime: "24/7",
+    env_keys: envKeys,
+    key_type: keyType,
+    key_length: keyLength,
+    key_prefix: keyPrefix,
     compatibility: c.env.GENAI_KEY ? "verified" : "missing_key",
   });
 });
@@ -93,11 +101,6 @@ app.post("/api/chat", async (c) => {
       }, response.status as any);
     }
 
-    // Set streaming headers
-    c.header("Content-Type", "text/event-stream");
-    c.header("Cache-Control", "no-cache");
-    c.header("Connection", "keep-alive");
-
     // Get the reader from the fetch stream
     const reader = response.body?.getReader();
     if (!reader) {
@@ -121,7 +124,14 @@ app.post("/api/chat", async (c) => {
       }
     });
 
-    return new Response(body);
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Content-Type-Options": "nosniff",
+      }
+    });
 
   } catch (err: any) {
     return c.json({ error: err.message || "Unknown error occurred" }, 500);

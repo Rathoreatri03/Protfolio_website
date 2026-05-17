@@ -1,74 +1,88 @@
 /**
- * Diagnostic Streaming Test Script
- * Simulates a frontend call to the Hono/LangChain backend and prints the real-time token stream.
+ * Diagnostic Streaming Test Script (Modern Fetch Version)
+ * Simulates a client call and prints the real-time token stream.
+ * Pre-configured for your active, live Cloudflare Edge deployment!
  * Run using: node test-stream.js
  */
 
-const http = require('http');
+// --- 🌐 LIVE TARGET ENDPOINT ---
+const API_URL = "https://dodo-ai-agent.dodoai.workers.dev/api/chat"; 
 
-const payload = JSON.stringify({
+const payload = {
   messages: [
     { role: "user", content: "Who is Atri Rathore and what does he generally do?" }
   ],
   model: "google/gemma-3-12b"
-});
-
-const options = {
-  hostname: 'localhost',
-  port: 8787,
-  path: '/api/chat',
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(payload)
-  }
 };
 
-console.log("--- Initializing Diagnostic Chat Stream Session ---");
-console.log("Sending payload to http://localhost:8787/api/chat...");
-console.log("--------------------------------------------------");
+async function startStreamTest() {
+  console.log("--- Initializing Diagnostic Chat Stream Session ---");
+  console.log(`Targeting Deployed Endpoint: ${API_URL}`);
+  console.log("--------------------------------------------------");
 
-const req = http.request(options, (res) => {
-  res.setEncoding('utf8');
-  
-  let fullResponse = "";
-  let buffer = ""; // Keeps running TCP fragments
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload)
+    });
 
-  res.on('data', (chunk) => {
-    // Append incoming data packet to our running buffer
-    buffer += chunk;
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`\n[!] HTTP Error: Server responded with status ${response.status}`);
+      console.error(`Payload details: ${errText}`);
+      return;
+    }
 
-    // Split buffer by newlines to separate complete lines
-    const lines = buffer.split('\n');
+    const reader = response.body?.getReader();
+    if (!reader) {
+      console.error("\n[!] Stream Error: Response body is not readable.");
+      return;
+    }
 
-    // Keep the last incomplete fragment in the buffer for the next chunk
-    buffer = lines.pop() || "";
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let fullResponse = "";
 
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('data: ')) {
-        const dataStr = trimmedLine.slice(6);
-        if (dataStr === '[DONE]') {
-          continue;
-        }
-        
-        try {
-          const data = JSON.parse(dataStr);
-          if (data.error) {
-            console.log(`\n[API Error Payload]: ${JSON.stringify(data.error)}`);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      // Decode the incoming packet and append it to our buffer
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split the buffer by newlines to capture complete lines
+      const lines = buffer.split('\n');
+
+      // Keep the last incomplete fragment in the buffer
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('data: ')) {
+          const dataStr = trimmedLine.slice(6);
+          if (dataStr === '[DONE]') {
             continue;
           }
-          const content = data.choices?.[0]?.delta?.content || "";
-          process.stdout.write(content); // Print token in real-time!
-          fullResponse += content;
-        } catch (e) {
-          // Ignore incomplete/malformed chunks
+
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.error) {
+              console.log(`\n[API Error Payload]: ${JSON.stringify(data.error)}`);
+              continue;
+            }
+            const content = data.choices?.[0]?.delta?.content || "";
+            process.stdout.write(content); // Print the token live!
+            fullResponse += content;
+          } catch (e) {
+            // Ignore incomplete JSON parses
+          }
         }
       }
     }
-  });
 
-  res.on('end', () => {
     // Process any remaining tail in the buffer
     const trimmedLine = buffer.trim();
     if (trimmedLine.startsWith('data: ')) {
@@ -86,16 +100,10 @@ const req = http.request(options, (res) => {
     console.log("\n--------------------------------------------------");
     console.log("Stream Complete.");
 
-    if (!fullResponse) {
-      console.log("\n[!] Warning: Received empty response stream. Make sure your local wrangler dev server is running on port 8787 and your GENAI_KEY matches!");
-    }
-  });
-});
+  } catch (err) {
+    console.error(`\n[!] Uplink Error: Could not reach endpoint. ${err.message}`);
+    console.log("Please ensure your computer is connected to the internet!");
+  }
+}
 
-req.on('error', (e) => {
-  console.error(`\n[!] Connection Error: Could not reach backend server. ${e.message}`);
-  console.log("Please run 'npm run dev' inside your D:\\Persnol\\AI-Portfolio_backend folder first!");
-});
-
-req.write(payload);
-req.end();
+startStreamTest();
