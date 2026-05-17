@@ -33,6 +33,7 @@ export function Layout() {
   const [scrollHint, setScrollHint] = useState<{ type: "next" | "prev"; active: boolean }>({ type: "next", active: false });
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollIntent = useRef(0);
+  const touchLastY = useRef<number | null>(null);
   const [isTriggered, setIsTriggered] = useState(false);
   const currentIndex = ROUTES.indexOf(cleanPathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -105,6 +106,72 @@ export function Layout() {
           }, 200);
         }, 300);
       }
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchLastY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchLastY.current === null) return;
+    
+    const currentY = e.touches[0].clientY;
+    const deltaY = touchLastY.current - currentY;
+    touchLastY.current = currentY;
+
+    const el = scrollRef.current;
+    if (!el || isTriggered) return;
+    
+    const isBottom = Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) < 4;
+    const isTop = el.scrollTop === 0;
+
+    const THRESHOLD_HINT = 60;
+    const THRESHOLD_TRIGGER = 600; 
+
+    // Scale deltaY to match wheel event scale (for the progress indicator)
+    const scaledDeltaY = deltaY * 4;
+
+    if (scaledDeltaY > 0 && isBottom) {
+      scrollIntent.current += scaledDeltaY;
+      if (currentIndex === ROUTES.length - 1) {
+        return;
+      } else if (currentIndex < ROUTES.length - 1) {
+        if (scrollIntent.current > THRESHOLD_HINT) setScrollHint({ type: "next", active: true });
+        if (scrollIntent.current > THRESHOLD_TRIGGER) {
+          setIsTriggered(true);
+          setTimeout(() => {
+            navigate({ to: ROUTES[currentIndex + 1] });
+            setTimeout(() => {
+              setIsTriggered(false);
+              scrollIntent.current = 0;
+              setScrollHint(prev => ({ ...prev, active: false }));
+            }, 200); 
+          }, 300);
+        }
+      }
+    } else if (scaledDeltaY < 0 && isTop && currentIndex > 0) {
+      scrollIntent.current += scaledDeltaY;
+      if (scrollIntent.current < -THRESHOLD_HINT) setScrollHint({ type: "prev", active: true });
+      if (scrollIntent.current < -THRESHOLD_TRIGGER) {
+        setIsTriggered(true);
+        setTimeout(() => {
+          navigate({ to: ROUTES[currentIndex - 1] });
+          setTimeout(() => {
+            setIsTriggered(false);
+            scrollIntent.current = 0;
+            setScrollHint(prev => ({ ...prev, active: false }));
+          }, 200);
+        }, 300);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchLastY.current = null;
+    if (!isTriggered) {
+      scrollIntent.current = 0;
+      setScrollHint(prev => ({ ...prev, active: false }));
     }
   };
 
@@ -205,7 +272,14 @@ export function Layout() {
       )}
 
       {/* Main content */}
-      <main ref={scrollRef} onWheel={handleWheel} className="flex-1 relative z-10 px-3 sm:px-6 overflow-y-auto overflow-x-hidden scrollbar-hide scroll-smooth pt-20 sm:pt-28">
+      <main 
+        ref={scrollRef} 
+        onWheel={handleWheel} 
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="flex-1 relative z-10 px-3 sm:px-6 overflow-y-auto overflow-x-hidden scrollbar-hide scroll-smooth pt-20 sm:pt-28 overscroll-y-none"
+      >
         <Outlet />
       </main>
 
