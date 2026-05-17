@@ -1,6 +1,19 @@
 # 🌟 Personal Portfolio Website
 
-Welcome to my personal portfolio repository! This website is a showcase of my journey, skills, and projects in the fields of AI, machine learning, web development, and sustainability. It's designed to provide a snapshot of my professional and academic accomplishments, along with my passion for innovation and technology.
+Welcome to my personal portfolio repository! This website is a showcase of my journey, skills, and projects in the fields of AI, machine learning, web development, and computer vision.
+
+---
+
+## 🗺️ Multi-Branch Repository Architecture
+
+To keep this project highly modular and organized, the repository is split into dedicated, functional branches:
+
+| Branch | Description / Purpose |
+| :--- | :--- |
+| **`main`** | **This Branch.** Contains general metadata, repo architecture guidelines, standard licensing, and overall landing documentation. |
+| **`frontend_code`** | **The UI Codebase.** Houses the premium React 19 + TanStack Start application, custom layouts, assets, and styling. *This is where you should write and modify code.* |
+| **`Json_data`** | **The Data Layer.** Houses all static data structures (JSON records) representing skills, work experience, research logs, and certifications for dynamic fetching. |
+| **`gh-pages`** | **The Live Build.** Hosts the compiled static production assets deployed to GitHub Pages. Powered by an automated CI/CD pipeline. |
 
 ---
 
@@ -9,138 +22,128 @@ Welcome to my personal portfolio repository! This website is a showcase of my jo
 - [About](#about)
 - [Key Features](#key-features)
 - [Technologies](#technologies)
-- [Installation](#installation)
-- [Customization](#customization)
-- [Deployment](#deployment)
+- [Branch Setup & Installation](#branch-setup--installation)
+- [Repository Guidance & Customization](#repository-guidance--customization)
+- [Automated Deployment](#automated-deployment)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
 
 ---
 
-## 🧑‍💻 About
+## 🧑💻 About
 
-This portfolio serves as a digital representation of my academic, professional, and creative endeavors. Whether it's groundbreaking projects in AI, hackathon achievements, or leadership roles, this site highlights my commitment to learning and innovation.
+This portfolio serves as a digital representation of my academic, professional, and creative endeavors. Whether it's groundbreaking projects in AI, research contributions, or leadership roles, this site highlights my commitment to engineering excellence.
 
 ### 🎯 Objective:
-- To inspire collaboration and showcase my expertise in cutting-edge technology.
-- To serve as a hub for potential recruiters, collaborators, and peers.
+- To showcase advanced engineering competencies in AI, Computer Vision, and full-stack web architectures.
+- To serve as a high-end, interactive digital hub for recruiters, peers, and collaborators.
 
 ---
 
 ## ✨ Key Features
 
-- **Dynamic Projects Showcase**: A curated collection of my technical and creative projects, complete with descriptions, images, and links.
-- **Responsive and Interactive Design**: Ensures smooth navigation on all devices, from desktops to mobile phones.
-- **Experience and Certifications**: Highlights my professional journey, internships, and certifications.
-- **Leadership and Achievements**: Details my leadership roles and accolades from hackathons and events.
-- **Contact Section**: A quick and intuitive way to reach out to me.
+- **🤖 DODO AI Communication Widget:** An interactive, canvas-rendered context-aware robot assistant that models simulated AI processes with clean visual animations and glow states.
+- **⚡ Hydrated Client SPA:** Fully optimized client-side hydration using pre-rendered shells to ensure 100% SEO indexability and instantaneous load times.
+- **💼 Interactive Work & Timeline:** A dynamic showcase of project archives, publications, and timelines with robust search/filter abilities.
+- **🎨 Glassmorphism & Micro-animations:** Premium curated dark modes utilizing modern typography (Inter/Outfit) and fluid state transitions.
 
 ---
 
 ## 🖥️ Technologies
 
-This portfolio leverages modern web technologies:
+The frontend application utilizes a modern, professional, full-stack static architecture:
 
-### **Frontend**:
-- React.js
-- HTML5, CSS3, JavaScript (ES6+)
-- React Router for navigation
-- Bootstrap for responsive design
+### **Framework & Routing**:
+- **React 19** (Functional components, hooks, hydration rendering)
+- **TanStack Start (SPA Mode)** & **TanStack Router** (File-system routing, automatic code-splitting)
+- **TanStack Query v5** (Robust state synchronization and client-side data fetching)
 
-### **Styling**:
-- CSS Modules, SCSS for better maintainability
-- Flexbox and Grid Layout for responsive design
+### **Styling & Effects**:
+- **Tailwind CSS v4** (Modern utility styles, custom variables, native HSL tailoring)
+- Canvas API (Dynamic particle systems and interactive floating elements)
 
 ### **Hosting/Deployment**:
-- GitHub Pages for static deployment
-- Optional: Netlify or Firebase for dynamic features (like contact forms)
+- **GitHub Pages** (Asset-optimized static hosting)
+- **Cloudflare Pages** (Optional fully-native SSR and Server Functions support via `wrangler.jsonc`)
 
 ---
 
-## 🔧 Installation
+## 🔧 Branch Setup & Installation
 
-Follow these steps to get a local copy of the portfolio up and running:
+Because the codebase is modularized on the **`frontend_code`** branch, follow these updated guidelines to clone and run the portfolio locally:
 
 ### Prerequisites:
-- [Node.js](https://nodejs.org/) installed
+- [Node.js 22+](https://nodejs.org/) installed
 - [Git](https://git-scm.com/) installed
 
 ### Steps:
-1. Clone this repository:
+1. Clone only the **`frontend_code`** branch from this repository:
    ```bash
-   git clone https://github.com/<your-username>/portfolio.git
+   git clone -b frontend_code https://github.com/Rathoreatri03/Protfolio_website.git
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd portfolio
+   cd Protfolio_website
    ```
 
-3. Install dependencies:
+3. Install production and development dependencies:
    ```bash
    npm install
    ```
 
-4. Start the development server:
+4. Spin up the development server:
    ```bash
-   npm start
+   npm run dev
    ```
 
-   Visit [http://localhost:3000](http://localhost:3000) to view your portfolio.
+   Visit **[http://localhost:3000](http://localhost:3000)** in your browser to view and interact with the dev site.
 
 ---
 
-## 🛠️ Customization
+## 🛠️ Repository Guidance & Customization
 
-You can tailor the portfolio to your needs by editing the following files:
+Customizations are handled systematically across branches:
 
-- **`src/data/experience.json`**: Update your experiences, certifications, and achievements.
-- **`src/components/About.js`**: Personalize the "About Me" section.
-- **`src/components/Projects.js`**: Add, remove, or modify your projects.
-- **`src/assets/`**: Replace placeholder images with your own.
+*   **To Customize the UI/Layout:** 
+    1. Checkout the `frontend_code` branch locally.
+    2. Edit routing layouts in `src/routes/` or individual UI components under `src/components/`.
+*   **To Update Portfolio Content (Skills, Projects, Work):**
+    1. Refer to the data structures on the `Json_data` branch or dynamic local paths.
+    2. Maintain JSON records (e.g. `skillsData.json`, `BannerDetails.json`) in their respective directories.
 
 ---
 
-## 🌐 Deployment
+## 🌐 Automated Deployment
 
-Deploy your portfolio to GitHub Pages:
+You do not need to build and deploy manually! The repository handles production deployments automatically via **GitHub Actions**:
 
-1. Build the production-ready files:
+1. When you commit and push changes to the **`frontend_code`** branch:
    ```bash
-   npm run build
+   git add .
+   git commit -m "feat: implement advanced feature"
+   git push origin frontend_code
    ```
+2. The GitHub Actions runner ([deploy.yml](.github/workflows/deploy.yml)) automatically triggers, builds the optimized client assets, generates the correct SPA `index.html` shell, and deploys it directly to the **`gh-pages`** branch.
 
-2. Deploy using the `gh-pages` package:
-   ```bash
-   npm run deploy
-   ```
-
-   Your portfolio will be live at `https://<your-username>.github.io/portfolio`.
-
-For alternative deployment platforms like Netlify or Firebase, follow their respective documentation.
+Your portfolio automatically goes live at:  
+👉 **[https://Rathoreatri03.github.io/Protfolio_website/](https://Rathoreatri03.github.io/Protfolio_website/)**
 
 ---
 
 ## 🤝 Contributing
 
-Want to improve or customize this portfolio? Contributions are welcome! 
+Contributions to improve features or implement new UI sections are highly appreciated!
 
 ### Steps:
-1. Fork the repository.
-2. Create a feature branch:
+1. Fork this repository.
+2. Checkout a new feature branch from `frontend_code`:
    ```bash
-   git checkout -b feature-branch
+   git checkout -b feature/amazing-feature
    ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Added new feature"
-   ```
-4. Push to your forked repository:
-   ```bash
-   git push origin feature-branch
-   ```
-5. Submit a pull request.
+3. Commit your changes.
+4. Push to your fork and submit a Pull Request targeting the **`frontend_code`** branch.
 
 ---
 
@@ -152,16 +155,10 @@ This project is licensed under the MIT License. See the [LICENSE](https://github
 
 ## 📞 Contact
 
-Feel free to reach out to me:
+Feel free to connect or reach out for collaborations:
 
 - **Name**: Atri Rathore  
 - **Email**: rathoreatri@gmail.com  
 - **Portfolio**: [rathoreatri03.github.io/Protfolio_website](https://rathoreatri03.github.io/Protfolio_website)  
 - **LinkedIn**: [linkedin.com/in/rathoreatri03](https://www.linkedin.com/in/rathoreatri03)  
 - **GitHub**: [github.com/Rathoreatri03](https://github.com/Rathoreatri03)
-
----
-
-### 🌟 Additional Sections (Optional)
-- **FAQ**: Address frequently asked questions about your projects.
-- **Changelog**: Track updates and new features added to your portfolio.
