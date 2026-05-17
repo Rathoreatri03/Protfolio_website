@@ -3,7 +3,7 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "homepage": "https://Rathoreatri03.github.io/DemoPortFolio",
+  "homepage": "https://Rathoreatri03.github.io/Protfolio_website",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
