@@ -140,6 +140,7 @@ export function DodoAI({ mini }: { mini?: boolean }) {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
+      let buffer = ""; // Assemblies TCP fragments dynamically
       let aiContent = "";
 
       if (!reader) throw new Error("Stream unreadable.");
@@ -148,26 +149,54 @@ export function DodoAI({ mini }: { mini?: boolean }) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        // Append incoming decoded values to the assembly buffer
+        buffer += decoder.decode(value, { stream: true });
+
+        // Split buffer by newlines to isolate fully complete lines
+        const lines = buffer.split("\n");
+
+        // Retain the remaining incomplete fragment in the buffer
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.trim().startsWith("data: ")) {
-            const dataStr = line.trim().slice(6);
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith("data: ")) {
+            const dataStr = trimmedLine.slice(6);
             if (dataStr === "[DONE]") continue;
 
             try {
               const parsed = JSON.parse(dataStr);
-              const content = parsed.choices[0].delta.content || "";
+              if (parsed.error) {
+                aiContent += `\n[API Error]: ${parsed.error}`;
+                setStreamingText(aiContent);
+                setSpeechText("Downstream error detected.");
+                continue;
+              }
+              const content = parsed.choices?.[0]?.delta?.content || "";
               aiContent += content;
               setStreamingText(aiContent);
               
-              // Set robot speech bubble to mirror the arriving streaming text
+              // Set robot speech bubble to mirror the arriving streaming text in real-time
               setSpeechText(aiContent);
             } catch (err) {
-              // Ignore partial JSON parses
+              // Ignore incomplete JSON chunks safely
             }
           }
+        }
+      }
+
+      // Parse any remaining tail in the buffer at the stream end
+      const finalTrimmed = buffer.trim();
+      if (finalTrimmed.startsWith("data: ")) {
+        const dataStr = finalTrimmed.slice(6);
+        if (dataStr !== "[DONE]") {
+          try {
+            const parsed = JSON.parse(dataStr);
+            const content = parsed.choices?.[0]?.delta?.content || "";
+            aiContent += content;
+            setStreamingText(aiContent);
+            setSpeechText(aiContent);
+          } catch (e) {}
         }
       }
 
