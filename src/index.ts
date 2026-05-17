@@ -1,11 +1,14 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { promptFallback } from "./promptFallback";
+import { cmsApp } from "./cms";
 
 type Bindings = {
   GENAI_KEY: string;
   LLM_BASE_URL?: string;
   LLM_MODEL_NAME?: string;
+  CMS_AUTH_TOKEN?: string;
+  GITHUB_PAT?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -17,6 +20,7 @@ app.use(
     origin: (origin) => {
       // Allow localhost for development and your official github pages portfolio URL
       if (
+        !origin ||
         origin.startsWith("http://localhost:") ||
         origin.startsWith("http://127.0.0.1:") ||
         origin === "https://rathoreatri03.github.io"
@@ -26,12 +30,15 @@ app.use(
       return "https://rathoreatri03.github.io"; // Default fallback
     },
     allowMethods: ["POST", "GET", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
-    exposeHeaders: ["Content-Type"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    exposeHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400,
     credentials: true,
   })
 );
+
+// Register all CMS endpoints after CORS is set up
+app.route("/", cmsApp);
 
 // 2. Health & Diagnostic Check
 app.get("/api/health", (c) => {
