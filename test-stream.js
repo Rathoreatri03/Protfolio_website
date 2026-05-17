@@ -8,7 +8,7 @@ const http = require('http');
 
 const payload = JSON.stringify({
   messages: [
-    { role: "user", content: "Identify yourself and tell me one key skill Atri Rathore possesses." }
+    { role: "user", content: "Who is Atri Rathore and what does he generally do?" }
   ],
   model: "google/gemma-3-12b"
 });
