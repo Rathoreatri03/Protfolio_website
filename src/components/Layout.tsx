@@ -36,6 +36,11 @@ export function Layout() {
   const [isTriggered, setIsTriggered] = useState(false);
   const currentIndex = ROUTES.indexOf(cleanPathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDodoSpeaking, setIsDodoSpeaking] = useState(false);
+
+  const mobileBottomClass = isHome
+    ? (isDodoSpeaking ? "bottom-[195px]" : "bottom-[145px]")
+    : (isDodoSpeaking ? "bottom-[100px]" : "bottom-12");
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -117,19 +122,19 @@ export function Layout() {
 
       {/* Mobile / Tablet (< md): always-visible compact widget, bottom-right */}
       <div className={`fixed z-[45] pointer-events-none transition-all duration-[1200ms] md:hidden
-        right-12 bottom-20 w-[90px] aspect-square opacity-95`}>
+        right-12 w-[90px] aspect-square opacity-95 transition-all duration-700 ease-out ${mobileBottomClass}`}>
         <div className="size-full pointer-events-auto">
-          <DodoAI mini={true} />
+          <DodoAI mini={true} onSpeakingChange={setIsDodoSpeaking} />
         </div>
       </div>
       {/* Desktop (≥ md): large hero on home, mini bottom-right on other pages */}
       <div className={`fixed z-[45] pointer-events-none transition-all duration-[1200ms] hidden md:block ${
         isHome
-          ? "right-[8%] lg:right-[13%] top-[38%] -translate-y-1/2 w-[min(300px,38vw)] lg:w-[min(450px,38vw)] aspect-square opacity-100"
+          ? "right-[8%] lg:right-[13%] top-[46%] -translate-y-1/2 w-[min(250px,35vw,35vh)] lg:w-[min(380px,35vw,38vh)] aspect-square opacity-100"
           : "right-8 bottom-20 w-[140px] lg:w-[180px] aspect-square opacity-90"
       }`}>
         <div className="size-full pointer-events-auto">
-          <DodoAI mini={!isHome} />
+          <DodoAI mini={!isHome} onSpeakingChange={setIsDodoSpeaking} />
         </div>
       </div>
 
