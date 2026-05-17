@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Terminal, X, RefreshCw } from "lucide-react";
+import { Send, Terminal, X, RefreshCw, Minus } from "lucide-react";
+import RotatingText from "./RotatingText";
 
 /**
  * DODO AI — a friendly research-lab robot.
@@ -8,15 +9,12 @@ import { Send, Terminal, X, RefreshCw } from "lucide-react";
  * - Click → opens an interactive, real-time streaming chat console
  *   powered by your Cloudflare Edge worker API (0ms cold start!).
  */
-const FUNNY_PHRASES = [
-  "System initialized. DODO is ready.",
-  "Beep boop. Uplink secured.",
-  "Diagnostics complete. Scanning parameters...",
-  "Loading neural networks... and a cup of coffee.",
-  "Did you know I can read your mind? Just kidding... or am I?",
-  "I'm an AI, but even I need a break sometimes.",
-  "Hacking the mainframe... I'm in.",
-  "Bleep bloop... processing humor..."
+const GLOBAL_GREETINGS = [
+  "Aloha! 🌺 I'm DODO, Atri's custom AI assistant. Ready to explore his ML & CV capabilities?",
+  "Namaste! 🙏 Welcome to Atri's digital lab. Ask me anything about his projects or hackathon wins!",
+  "Bonjour! 🇨🇵 DODO operational! I'm here to decode Atri's advanced automation systems.",
+  "Konnichiwa! 🇯🇵 System online! Let's analyze Atri's deep learning models together!",
+  "Hello there! 👋 DODO is booted up. How may I assist you in navigating Atri's expertise today?"
 ];
 
 type Message = {
@@ -27,6 +25,7 @@ type Message = {
 export function DodoAI({ mini }: { mini?: boolean }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const bubbleScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [look, setLook] = useState({ x: 0, y: 0 });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -41,16 +40,24 @@ export function DodoAI({ mini }: { mini?: boolean }) {
   const [inputVal, setInputVal] = useState("");
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState("");
+  const [showTerminal, setShowTerminal] = useState(false);
+  const [minimized, setMinimized] = useState(false);
 
-  // Dynamic API routing (switch between local worker dev port and live production URL)
-  const API_ENDPOINT = import.meta.env.DEV
-    ? "http://localhost:8787/api/chat"
-    : "https://dodo-ai-agent.dodoai.workers.dev/api/chat";
+  // Live Cloudflare Edge production URL used for both local development and global hosting!
+  const API_ENDPOINT = "https://dodo-ai-agent.dodoai.workers.dev/api/chat";
 
-  // Cycle introductory phrases when clicked but not chatting yet
+  // Reactive speech bubble helper
+  const latestAssistantMessage = [...messages].reverse().find((m) => m.role === "assistant");
+  const bubbleContent = streamingText
+    ? streamingText
+    : latestAssistantMessage
+      ? latestAssistantMessage.content
+      : speechText;
+
+  // Cycle warm global greetings when clicked but not chatting yet
   useEffect(() => {
     if (speaking && messages.length === 0) {
-      const pickRandom = () => FUNNY_PHRASES[Math.floor(Math.random() * FUNNY_PHRASES.length)];
+      const pickRandom = () => GLOBAL_GREETINGS[Math.floor(Math.random() * GLOBAL_GREETINGS.length)];
       setSpeechText(pickRandom());
       const interval = setInterval(() => setSpeechText(pickRandom()), 5000);
       return () => clearInterval(interval);
@@ -63,6 +70,13 @@ export function DodoAI({ mini }: { mini?: boolean }) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, streamingText, speaking]);
+
+  // Keep speech bubble scrolled to bottom as text stream grows
+  useEffect(() => {
+    if (bubbleScrollRef.current) {
+      bubbleScrollRef.current.scrollTop = bubbleScrollRef.current.scrollHeight;
+    }
+  }, [bubbleContent, messages, streamingText, speaking]);
 
   // Cursor tracking
   useEffect(() => {
@@ -115,6 +129,9 @@ export function DodoAI({ mini }: { mini?: boolean }) {
   const sendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputVal.trim() || loading) return;
+
+    // Auto-expand dialogue cloud on new submission
+    setMinimized(false);
 
     const userPrompt = inputVal.trim();
     setInputVal("");
@@ -217,8 +234,137 @@ export function DodoAI({ mini }: { mini?: boolean }) {
     setStreamingText("");
   };
 
+  const parseBoldTags = (text: string): React.ReactNode[] => {
+    const boldRegex = /\*\*([^*]+)\*\*/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    
+    boldRegex.lastIndex = 0;
+    
+    while ((match = boldRegex.exec(text)) !== null) {
+      const matchIndex = match.index;
+      const plainText = text.substring(lastIndex, matchIndex);
+      
+      if (plainText) {
+        parts.push(plainText);
+      }
+      
+      const boldText = match[1];
+      parts.push(
+        <strong 
+          key={`bold-${matchIndex}`} 
+          className="text-primary font-bold drop-shadow-[0_0_8px_rgba(var(--primary),0.3)] hover:brightness-125 transition-all inline"
+        >
+          {boldText}
+        </strong>
+      );
+      
+      lastIndex = boldRegex.lastIndex;
+    }
+    
+    const remainingText = text.substring(lastIndex);
+    if (remainingText) {
+      parts.push(remainingText);
+    }
+    
+    return parts;
+  };
+
+  const parseInlineElements = (text: string): React.ReactNode[] => {
+    if (!text) return [];
+    
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    
+    linkRegex.lastIndex = 0;
+    
+    while ((match = linkRegex.exec(text)) !== null) {
+      const matchIndex = match.index;
+      const plainText = text.substring(lastIndex, matchIndex);
+      
+      if (plainText) {
+        parts.push(...parseBoldTags(plainText));
+      }
+      
+      const label = match[1];
+      const url = match[2];
+      
+      parts.push(
+        <a 
+          key={`link-${matchIndex}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-primary underline font-bold hover:brightness-125 transition-all drop-shadow-[0_0_8px_rgba(var(--primary),0.3)] break-all inline"
+        >
+          {label}
+        </a>
+      );
+      
+      lastIndex = linkRegex.lastIndex;
+    }
+    
+    const remainingText = text.substring(lastIndex);
+    if (remainingText) {
+      parts.push(...parseBoldTags(remainingText));
+    }
+    
+    return parts;
+  };
+
+  // Formats Markdown-like bold, links, and bullet points into gorgeous React elements
+  const formatMessage = (text: string) => {
+    if (!text) return "";
+    
+    const lines = text.split("\n");
+    
+    return lines.map((line, lineIdx) => {
+      let trimmed = line.trim();
+      const isBullet = trimmed.startsWith("* ");
+      if (isBullet) {
+        trimmed = trimmed.substring(2);
+      }
+      
+      const renderedLine = parseInlineElements(trimmed);
+
+      return (
+        <div key={lineIdx} className={isBullet ? "pl-4 relative my-1 break-words w-full" : "my-1 break-words w-full"}>
+          {isBullet && <span className="absolute left-0 text-primary font-extrabold">•</span>}
+          {renderedLine}
+        </div>
+      );
+    });
+  };
+
   return (
-    <div className="relative size-full flex items-center justify-center">
+    <div className="relative size-full flex flex-col items-center justify-center">
+      {/* Custom self-contained cognitive animation styles */}
+      <style>{`
+        @keyframes dodo-bar-bounce {
+          0%, 100% { transform: scaleY(0.25); }
+          50% { transform: scaleY(1); }
+        }
+        .dodo-eq-bar {
+          display: inline-block;
+          width: 2px;
+          background-color: oklch(0.85 0.18 145);
+          border-radius: 9999px;
+          transform-origin: bottom;
+          animation: dodo-bar-bounce 0.6s ease-in-out infinite;
+        }
+        .dodo-no-scrollbar::-webkit-scrollbar {
+          display: none !important;
+        }
+        .dodo-no-scrollbar {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+      `}</style>
+
       {/* 🤖 ROBOT FACE WRAPPER */}
       <div
         ref={wrapRef}
@@ -227,7 +373,18 @@ export function DodoAI({ mini }: { mini?: boolean }) {
           setHovered(false);
           setMood("neutral");
         }}
-        onClick={() => setSpeaking((s) => !s)}
+        onClick={() => {
+          if (mini) {
+            setSpeaking(true);
+            setShowTerminal(true);
+          } else {
+            if (speaking && minimized) {
+              setMinimized(false);
+            } else {
+              setSpeaking((s) => !s);
+            }
+          }
+        }}
         className={`relative aspect-square select-none cursor-pointer [perspective:1000px] shrink-0 transition-all duration-700 ${
           mini ? "w-full" : speaking ? "w-[120px] sm:w-[150px] md:w-[180px] lg:w-[220px]" : "w-full"
         }`}
@@ -238,23 +395,112 @@ export function DodoAI({ mini }: { mini?: boolean }) {
           speaking ? "bg-primary/30" : "bg-primary/10"
         }`} />
 
-        {/* Dynamic Speech Bubble (shown only when NOT using the large homepage chat overlay) */}
-        {speaking && (mini || messages.length === 0) && (
-          <div className={`absolute z-50 animate-in fade-in zoom-in-95 duration-500 pointer-events-none ${
+        {/* Dynamic Speech Bubble (Always displays latest response, fully scrollable, centered above head) */}
+        {speaking && !minimized && (
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (mini) {
+                setShowTerminal(true);
+              }
+            }}
+            className={`absolute z-50 animate-in fade-in zoom-in-95 duration-500 ${
             mini 
-              ? "top-[-12px] -right-4 max-w-[120px]" 
-              : "top-[2%] md:top-[5%] -right-10 md:-right-16 max-w-[180px] md:max-w-[240px]"
+              ? "bottom-[102%] right-0 w-[180px] md:w-[220px]" 
+              : "bottom-[98%] left-1/2 -translate-x-1/2 w-[250px] md:w-[300px]"
           }`}>
-            <div className={`relative bg-[#080808]/90 backdrop-blur-xl border border-primary/40 text-white/90 font-mono rounded-2xl rounded-bl-sm shadow-[0_0_30px_rgba(var(--primary),0.3)] ${
-              mini ? "text-[8px] p-2 leading-tight" : "text-[10px] md:text-xs p-3 md:p-4"
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className={`relative bg-[#080808]/95 backdrop-blur-2xl border border-primary/30 text-white/90 font-mono rounded-[24px] shadow-[0_15px_40px_rgba(var(--primary),0.25)] ${
+              mini 
+                ? "text-[10px] p-3 pr-6 leading-normal" 
+                : "text-[10px] md:text-xs p-4 pr-7 leading-relaxed"
             }`}>
-              <div className="flex gap-1 md:gap-2 items-start">
-                <span className="text-primary font-bold animate-pulse">{'>'}</span>
-                <span className={`${mini ? "leading-tight tracking-tight" : "leading-relaxed"}`}>{speechText}</span>
+              {/* Sleek Minimize Button (No clunky cross) */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMinimized(true);
+                }}
+                title="Minimize Dialogue"
+                className={`absolute rounded text-white/30 hover:text-primary hover:bg-white/5 transition-all z-20 cursor-pointer ${
+                  mini ? "top-2.5 right-2.5 p-0.5" : "top-3 right-3 p-1"
+                }`}
+              >
+                <Minus className="size-3" />
+              </button>
+
+              {/* Scrollable text container with guaranteed hidden scrollbar */}
+              <div 
+                ref={bubbleScrollRef}
+                className="max-h-[100px] md:max-h-[160px] overflow-y-auto overflow-x-hidden dodo-no-scrollbar scroll-smooth w-full break-words select-text"
+              >
+                <div className="flex gap-1 md:gap-2 items-start w-full">
+                  <span className="text-primary font-bold animate-pulse shrink-0">{'>'}</span>
+                  <span className="leading-relaxed w-full break-words">
+                    {loading && !streamingText ? (
+                      <span className="flex items-center gap-2 italic text-white/50 text-[10px] md:text-xs">
+                        <span className="size-1.5 rounded-full bg-primary animate-ping shrink-0" />
+                        <span>DODO is parsing query parameters...</span>
+                      </span>
+                    ) : messages.length === 0 && !streamingText ? (
+                      <span className="inline">
+                        <RotatingText
+                          texts={["Namaste! 🙏", "Aloha! 🌺", "Bonjour! 🇨🇵", "Konnichiwa! 🇯🇵", "Hello there! 👋"]}
+                          mainClassName="text-primary font-bold overflow-hidden select-none inline-flex mr-1.5"
+                          staggerFrom="last"
+                          initial={{ y: "100%", opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: "-120%", opacity: 0 }}
+                          staggerDuration={0.025}
+                          splitLevelClassName="overflow-hidden pb-0.5"
+                          transition={{ type: "spring", damping: 25, stiffness: 400 }}
+                          rotationInterval={3500}
+                        />
+                        <span>I'm DODO, Atri's custom AI assistant. Ready to explore his ML & CV capabilities?</span>
+                      </span>
+                    ) : (
+                      formatMessage(bubbleContent)
+                    )}
+                  </span>
+                </div>
               </div>
-              <div className={`absolute left-0 w-0 h-0 border-l-transparent border-t-primary/40 border-r-transparent ${
-                mini ? "-bottom-[3px] border-l-[6px] border-t-[6px] border-r-[6px]" : "-bottom-[5px] border-l-[10px] border-t-[10px] border-r-[10px]"
-              }`}></div>
+              
+              <div className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none ${
+                mini 
+                  ? "-bottom-[10px] left-auto right-[40px] md:right-[65px] lg:right-[85px] -translate-x-0" 
+                  : "-bottom-[12px]"
+              }`}>
+                <div className={`rounded-full bg-[#080808]/95 border border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.1)] ${
+                  mini ? "size-2" : "size-3"
+                }`} />
+                <div className={`rounded-full bg-[#080808]/95 border border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.1)] ${
+                  mini ? "size-1" : "size-1.5"
+                }`} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Playful Miniature Bouncing Thinking Bubble when minimized */}
+        {speaking && minimized && !mini && (
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              setMinimized(false);
+            }}
+            title="DODO is thinking. Click to expand!"
+            className="absolute bottom-[98%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer z-50 animate-in fade-in zoom-in-95 duration-500 hover:scale-105 transition-all"
+          >
+            {/* Main mini thinking cloud bubble */}
+            <div className="px-3.5 py-1.5 bg-[#080808]/95 border border-primary/30 rounded-full shadow-[0_5px_20px_rgba(var(--primary),0.2)] text-[9px] font-mono text-primary font-bold animate-pulse flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-primary animate-ping shrink-0" />
+              <span className="tracking-wider">DODO ACTIVE</span>
+            </div>
+            {/* Thought bubble trail circles trailing down */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="size-2 rounded-full bg-[#080808]/95 border border-primary/30 shadow-[0_0_8px_rgba(var(--primary),0.1)] animate-pulse [animation-delay:0.2s]" />
+              <div className="size-1.5 rounded-full bg-[#080808]/95 border border-primary/30 shadow-[0_0_8px_rgba(var(--primary),0.1)] animate-pulse [animation-delay:0.4s]" />
             </div>
           </div>
         )}
@@ -299,6 +545,11 @@ export function DodoAI({ mini }: { mini?: boolean }) {
                     <>
                       <path d="M95 155 Q115 140 135 155" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
                       <path d="M165 155 Q185 140 205 155" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
+                    </>
+                  ) : (loading && !streamingText) ? (
+                    <>
+                      <path d="M95 145 Q115 160 135 145" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
+                      <path d="M165 145 Q185 160 205 145" fill="none" stroke="oklch(0.95 0.2 145)" strokeWidth="5" strokeLinecap="round" className="drop-shadow-[0_0_12px_hsl(var(--primary))]" />
                     </>
                   ) : (
                     <>
@@ -350,7 +601,16 @@ export function DodoAI({ mini }: { mini?: boolean }) {
           <div className={`flex items-center transition-all ${
             mini ? "gap-1.5 px-2 py-0.5" : "gap-3 px-4 py-1"
           } bg-primary/10 backdrop-blur-md rounded-full border border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.1)]`}>
-            <span className={`${mini ? "size-1" : "size-2"} rounded-full bg-primary ${(speaking || loading) ? "animate-ping" : hovered ? "animate-pulse" : "opacity-30"}`} />
+            {(speaking || loading) ? (
+              <div className="flex items-end gap-[2px] h-[10px] w-4 shrink-0 mb-[1px]">
+                <span className="dodo-eq-bar h-full" style={{ animationDelay: "0.1s" }} />
+                <span className="dodo-eq-bar h-[80%]" style={{ animationDelay: "0.3s", animationDuration: "0.4s" }} />
+                <span className="dodo-eq-bar h-[60%]" style={{ animationDelay: "0.0s", animationDuration: "0.7s" }} />
+                <span className="dodo-eq-bar h-[90%]" style={{ animationDelay: "0.2s", animationDuration: "0.5s" }} />
+              </div>
+            ) : (
+              <span className={`${mini ? "size-1" : "size-2"} rounded-full bg-primary ${hovered ? "animate-pulse" : "opacity-30"}`} />
+            )}
             <span className={`font-display tracking-[0.3em] text-primary uppercase transition-all ${
               mini ? "text-[7px]" : "text-[11px] font-bold"
             }`}>
@@ -360,120 +620,162 @@ export function DodoAI({ mini }: { mini?: boolean }) {
         </div>
       </div>
 
-      {/* 📟 INTERACTIVE GLASS TERMINAL CONSOLE (Shown only on Desktop/Home when speaking is true) */}
-      {!mini && speaking && (
-        <div className="absolute right-[110%] top-1/2 -translate-y-1/2 w-[350px] sm:w-[420px] lg:w-[480px] h-[380px] sm:h-[460px] bg-[#050505]/85 backdrop-blur-2xl border border-primary/20 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col animate-in slide-in-from-right-10 fade-in duration-500 z-50 font-mono text-xs">
-          
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-[#0d0d0d]/90 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <Terminal className="size-3.5 text-primary" />
-              <span className="font-display text-[9px] sm:text-[10px] tracking-widest text-white/50 uppercase">DODO_AI // Core_Relay</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={clearChat} 
-                title="Wipe Logs"
-                className="p-1 hover:bg-white/5 rounded text-white/40 hover:text-primary transition-all"
-              >
-                <RefreshCw className="size-3" />
-              </button>
-              <button 
-                onClick={() => setSpeaking(false)} 
-                className="p-1 hover:bg-white/5 rounded text-white/40 hover:text-white transition-all"
-              >
-                <X className="size-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Messages Console Box */}
-          <div 
-            ref={scrollRef}
-            className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {/* Embedded Scanner Overlay scanline */}
-            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.03)_50%)] z-10 bg-[length:100%_2px]" />
-
-            {/* Static Initial Banner */}
-            <div className="text-[10px] text-primary/30 border-b border-primary/10 pb-2 leading-relaxed">
-              &gt;_ UPLINK SECURE. DODO AGENT IS FULLY OPERATIONAL.<br/>
-              &gt;_ CHIP IDENT: GEMMA-3-12B // EDGE STREAM ACTIVE.<br/>
-              &gt;_ ASK DODO ABOUT ATRI'S EXPERIENCES, SIH WIN, AND SKILLS.
-            </div>
-
-            {/* Chat History */}
-            {messages.length === 0 && !streamingText && (
-              <div className="p-3 bg-white/[0.01] border border-white/5 rounded-lg text-white/40 text-center leading-relaxed italic text-[11px]">
-                Waiting for query inputs. Click below to establish dialogue matrix.
-              </div>
-            )}
-
-            {messages.map((msg, idx) => (
-              <div 
-                key={idx} 
-                className={`flex gap-2.5 items-start ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {msg.role === "assistant" && (
-                  <div className="size-5 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center text-[9px] text-primary font-bold shrink-0">🤖</div>
-                )}
-                <div className={`p-3 rounded-xl max-w-[82%] leading-relaxed ${
-                  msg.role === "user" 
-                    ? "bg-primary/15 border border-primary/25 text-white rounded-br-sm" 
-                    : "bg-white/[0.02] border border-white/5 text-white/80 rounded-bl-sm"
-                }`}>
-                  {msg.content}
-                </div>
-                {msg.role === "user" && (
-                  <div className="size-5 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-[9px] text-white/40 font-bold shrink-0">U</div>
-                )}
-              </div>
-            ))}
-
-            {/* Live Streaming Token Output */}
-            {streamingText && (
-              <div className="flex gap-2.5 items-start justify-start">
-                <div className="size-5 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center text-[9px] text-primary font-bold shrink-0">🤖</div>
-                <div className="p-3 bg-white/[0.02] border border-white/5 text-white/80 rounded-xl rounded-bl-sm max-w-[82%] leading-relaxed">
-                  {streamingText}
-                  <span className="inline-block w-1.5 h-3 bg-primary animate-pulse ml-0.5" />
-                </div>
-              </div>
-            )}
-
-            {/* Loader indicator */}
-            {loading && !streamingText && (
-              <div className="flex gap-2.5 items-start justify-start">
-                <div className="size-5 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center text-[9px] text-primary font-bold shrink-0 animate-spin">🤖</div>
-                <div className="p-3 bg-white/[0.02] border border-white/5 text-white/40 rounded-xl rounded-bl-sm italic">
-                  Parsing query parameters...
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Form Input Relay */}
-          <form 
-            onSubmit={sendMessage}
-            className="p-3 bg-[#080808]/95 border-t border-white/5 flex gap-2 items-center"
-          >
+      {/* Small Chat Input Capsule Form (Positioned below DODO's head) */}
+      {speaking && !mini && (
+        <form 
+          onSubmit={sendMessage}
+          className="mt-4 w-full max-w-[210px] sm:max-w-[250px] animate-in slide-in-from-bottom-2 fade-in duration-500 z-30"
+        >
+          <div className="relative flex items-center bg-[#080808]/80 backdrop-blur-xl border border-primary/30 rounded-full px-3 py-1.5 focus-within:border-primary/60 transition-all shadow-[0_0_20px_rgba(var(--primary),0.05)]">
             <input 
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               disabled={loading}
-              placeholder={loading ? "Waiting for response..." : "Ask DODO about Atri..."}
-              className="flex-1 bg-white/[0.02] border border-white/5 rounded-lg px-3 py-2.5 outline-none focus:border-primary/20 transition-all text-white placeholder:text-white/20 disabled:opacity-40"
+              placeholder="Ask DODO..."
+              className="w-full bg-transparent text-white placeholder:text-white/30 text-[10px] sm:text-xs outline-none pr-12 pl-1"
             />
-            <button 
-              type="submit"
-              disabled={loading || !inputVal.trim()}
-              className="size-9 bg-primary text-primary-foreground font-bold rounded-lg flex items-center justify-center hover:bg-primary/95 transition-all active:scale-[0.96] disabled:opacity-40"
+            <div className="absolute right-1 flex items-center gap-1">
+              {/* Expand to Full-Screen Terminal Dialog */}
+              <button 
+                type="button"
+                onClick={() => setShowTerminal(true)}
+                title="Open Cognitive Console"
+                className="p-1 text-white/40 hover:text-primary transition-all rounded"
+              >
+                <Terminal className="size-3" />
+              </button>
+              <button 
+                type="submit"
+                disabled={loading || !inputVal.trim()}
+                className="text-primary hover:brightness-125 transition-all p-1 disabled:opacity-30"
+              >
+                <Send className="size-3" />
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* 📟 CENTERAL FULL-SCREEN TERMINAL COGNITIVE MODAL */}
+      {!mini && showTerminal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-[620px] h-[480px] bg-[#050505]/90 backdrop-blur-2xl border border-primary/20 rounded-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-500 font-mono text-xs">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#0d0d0d]/90 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <Terminal className="size-3.5 text-primary animate-pulse" />
+                <span className="font-display text-[9px] sm:text-[10px] tracking-widest text-white/50 uppercase">DODO_AI // COGNITIVE_CONSOLE</span>
+              </div>
+              <button 
+                onClick={() => setShowTerminal(false)} 
+                className="p-1 hover:bg-white/5 rounded text-white/40 hover:text-white transition-all"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Messages Console Box */}
+            <div 
+              ref={scrollRef}
+              className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar scroll-smooth relative"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              <Send className="size-3.5" />
-            </button>
-          </form>
+              {/* Embedded Scanner Overlay scanline */}
+              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.03)_50%)] z-10 bg-[length:100%_2px]" />
+
+              {/* Static Initial Banner */}
+              <div className="text-[10px] text-primary/30 border-b border-primary/10 pb-2 leading-relaxed">
+                &gt;_ UPLINK SECURE. DODO AGENT IS FULLY OPERATIONAL.<br/>
+                &gt;_ CHIP IDENT: GEMMA-3-12B // EDGE STREAM ACTIVE.<br/>
+                &gt;_ ASK DODO ABOUT ATRI'S EXPERIENCES, SIH WIN, AND SKILLS.
+              </div>
+
+              {/* Chat History */}
+              {messages.length === 0 && !streamingText && (
+                <div className="p-3 bg-white/[0.01] border border-white/5 rounded-lg text-white/40 text-center leading-relaxed italic text-[11px]">
+                  Waiting for query inputs. Close this modal to talk via the mini capsule below DODO.
+                </div>
+              )}
+
+              {messages.map((msg, idx) => (
+                <div 
+                  key={idx} 
+                  className={`flex gap-2.5 items-start ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="size-5 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center text-[9px] text-primary font-bold shrink-0">🤖</div>
+                  )}
+                  <div className={`p-3 rounded-xl max-w-[82%] leading-relaxed ${
+                    msg.role === "user" 
+                      ? "bg-primary/15 border border-primary/25 text-white rounded-br-sm" 
+                      : "bg-white/[0.02] border border-white/5 text-white/80 rounded-bl-sm"
+                  }`}>
+                    {msg.role === "assistant" ? formatMessage(msg.content) : msg.content}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="size-5 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-[9px] text-white/40 font-bold shrink-0">U</div>
+                  )}
+                </div>
+              ))}
+
+              {/* Live Streaming Token Output */}
+              {streamingText && (
+                <div className="flex gap-2.5 items-start justify-start animate-in fade-in duration-300">
+                  <div className="size-5 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center text-[9px] text-primary font-bold shrink-0">🤖</div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 text-white/80 rounded-xl rounded-bl-sm max-w-[82%] leading-relaxed relative overflow-hidden">
+                    {formatMessage(streamingText)}
+                    <span className="inline-block w-1.5 h-3 bg-primary animate-pulse ml-0.5" />
+                    
+                    {/* Premium Equalizer Overlay in the top-right corner of the bubble */}
+                    <div className="absolute top-2 right-2 flex items-end gap-[1.5px] h-[8px] opacity-40">
+                      <span className="dodo-eq-bar h-full" style={{ width: "1.5px", animationDelay: "0.1s", animationDuration: "0.5s" }} />
+                      <span className="dodo-eq-bar h-[70%]" style={{ width: "1.5px", animationDelay: "0.3s", animationDuration: "0.3s" }} />
+                      <span className="dodo-eq-bar h-[50%]" style={{ width: "1.5px", animationDelay: "0.0s", animationDuration: "0.6s" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Loader indicator */}
+              {loading && !streamingText && (
+                <div className="flex gap-2.5 items-start justify-start animate-in fade-in duration-300">
+                  <div className="size-5 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center text-[9px] text-primary font-bold shrink-0 animate-spin">🤖</div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 text-white/40 rounded-xl rounded-bl-sm italic flex items-center gap-2">
+                    <span>Parsing query parameters...</span>
+                    <div className="flex items-end gap-[2px] h-[8px] w-3">
+                      <span className="dodo-eq-bar h-full" style={{ animationDelay: "0.1s", animationDuration: "0.8s" }} />
+                      <span className="dodo-eq-bar h-[70%]" style={{ animationDelay: "0.4s", animationDuration: "0.6s" }} />
+                      <span className="dodo-eq-bar h-[40%]" style={{ animationDelay: "0.2s", animationDuration: "0.9s" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Form Input inside Modal */}
+            <form 
+              onSubmit={sendMessage}
+              className="p-3 bg-[#080808]/95 border-t border-white/5 flex gap-2 items-center"
+            >
+              <input 
+                type="text"
+                value={inputVal}
+                onChange={(e) => setInputVal(e.target.value)}
+                disabled={loading}
+                placeholder={loading ? "Waiting for response..." : "Ask DODO about Atri..."}
+                className="flex-1 bg-white/[0.02] border border-white/5 rounded-lg px-3 py-2.5 outline-none focus:border-primary/20 transition-all text-white placeholder:text-white/20 disabled:opacity-40"
+              />
+              <button 
+                type="submit"
+                disabled={loading || !inputVal.trim()}
+                className="size-9 bg-primary text-primary-foreground font-bold rounded-lg flex items-center justify-center hover:bg-primary/95 transition-all active:scale-[0.96] disabled:opacity-40"
+              >
+                <Send className="size-3.5" />
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
