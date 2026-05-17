@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { promptFallback } from "./promptFallback";
 
 type Bindings = {
   GENAI_KEY: string;
@@ -74,7 +75,7 @@ app.post("/api/chat", async (c) => {
     const targetURL = `${baseURL}/chat/completions`;
 
     // Fetch the latest system prompt dynamically from GitHub
-    let dynamicSystemPrompt = "You are DODO. Your primary data link is offline. Politely inform the user that you are currently under service/maintenance and cannot access Atri's core knowledge base right now. Keep it brief and robotic."; // Maintenance fallback
+    let dynamicSystemPrompt = promptFallback; // High-quality local static fallback compiled from portfolio JSONs!
     try {
       const promptRes = await fetch("https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data/dodo_prompt.json");
       if (promptRes.ok) {
