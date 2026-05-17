@@ -4,6 +4,7 @@ import { usePortfolioData } from "@/hooks/usePortfolioData";
 import { useRef, useState, useEffect } from "react";
 import { DodoAI } from "@/components/DodoAI";
 import { Menu, X } from "lucide-react";
+import { motion } from "framer-motion";
 
 const ROUTES = ["/", "/work", "/skills", "/achievements", "/log", "/contact"];
 
@@ -32,6 +33,7 @@ export function Layout() {
   const isHome = cleanPathname === "/";
   const [scrollHint, setScrollHint] = useState<{ type: "next" | "prev"; active: boolean }>({ type: "next", active: false });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const mobileContainerRef = useRef<HTMLDivElement>(null);
   const scrollIntent = useRef(0);
   const touchLastY = useRef<number | null>(null);
   const [isTriggered, setIsTriggered] = useState(false);
@@ -40,8 +42,8 @@ export function Layout() {
   const [isDodoSpeaking, setIsDodoSpeaking] = useState(false);
 
   const mobileBottomClass = isHome
-    ? (isDodoSpeaking ? "bottom-[195px]" : "bottom-[145px]")
-    : (isDodoSpeaking ? "bottom-[100px]" : "bottom-12");
+    ? (isDodoSpeaking ? "bottom-[185px]" : "bottom-[135px]")
+    : (isDodoSpeaking ? "bottom-[52px]" : "bottom-0");
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -187,12 +189,25 @@ export function Layout() {
                    desktop home: large hero position
                    desktop non-home: mini bottom-right widget */}
 
-      {/* Mobile / Tablet (< md): always-visible compact widget, bottom-right */}
-      <div className={`fixed z-[45] pointer-events-none transition-all duration-[1200ms] md:hidden
-        right-12 w-[90px] aspect-square opacity-95 transition-all duration-700 ease-out ${mobileBottomClass}`}>
-        <div className="size-full pointer-events-auto">
-          <DodoAI mini={true} onSpeakingChange={setIsDodoSpeaking} />
-        </div>
+      {/* Mobile / Tablet (< md): always-visible compact widget with custom safety margins to prevent bubble & input clipping */}
+      <div 
+        ref={mobileContainerRef} 
+        className="fixed top-28 bottom-6 left-12 right-12 md:hidden pointer-events-none z-[45]"
+      >
+        <motion.div 
+          drag
+          dragConstraints={mobileContainerRef}
+          dragElastic={0.05}
+          dragMomentum={true}
+          className={`absolute pointer-events-none w-[90px] aspect-square opacity-95 ${mobileBottomClass} right-0`}
+          style={{
+            transition: "opacity 0.7s ease-out, bottom 0.7s ease-out, right 0.7s ease-out"
+          }}
+        >
+          <div className="size-full pointer-events-auto cursor-grab active:cursor-grabbing">
+            <DodoAI mini={true} onSpeakingChange={setIsDodoSpeaking} />
+          </div>
+        </motion.div>
       </div>
       {/* Desktop (≥ md): large hero on home, mini bottom-right on other pages */}
       <div className={`fixed z-[45] pointer-events-none transition-all duration-[1200ms] hidden md:block ${
