@@ -1,7 +1,5 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { ChatOpenAI } from "@langchain/openai";
-import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 import { SYSTEM_PROMPT } from "./prompt";
 
 type Bindings = {
@@ -45,7 +43,7 @@ app.get("/api/health", (c) => {
   });
 });
 
-// 3. Real-time LangChain Streaming Chat Endpoint
+// 3. Direct Streaming Proxy Endpoint
 app.post("/api/chat", async (c) => {
   try {
     const { messages, model } = await c.req.json<{
@@ -62,82 +60,71 @@ app.post("/api/chat", async (c) => {
       return c.json({ error: "System Configuration Error: Server API credentials are not initialized." }, 500);
     }
 
-    // Determine custom server endpoints (e.g., Genesys AI or OpenRouter/vLLM/Gemini)
-    // Default to OpenAI format compatible custom route, or custom provider
     const baseURL = c.env.LLM_BASE_URL || "https://your-domain.com/genAI/v1"; 
     const modelName = model || c.env.LLM_MODEL_NAME || "google/gemma-3-12b";
 
-    // Initialize LangChain OpenAI model (which is universally compatible with OpenAI-like API servers)
-    const chatModel = new ChatOpenAI({
-      apiKey: apiKey, // Keeps LangChain validation happy!
-      configuration: {
-        baseURL: baseURL,
-        defaultHeaders: {
-          "GENAI_KEY": apiKey, // Use your custom GENAI_KEY header securely!
-        }
-      },
-      modelName: modelName,
-      streaming: true,
-      temperature: 0.7,
-    });
+    // Build downstream endpoint path
+    const targetURL = `${baseURL}/chat/completions`;
 
-    // Format chat history into LangChain Message structures
-    const langchainMessages = [
-      new SystemMessage(SYSTEM_PROMPT)
+    // Inject system portfolio instructions at the absolute start of the conversation history
+    const downstreamMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...messages
     ];
 
-    for (const msg of messages) {
-      if (msg.role === "user") {
-        langchainMessages.push(new HumanMessage(msg.content));
-      } else if (msg.role === "assistant") {
-        langchainMessages.push(new AIMessage(msg.content));
-      }
+    // Make the exact downstream POST request
+    const response = await fetch(targetURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "GENAI_KEY": apiKey,
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: downstreamMessages,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return c.json({ 
+        error: `Downstream LLM server returned status ${response.status}: ${errorText}`
+      }, response.status as any);
     }
 
-    // Set up standard Response streaming headers
+    // Set streaming headers
     c.header("Content-Type", "text/event-stream");
     c.header("Cache-Control", "no-cache");
     c.header("Connection", "keep-alive");
 
-    // Initiate stream
-    const stream = await chatModel.stream(langchainMessages);
+    // Get the reader from the fetch stream
+    const reader = response.body?.getReader();
+    if (!reader) {
+      return c.json({ error: "Response body is not readable." }, 500);
+    }
 
-    // Stream the chunks using a readable stream
+    // Pipe the response bytes directly!
     const body = new ReadableStream({
       async start(controller) {
-        const encoder = new TextEncoder();
         try {
-          for await (const chunk of stream) {
-            const content = chunk.content;
-            if (content) {
-              // Wrap content in SSE (Server-Sent Events) formatting
-              // Compatible with standard EventSource/fetch readers
-              const ssePayload = {
-                choices: [
-                  {
-                    delta: {
-                      content: content,
-                    },
-                  },
-                ],
-              };
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(ssePayload)}\n\n`));
-            }
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
           }
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         } catch (err: any) {
-          const errorPayload = { error: err.message };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorPayload)}\n\n`));
+          console.error("Stream pipe error:", err);
         } finally {
           controller.close();
         }
-      },
+      }
     });
 
     return new Response(body);
 
   } catch (err: any) {
-    return c.json({ error: err.message || "Unknown processing error occurred." }, 500);
+    return c.json({ error: err.message || "Unknown error occurred" }, 500);
   }
 });
 
