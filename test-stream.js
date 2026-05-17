@@ -46,7 +46,11 @@ const req = http.request(options, (res) => {
         
         try {
           const data = JSON.parse(dataStr);
-          const content = data.choices[0].delta.content || "";
+          if (data.error) {
+            console.log(`\n[API Error Payload]: ${JSON.stringify(data.error)}`);
+            continue;
+          }
+          const content = data.choices?.[0]?.delta?.content || "";
           process.stdout.write(content);
           fullResponse += content;
         } catch (e) {
