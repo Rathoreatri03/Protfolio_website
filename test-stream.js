@@ -32,18 +32,23 @@ const req = http.request(options, (res) => {
   res.setEncoding('utf8');
   
   let fullResponse = "";
+  let buffer = ""; // Keeps running TCP fragments
 
   res.on('data', (chunk) => {
-    // Print the raw incoming chunk to see exactly what is being sent!
-    console.log(`[RAW CHUNK RECEIVED]: ${JSON.stringify(chunk)}`);
+    // Append incoming data packet to our running buffer
+    buffer += chunk;
 
-    const lines = chunk.split('\n');
+    // Split buffer by newlines to separate complete lines
+    const lines = buffer.split('\n');
+
+    // Keep the last incomplete fragment in the buffer for the next chunk
+    buffer = lines.pop() || "";
+
     for (const line of lines) {
-      if (line.trim().startsWith('data: ')) {
-        const dataStr = line.trim().slice(6);
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('data: ')) {
+        const dataStr = trimmedLine.slice(6);
         if (dataStr === '[DONE]') {
-          console.log("\n--------------------------------------------------");
-          console.log("Stream Complete.");
           continue;
         }
         
@@ -54,15 +59,33 @@ const req = http.request(options, (res) => {
             continue;
           }
           const content = data.choices?.[0]?.delta?.content || "";
+          process.stdout.write(content); // Print token in real-time!
           fullResponse += content;
         } catch (e) {
-          // Skip malformed SSE chunks
+          // Ignore incomplete/malformed chunks
         }
       }
     }
   });
 
   res.on('end', () => {
+    // Process any remaining tail in the buffer
+    const trimmedLine = buffer.trim();
+    if (trimmedLine.startsWith('data: ')) {
+      const dataStr = trimmedLine.slice(6);
+      if (dataStr !== '[DONE]') {
+        try {
+          const data = JSON.parse(dataStr);
+          const content = data.choices?.[0]?.delta?.content || "";
+          process.stdout.write(content);
+          fullResponse += content;
+        } catch (e) {}
+      }
+    }
+
+    console.log("\n--------------------------------------------------");
+    console.log("Stream Complete.");
+
     if (!fullResponse) {
       console.log("\n[!] Warning: Received empty response stream. Make sure your local wrangler dev server is running on port 8787 and your GENAI_KEY matches!");
     }
