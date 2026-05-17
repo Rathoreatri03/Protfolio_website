@@ -10,7 +10,8 @@
   "dependencies": {
     "@langchain/core": "^0.3.36",
     "@langchain/openai": "^0.4.3",
-    "hono": "^4.6.15"
+    "hono": "^4.6.15",
+    "tanstack_start_ts": "file:../AI-Portfolio"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241218.0",

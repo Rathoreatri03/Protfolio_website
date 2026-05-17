@@ -69,6 +69,7 @@ app.post("/api/chat", async (c) => {
 
     // Initialize LangChain OpenAI model (which is universally compatible with OpenAI-like API servers)
     const chatModel = new ChatOpenAI({
+      apiKey: apiKey, // Keeps LangChain validation happy!
       configuration: {
         baseURL: baseURL,
         defaultHeaders: {
