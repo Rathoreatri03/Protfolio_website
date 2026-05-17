@@ -34,6 +34,9 @@ const req = http.request(options, (res) => {
   let fullResponse = "";
 
   res.on('data', (chunk) => {
+    // Print the raw incoming chunk to see exactly what is being sent!
+    console.log(`[RAW CHUNK RECEIVED]: ${JSON.stringify(chunk)}`);
+
     const lines = chunk.split('\n');
     for (const line of lines) {
       if (line.trim().startsWith('data: ')) {
@@ -51,7 +54,6 @@ const req = http.request(options, (res) => {
             continue;
           }
           const content = data.choices?.[0]?.delta?.content || "";
-          process.stdout.write(content);
           fullResponse += content;
         } catch (e) {
           // Skip malformed SSE chunks
