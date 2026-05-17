@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const GH = "https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data";
+const GH = "https://raw.githubusercontent.com/Rathoreatri03/Portfolio_website/Json_data";
 
 export type Banner = { titles: string[]; description: string; imgUrl: string };
 export type Skill = { name: string; progress: number };

@@ -90,7 +90,7 @@ function AdminComponent() {
     }
   }, []);
 
-  const GH_RAW_BASE = "https://raw.githubusercontent.com/Rathoreatri03/Protfolio_website/Json_data";
+  const GH_RAW_BASE = "https://raw.githubusercontent.com/Rathoreatri03/Portfolio_website/Json_data";
 
   // 2. Fetch all Portfolio Datasets directly from raw GitHub CDN (Zero API Rate Limit!)
   const loadDatabase = async (authToken: string) => {
