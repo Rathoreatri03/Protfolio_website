@@ -21,9 +21,11 @@ import {
   ArrowDown,
   User,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  GripVertical
 } from "lucide-react";
 import { toast } from "sonner";
+import { NeuralBackground } from "../components/NeuralBackground";
 
 export const Route = createFileRoute("/admin")({
   component: AdminComponent,
@@ -82,8 +84,146 @@ function AdminComponent() {
   const [showSourceDropdown, setShowSourceDropdown] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
+  // Skills Drag & Drop States
+  const [draggedSkill, setDraggedSkill] = useState<{ catIdx: number; sIdx: number } | null>(null);
+  const [dragOverSkill, setDragOverSkill] = useState<{ catIdx: number; sIdx: number } | null>(null);
+  const [skillDropPlacement, setSkillDropPlacement] = useState<"above" | "below" | null>(null);
+
+  // Tech Stack Tags Drag & Drop States
+  const [draggedTechIdx, setDraggedTechIdx] = useState<number | null>(null);
+  const [dragOverTechIdx, setDragOverTechIdx] = useState<number | null>(null);
+  const [techDropPlacement, setTechDropPlacement] = useState<"left" | "right" | null>(null);
+
   // ── 100% PRODUCTION EDGE MODE: Always fetch dynamically from live Cloudflare & GitHub! ──
   const WORKER_BASE = "https://dodo-ai-agent.dodoai.workers.dev";
+
+  // Skills Drag & Drop Event Handifiers
+  const handleSkillDragStart = (e: React.DragEvent, catIdx: number, sIdx: number) => {
+    setDraggedSkill({ catIdx, sIdx });
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleSkillDragOver = (e: React.DragEvent, catIdx: number, sIdx: number) => {
+    e.preventDefault();
+    if (!draggedSkill || (draggedSkill.catIdx === catIdx && draggedSkill.sIdx === sIdx)) return;
+    if (draggedSkill.catIdx !== catIdx) return; // Prevent category cross-contamination
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+    const placement = relativeY < rect.height / 2 ? "above" : "below";
+    
+    setDragOverSkill({ catIdx, sIdx });
+    setSkillDropPlacement(placement);
+  };
+
+  const handleSkillDragEnd = () => {
+    setDraggedSkill(null);
+    setDragOverSkill(null);
+    setSkillDropPlacement(null);
+  };
+
+  const handleSkillDrop = (e: React.DragEvent, catIdx: number, targetSIdx: number) => {
+    e.preventDefault();
+    if (!draggedSkill || draggedSkill.catIdx !== catIdx) return;
+    
+    // Direct position calculation to avoid state race conditions!
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+    const placement = relativeY < rect.height / 2 ? "above" : "below";
+    
+    const categories = [...db.skillsData.content.categories];
+    const skillsList = [...categories[catIdx].skills];
+    
+    const draggedItem = skillsList[draggedSkill.sIdx];
+    skillsList.splice(draggedSkill.sIdx, 1);
+    
+    let insertIdx = targetSIdx;
+    if (draggedSkill.sIdx < targetSIdx) {
+      insertIdx = placement === "below" ? targetSIdx : targetSIdx - 1;
+    } else {
+      insertIdx = placement === "below" ? targetSIdx + 1 : targetSIdx;
+    }
+    
+    insertIdx = Math.max(0, Math.min(skillsList.length, insertIdx));
+    skillsList.splice(insertIdx, 0, draggedItem);
+    
+    categories[catIdx].skills = skillsList;
+    
+    setDb({
+      ...db,
+      skillsData: {
+        ...db.skillsData,
+        content: { ...db.skillsData.content, categories }
+      }
+    });
+    
+    setDraggedSkill(null);
+    setDragOverSkill(null);
+    setSkillDropPlacement(null);
+    toast.success("Skill sorted successfully!");
+  };
+
+  // Tech Stack Tags Drag & Drop Event Handifiers
+  const handleTechDragStart = (e: React.DragEvent, idx: number) => {
+    setDraggedTechIdx(idx);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleTechDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (draggedTechIdx === null || draggedTechIdx === idx) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left;
+    const placement = relativeX < rect.width / 2 ? "left" : "right";
+    
+    setDragOverTechIdx(idx);
+    setTechDropPlacement(placement);
+  };
+
+  const handleTechDragEnd = () => {
+    setDraggedTechIdx(null);
+    setDragOverTechIdx(null);
+    setTechDropPlacement(null);
+  };
+
+  const handleTechDrop = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    if (draggedTechIdx === null) return;
+    
+    // Direct position calculation to avoid state race conditions!
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left;
+    const placement = relativeX < rect.width / 2 ? "left" : "right";
+    
+    const newStack = [...db.techstack.content];
+    const draggedItem = newStack[draggedTechIdx];
+    
+    newStack.splice(draggedTechIdx, 1);
+    
+    let insertIdx = targetIdx;
+    if (draggedTechIdx < targetIdx) {
+      insertIdx = placement === "right" ? targetIdx : targetIdx - 1;
+    } else {
+      insertIdx = placement === "right" ? targetIdx + 1 : targetIdx;
+    }
+    
+    insertIdx = Math.max(0, Math.min(newStack.length, insertIdx));
+    newStack.splice(insertIdx, 0, draggedItem);
+    
+    setDb({
+      ...db,
+      techstack: {
+        ...db.techstack,
+        content: newStack
+      }
+    });
+    
+    setDraggedTechIdx(null);
+    setDragOverTechIdx(null);
+    setTechDropPlacement(null);
+    toast.success("Tech tag sorted successfully!");
+  };
 
   // Sleek helper to render a text input with an integrated "Open Link" action button if it contains a URL
   const renderUrlInput = (
@@ -464,7 +604,8 @@ function AdminComponent() {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex bg-[#050505] font-sans antialiased text-white selection:bg-[#00ff88]/20">
+    <div className="h-screen w-screen overflow-hidden flex bg-[#050505] font-sans antialiased text-white selection:bg-[#00ff88]/20 relative">
+      <NeuralBackground />
       <style>{`
         body {
           font-family: 'Outfit', sans-serif;
@@ -1121,53 +1262,119 @@ function AdminComponent() {
                     </div>
 
                     {/* Skill items list */}
-                    <div className="space-y-3">
-                      {cat.skills && cat.skills.map((s: any, sIdx: number) => (
-                        <div key={sIdx} className="grid grid-cols-12 gap-3 items-center">
-                          <div className="col-span-6">
-                            <input 
-                              type="text" 
-                              value={s.name} 
-                              onChange={e => {
-                                const categories = [...db.skillsData.content.categories];
-                                categories[catIdx].skills[sIdx].name = e.target.value;
-                                setDb({...db, skillsData: {...db.skillsData, content: {...db.skillsData.content, categories}}});
-                              }}
-                              className="w-full cyber-input font-medium"
-                              placeholder="Skill Name"
-                            />
+                    <div 
+                      className="space-y-3"
+                      onDragOver={(e) => {
+                        if (draggedSkill !== null && draggedSkill.catIdx === catIdx) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onDrop={(e) => {
+                        if (draggedSkill !== null && draggedSkill.catIdx === catIdx && draggedSkill.sIdx !== cat.skills.length - 1) {
+                          e.preventDefault();
+                          
+                          const categories = [...db.skillsData.content.categories];
+                          const skillsList = [...categories[catIdx].skills];
+                          
+                          const draggedItem = skillsList[draggedSkill.sIdx];
+                          skillsList.splice(draggedSkill.sIdx, 1);
+                          skillsList.push(draggedItem);
+                          
+                          categories[catIdx].skills = skillsList;
+                          
+                          setDb({
+                            ...db,
+                            skillsData: {
+                              ...db.skillsData,
+                              content: { ...db.skillsData.content, categories }
+                            }
+                          });
+                          
+                          setDraggedSkill(null);
+                          setDragOverSkill(null);
+                          setSkillDropPlacement(null);
+                          toast.success("Skill sorted to bottom successfully!");
+                        }
+                      }}
+                    >
+                      {cat.skills && cat.skills.map((s: any, sIdx: number) => {
+                        const isDragging = draggedSkill?.catIdx === catIdx && draggedSkill?.sIdx === sIdx;
+                        const isDragOver = dragOverSkill?.catIdx === catIdx && dragOverSkill?.sIdx === sIdx;
+                        
+                        return (
+                          <div 
+                            key={sIdx} 
+                            draggable="true"
+                            onDragStart={(e) => handleSkillDragStart(e, catIdx, sIdx)}
+                            onDragOver={(e) => handleSkillDragOver(e, catIdx, sIdx)}
+                            onDragEnd={handleSkillDragEnd}
+                            onDrop={(e) => handleSkillDrop(e, catIdx, sIdx)}
+                            className={`group relative flex items-center gap-3 p-2 rounded-xl transition-all duration-300 border ${
+                              isDragging 
+                                ? "opacity-30 border-dashed border-[#00ff88]/40 bg-[#00ff88]/5 scale-[0.98] cursor-grabbing" 
+                                : isDragOver
+                                  ? "bg-[#00ff88]/10 border-transparent text-[#00ff88] scale-[1.01] shadow-[0_0_15px_rgba(0,255,136,0.06)] cursor-grabbing"
+                                  : "bg-transparent border-transparent hover:bg-white/[0.02] border-white/0 hover:border-white/5"
+                            }`}
+                          >
+                            {/* Glowing insertion line indicators */}
+                            {isDragOver && skillDropPlacement === "above" && (
+                              <div className="absolute -top-[1.5px] left-0 right-0 h-[2.5px] bg-[#00ff88] shadow-[0_0_8px_#00ff88] pointer-events-none rounded-full z-20 animate-pulse" />
+                            )}
+                            {isDragOver && skillDropPlacement === "below" && (
+                              <div className="absolute -bottom-[1.5px] left-0 right-0 h-[2.5px] bg-[#00ff88] shadow-[0_0_8px_#00ff88] pointer-events-none rounded-full z-20 animate-pulse" />
+                            )}
+
+                            {/* Drag handle */}
+                            <GripVertical className="size-4 text-muted-foreground/30 group-hover:text-muted-foreground/75 shrink-0 transition-colors cursor-grab active:cursor-grabbing" />
+
+                            <div className="grid grid-cols-12 gap-3 items-center flex-1">
+                              <div className="col-span-6">
+                                <input 
+                                  type="text" 
+                                  value={s.name} 
+                                  onChange={e => {
+                                    const categories = [...db.skillsData.content.categories];
+                                    categories[catIdx].skills[sIdx].name = e.target.value;
+                                    setDb({...db, skillsData: {...db.skillsData, content: {...db.skillsData.content, categories}}});
+                                  }}
+                                  className="w-full cyber-input font-medium"
+                                  placeholder="Skill Name"
+                                />
+                              </div>
+                              <div className="col-span-4 flex items-center gap-2">
+                                <input 
+                                  type="number" 
+                                  min="0" 
+                                  max="100"
+                                  value={s.progress} 
+                                  onChange={e => {
+                                    const categories = [...db.skillsData.content.categories];
+                                    categories[catIdx].skills[sIdx].progress = parseInt(e.target.value) || 0;
+                                    setDb({...db, skillsData: {...db.skillsData, content: {...db.skillsData.content, categories}}});
+                                  }}
+                                  className="w-full cyber-input font-bold"
+                                  placeholder="Progress %"
+                                />
+                                <span className="text-[10px] text-muted-foreground font-mono">%</span>
+                              </div>
+                              <div className="col-span-2 flex justify-end">
+                                <button
+                                  onClick={() => {
+                                    const categories = [...db.skillsData.content.categories];
+                                    categories[catIdx].skills.splice(sIdx, 1);
+                                    setDb({...db, skillsData: {...db.skillsData, content: {...db.skillsData.content, categories}}});
+                                  }}
+                                  className="p-1.5 text-muted-foreground hover:text-red-500 transition-all"
+                                  title="Delete Skill"
+                                >
+                                  <Trash className="size-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <div className="col-span-4 flex items-center gap-2">
-                            <input 
-                              type="number" 
-                              min="0" 
-                              max="100"
-                              value={s.progress} 
-                              onChange={e => {
-                                const categories = [...db.skillsData.content.categories];
-                                categories[catIdx].skills[sIdx].progress = parseInt(e.target.value) || 0;
-                                setDb({...db, skillsData: {...db.skillsData, content: {...db.skillsData.content, categories}}});
-                              }}
-                              className="w-full cyber-input font-bold"
-                              placeholder="Progress %"
-                            />
-                            <span className="text-[10px] text-muted-foreground font-mono">%</span>
-                          </div>
-                          <div className="col-span-2 flex justify-end">
-                            <button
-                              onClick={() => {
-                                const categories = [...db.skillsData.content.categories];
-                                categories[catIdx].skills.splice(sIdx, 1);
-                                setDb({...db, skillsData: {...db.skillsData, content: {...db.skillsData.content, categories}}});
-                              }}
-                              className="p-1.5 text-muted-foreground hover:text-red-500 transition-all"
-                              title="Delete Skill"
-                            >
-                              <Trash className="size-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       <button
                         onClick={() => {
@@ -1205,25 +1412,178 @@ function AdminComponent() {
               </button>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 space-y-4 max-w-2xl">
-              <div className="flex items-center gap-3 border-b border-white/5 pb-3">
-                <Wrench className="size-4 text-[#00ff88]" />
-                <h3 className="text-xs font-bold tracking-wider uppercase text-white">Marquee Tech Stack</h3>
+            <div className="glass-card rounded-2xl p-6 space-y-6 w-full">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <div className="flex items-center gap-3">
+                  <Wrench className="size-4 text-[#00ff88]" />
+                  <h3 className="text-xs font-bold tracking-wider uppercase text-white">Marquee Tech Stack Configuration</h3>
+                </div>
+                {db.techstack.content && db.techstack.content.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setDb({
+                        ...db,
+                        techstack: { ...db.techstack, content: [] }
+                      });
+                      toast.success("Slate cleared! Stack wiped.");
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-red-500/20 hover:border-red-500 hover:bg-red-500/10 text-red-400 text-[10px] font-bold rounded-lg uppercase transition-all"
+                  >
+                    <Trash className="size-3" /> Clear All
+                  </button>
+                )}
               </div>
-              <div>
-                <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Tech Stack Items (Comma-separated)</label>
-                <input 
-                  type="text" 
-                  value={db.techstack.content ? db.techstack.content.join(", ") : ""} 
-                  onChange={e => setDb({
-                    ...db,
-                    techstack: {
-                      ...db.techstack,
-                      content: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+
+              {/* Glowing Interactive Badges Wrapper */}
+              <div className="space-y-4">
+                <label className="block text-muted-foreground text-[10px] uppercase font-semibold tracking-wider">
+                  Active Technologies Stack ({db.techstack.content ? db.techstack.content.length : 0} items)
+                </label>
+                
+                <div 
+                  className="flex flex-wrap gap-2.5 p-5 bg-white/[0.007] border border-white/5 rounded-2xl min-h-[120px] items-center content-start transition-all duration-300"
+                  onDragOver={(e) => {
+                    if (draggedTechIdx !== null) {
+                      e.preventDefault();
                     }
-                  })}
-                  className="w-full cyber-input font-bold"
-                />
+                  }}
+                  onDrop={(e) => {
+                    if (draggedTechIdx !== null && draggedTechIdx !== db.techstack.content.length - 1) {
+                      e.preventDefault();
+                      
+                      const newStack = [...db.techstack.content];
+                      const draggedItem = newStack[draggedTechIdx];
+                      newStack.splice(draggedTechIdx, 1);
+                      newStack.push(draggedItem);
+                      
+                      setDb({
+                        ...db,
+                        techstack: {
+                          ...db.techstack,
+                          content: newStack
+                        }
+                      });
+                      
+                      setDraggedTechIdx(null);
+                      setDragOverTechIdx(null);
+                      setTechDropPlacement(null);
+                      toast.success("Tech tag sorted to bottom successfully!");
+                    }
+                  }}
+                >
+                  {db.techstack.content && db.techstack.content.length > 0 ? (
+                    db.techstack.content.map((tech: string, idx: number) => {
+                      const isDragging = draggedTechIdx === idx;
+                      const isDragOver = dragOverTechIdx === idx;
+                      
+                      return (
+                        <div
+                          key={idx}
+                          draggable="true"
+                          onDragStart={(e) => handleTechDragStart(e, idx)}
+                          onDragOver={(e) => handleTechDragOver(e, idx)}
+                          onDragEnd={handleTechDragEnd}
+                          onDrop={(e) => handleTechDrop(e, idx)}
+                          className={`group relative flex items-center gap-2 px-3 py-1.5 bg-[#00ff88]/5 border border-[#00ff88]/20 hover:border-[#00ff88] text-white hover:text-[#00ff88] text-xs font-bold rounded-xl active-tab-glow transition-all duration-300 scale-100 hover:scale-105 active:scale-95 shadow-[0_2px_10px_rgba(0,255,136,0.02)] animate-in zoom-in-95 duration-200 cursor-grab active:cursor-grabbing`}
+                          style={{ animationDelay: `${idx * 20}ms` }}
+                        >
+                          {/* Glowing insertion line indicators for horizontal grid */}
+                          {isDragOver && techDropPlacement === "left" && (
+                            <div className="absolute top-0 bottom-0 -left-[1.5px] w-[2.5px] bg-[#00ff88] shadow-[0_0_8px_#00ff88] pointer-events-none rounded-full z-20 animate-pulse" />
+                          )}
+                          {isDragOver && techDropPlacement === "right" && (
+                            <div className="absolute top-0 bottom-0 -right-[1.5px] w-[2.5px] bg-[#00ff88] shadow-[0_0_8px_#00ff88] pointer-events-none rounded-full z-20 animate-pulse" />
+                          )}
+
+                          <GripVertical className="size-3 text-muted-foreground/30 group-hover:text-muted-foreground/75 shrink-0 transition-colors cursor-grab active:cursor-grabbing" />
+                          <span className="font-mono-fira text-[11px] tracking-wide uppercase">{tech}</span>
+                          <button
+                            onClick={() => {
+                              const newStack = [...db.techstack.content];
+                              newStack.splice(idx, 1);
+                              setDb({
+                                ...db,
+                                techstack: { ...db.techstack, content: newStack }
+                              });
+                              toast.success(`Removed ${tech}`);
+                            }}
+                            className="text-muted-foreground hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-white/5"
+                            title={`Remove ${tech}`}
+                          >
+                            <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="w-full text-center py-8 text-muted-foreground text-xs font-mono-fira uppercase tracking-wider animate-pulse">
+                      🛠️ Tech stack is empty. Add technologies below to populate!
+                    </div>
+                  )}
+                </div>
+
+                {/* Add Tag Section */}
+                <div className="pt-4 border-t border-white/5">
+                  <label className="block text-muted-foreground mb-2 text-[10px] uppercase font-semibold tracking-wider">
+                    Add New Technology Tag
+                  </label>
+                  <div className="flex gap-3 max-w-md">
+                    <input
+                      type="text"
+                      id="new-tech-input"
+                      placeholder="e.g. Next.js, PyTorch, Kubernetes"
+                      className="flex-1 cyber-input font-bold"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const inputEl = e.currentTarget;
+                          const val = inputEl.value.trim().toUpperCase();
+                          if (val) {
+                            const currentStack = db.techstack.content || [];
+                            if (currentStack.includes(val)) {
+                              toast.error(`${val} is already in your tech stack!`);
+                              return;
+                            }
+                            const newStack = [...currentStack, val];
+                            setDb({
+                              ...db,
+                              techstack: { ...db.techstack, content: newStack }
+                            });
+                            inputEl.value = "";
+                            toast.success(`Added ${val} to your tech stack!`);
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const inputEl = document.getElementById("new-tech-input") as HTMLInputElement;
+                        const val = inputEl?.value.trim().toUpperCase();
+                        if (val) {
+                          const currentStack = db.techstack.content || [];
+                          if (currentStack.includes(val)) {
+                            toast.error(`${val} is already in your tech stack!`);
+                            return;
+                          }
+                          const newStack = [...currentStack, val];
+                          setDb({
+                            ...db,
+                            techstack: { ...db.techstack, content: newStack }
+                          });
+                          inputEl.value = "";
+                          toast.success(`Added ${val} to your tech stack!`);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#00ff88] hover:bg-[#00ff88]/90 text-[#050505] text-xs font-bold rounded-lg uppercase tracking-wider transition-all shadow-[0_4px_12px_rgba(0,255,136,0.15)] hover:scale-105 active:scale-95 active:shadow-none"
+                    >
+                      <Plus className="size-3.5 stroke-[3]" /> Add Tag
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground font-sans mt-2 uppercase tracking-wider">
+                    Tip: Press <kbd className="px-1 py-0.5 bg-white/5 border border-white/10 rounded font-mono">Enter</kbd> to add tags quickly!
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -1432,6 +1792,70 @@ function ListEditor({
 }: ListEditorProps) {
   const list = db[fileKey].content || [];
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [dropPlacement, setDropPlacement] = useState<"above" | "below" | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, idx: number) => {
+    setDraggedIdx(idx);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === idx) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+    const placement = relativeY < rect.height / 2 ? "above" : "below";
+    
+    setDragOverIdx(idx);
+    setDropPlacement(placement);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+    setDropPlacement(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    if (draggedIdx === null) return;
+    
+    // Direct position calculation to avoid state race conditions!
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+    const placement = relativeY < rect.height / 2 ? "above" : "below";
+    
+    const newList = [...list];
+    const draggedItem = newList[draggedIdx];
+    
+    newList.splice(draggedIdx, 1);
+    
+    let insertIdx = targetIdx;
+    if (draggedIdx < targetIdx) {
+      insertIdx = placement === "below" ? targetIdx : targetIdx - 1;
+    } else {
+      insertIdx = placement === "below" ? targetIdx + 1 : targetIdx;
+    }
+    
+    insertIdx = Math.max(0, Math.min(newList.length, insertIdx));
+    newList.splice(insertIdx, 0, draggedItem);
+    
+    setDb({
+      ...db,
+      [fileKey]: {
+        ...db[fileKey],
+        content: newList
+      }
+    });
+    setSelectedIdx(insertIdx);
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+    setDropPlacement(null);
+    toast.success("Item sorted successfully!");
+  };
 
   const handleItemChange = (updatedItem: any) => {
     const newList = [...list];
@@ -1510,22 +1934,75 @@ function ListEditor({
       <div className="flex flex-col md:flex-row gap-6 items-start">
         {/* Left: Scrollable Items List */}
         <div className="w-full md:w-80 shrink-0 glass-card rounded-2xl p-4 space-y-3 self-stretch flex flex-col justify-between max-h-[70vh] min-h-[500px]">
-          <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+          <div 
+            className="space-y-2 overflow-y-auto pr-1 flex-1"
+            onDragOver={(e) => {
+              if (draggedIdx !== null) {
+                e.preventDefault();
+              }
+            }}
+            onDrop={(e) => {
+              if (draggedIdx !== null && draggedIdx !== list.length - 1) {
+                e.preventDefault();
+                const targetIdx = list.length - 1;
+                
+                const newList = [...list];
+                const draggedItem = newList[draggedIdx];
+                newList.splice(draggedIdx, 1);
+                newList.push(draggedItem);
+                
+                setDb({
+                  ...db,
+                  [fileKey]: {
+                    ...db[fileKey],
+                    content: newList
+                  }
+                });
+                setSelectedIdx(newList.length - 1);
+                setDraggedIdx(null);
+                setDragOverIdx(null);
+                setDropPlacement(null);
+                toast.success("Item sorted to bottom successfully!");
+              }
+            }}
+          >
             {list.map((item: any, idx: number) => {
               const isSelected = selectedIdx === idx;
+              const isDragging = draggedIdx === idx;
+              const isDragOver = dragOverIdx === idx;
+              
               return (
                 <div 
                   key={idx}
                   onClick={() => setSelectedIdx(idx)}
-                  className={`group flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-300 border ${
-                    isSelected 
-                      ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]" 
-                      : "bg-white/[0.005] border-white/5 text-white hover:bg-white/5 hover:border-white/10"
+                  draggable="true"
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDragEnd={handleDragEnd}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  className={`group relative flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 border ${
+                    isDragging 
+                      ? "opacity-30 border-dashed border-[#00ff88]/40 bg-[#00ff88]/5 scale-[0.97] cursor-grabbing" 
+                      : isDragOver
+                        ? "bg-[#00ff88]/10 border-transparent text-[#00ff88] scale-[1.01] shadow-[0_0_15px_rgba(0,255,136,0.06)] cursor-grabbing"
+                        : isSelected 
+                          ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88] cursor-grab" 
+                          : "bg-white/[0.005] border-white/5 text-white hover:bg-white/5 hover:border-white/10 cursor-grab"
                   }`}
                 >
-                  <span className="text-xs font-bold truncate pr-2 max-w-[150px]">
-                    {item.title || "Untitled Milestone"}
-                  </span>
+                  {/* Glowing insertion line indicators */}
+                  {isDragOver && dropPlacement === "above" && (
+                    <div className="absolute -top-[1.5px] left-0 right-0 h-[2.5px] bg-[#00ff88] shadow-[0_0_8px_#00ff88] pointer-events-none rounded-full z-20 animate-pulse" />
+                  )}
+                  {isDragOver && dropPlacement === "below" && (
+                    <div className="absolute -bottom-[1.5px] left-0 right-0 h-[2.5px] bg-[#00ff88] shadow-[0_0_8px_#00ff88] pointer-events-none rounded-full z-20 animate-pulse" />
+                  )}
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <GripVertical className="size-3.5 text-muted-foreground/30 group-hover:text-muted-foreground/75 shrink-0 transition-colors cursor-grab active:cursor-grabbing" />
+                    <span className="text-xs font-bold truncate pr-2 flex-1">
+                      {item.title || "Untitled Milestone"}
+                    </span>
+                  </div>
                   
                   {/* Sorting & Deleting controls */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
