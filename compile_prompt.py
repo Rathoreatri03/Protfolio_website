@@ -24,6 +24,7 @@ def compile_prompt():
     # Load all files
     metadata = load_json("systemMetadata.json") or {}
     links = load_json("professionalLinks.json") or {}
+    logo = load_json("logo.json") or {}
     banner = load_json("BannerDetails.json") or {}
     experience = load_json("experience.json") or []
     projects = load_json("projects.json") or []
@@ -75,6 +76,12 @@ def compile_prompt():
             prompt_lines.append(f"- **Official Resume (PDF):** [View Atri's Resume]({links['resume_PDF']})")
         if links.get("visume_video"):
             prompt_lines.append(f"- **Video Resume (Visume):** [Watch Atri's Video Resume]({links['visume_video']})")
+        prompt_lines.append("")
+
+    # 3.2. Add Brand Logo URL
+    if logo and logo.get("logo_url"):
+        prompt_lines.append("#### 🏷️ Official Brand Logo:")
+        prompt_lines.append(f"- **Logo URL:** {logo['logo_url']}")
         prompt_lines.append("")
 
     # 4. Add User Description & Titles

@@ -6,6 +6,7 @@
   "included_datasets": {
     "systemMetadata": true,
     "professionalLinks": true,
+    "logo": true,
     "BannerDetails": true,
     "experience": true,
     "projects": true,
