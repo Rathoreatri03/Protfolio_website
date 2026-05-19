@@ -6,12 +6,12 @@
         {
           "name": "Python & PyTorch",
           "progress": 95,
-          "format": "percent"
+          "format": "tier"
         },
         {
           "name": "TensorFlow & Keras",
-          "progress": 90,
-          "format": "percent"
+          "progress": 80,
+          "format": "tier"
         },
         {
           "name": "OpenCV (Computer Vision)",
