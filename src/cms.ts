@@ -62,19 +62,25 @@ cmsApp.get("/api/cms/load", async (c) => {
 
     const items = await dirRes.json() as Array<{ name: string; type: string }>;
     
-    // Filter to JSON files only, excluding package.json, tsconfig.json, dodo_prompt.json
+    // Schema files end with .schema.json
+    const schemaFiles = items
+      .filter(item => item.type === "file" && item.name.endsWith(".schema.json"))
+      .map(item => item.name);
+
+    // Content files are JSON files that do not end with .schema.json, excluding package.json, etc.
     const jsonFiles = items
       .filter(item => 
         item.type === "file" && 
         item.name.endsWith(".json") && 
+        !item.name.endsWith(".schema.json") &&
         item.name !== "dodo_prompt.json" && 
         item.name !== "package.json" && 
         item.name !== "tsconfig.json"
       )
       .map(item => item.name);
 
-    // Fetch all of them in parallel
-    const fetches = jsonFiles.map(filename => 
+    // Fetch all content files and schema files in parallel
+    const fetchesJson = jsonFiles.map(filename => 
       fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
         headers: {
           "Authorization": `token ${ghToken}`,
@@ -83,11 +89,53 @@ cmsApp.get("/api/cms/load", async (c) => {
       })
     );
 
-    const responses = await Promise.all(fetches);
-    const db: Record<string, { content: any; sha: string }> = {};
+    const fetchesSchema = schemaFiles.map(filename => 
+      fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
+        headers: {
+          "Authorization": `token ${ghToken}`,
+          "User-Agent": "DodoCmsEngine"
+        }
+      })
+    );
+
+    const allResponses = await Promise.all([...fetchesJson, ...fetchesSchema]);
+    
+    const jsonResponses = allResponses.slice(0, jsonFiles.length);
+    const schemaResponses = allResponses.slice(jsonFiles.length);
+
+    // Parse all schema files first
+    const schemas: Record<string, { title: string; type: "list" | "object"; schema: any[]; sha: string }> = {};
+
+    for (let i = 0; i < schemaFiles.length; i++) {
+      const res = schemaResponses[i];
+      if (!res.ok) continue;
+
+      const fileData = await res.json() as { content: string; sha: string };
+      const decoded = decodeURIComponent(
+        atob(fileData.content.replace(/\s/g, ""))
+          .split("")
+          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      
+      const schemaKey = schemaFiles[i].replace(".schema.json", "");
+      try {
+        const parsed = JSON.parse(decoded);
+        schemas[schemaKey] = {
+          title: parsed.title,
+          type: parsed.type,
+          schema: parsed.schema,
+          sha: fileData.sha
+        };
+      } catch (e) {
+        console.error(`Failed to parse schema file ${schemaFiles[i]}`);
+      }
+    }
+
+    const db: Record<string, { content: any; sha: string; schema?: any[]; type?: string; title?: string; schemaSha?: string }> = {};
 
     for (let i = 0; i < jsonFiles.length; i++) {
-      const res = responses[i];
+      const res = jsonResponses[i];
       const filename = jsonFiles[i];
       const key = filename.replace(".json", "");
 
@@ -122,7 +170,6 @@ cmsApp.get("/api/cms/load", async (c) => {
       }
 
       const fileData = await res.json() as { content: string; sha: string };
-      // Base64 decode utf-8 cleanly
       const decoded = decodeURIComponent(
         atob(fileData.content.replace(/\s/g, ""))
           .split("")
@@ -134,6 +181,14 @@ cmsApp.get("/api/cms/load", async (c) => {
         content: JSON.parse(decoded),
         sha: fileData.sha
       };
+
+      // Attach schema if schema file exists
+      if (schemas[key]) {
+        db[key].title = schemas[key].title;
+        db[key].type = schemas[key].type;
+        db[key].schema = schemas[key].schema;
+        db[key].schemaSha = schemas[key].sha;
+      }
     }
 
     return c.json({ db });
@@ -225,7 +280,7 @@ cmsApp.post("/api/cms/delete", async (c) => {
   const branch = "Json_data";
 
   try {
-    // 1. Fetch the file SHA first
+    // 1. Fetch content file SHA first
     const shaRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.json?ref=${branch}`, {
       headers: {
         "Authorization": `token ${ghToken}`,
@@ -233,33 +288,60 @@ cmsApp.post("/api/cms/delete", async (c) => {
       }
     });
 
-    if (!shaRes.ok) {
-      return c.json({ success: true, message: "File already deleted or does not exist." });
+    if (shaRes.ok) {
+      const shaData = await shaRes.json() as { sha: string };
+      // Delete the content file
+      const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.json`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `token ${ghToken}`,
+          "User-Agent": "DodoCmsEngine",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `Admin CMS: deleted custom section ${filename}.json`,
+          sha: shaData.sha,
+          branch: branch
+        })
+      });
+
+      if (!deleteRes.ok) {
+        const errText = await deleteRes.text();
+        console.error(`Failed to delete content file: ${errText}`);
+      }
     }
 
-    const shaData = await shaRes.json() as { sha: string };
-
-    // 2. Delete the file using the GitHub API
-    const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.json`, {
-      method: "DELETE",
+    // 2. Fetch and delete schema companion file if it exists
+    const schemaShaRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.schema.json?ref=${branch}`, {
       headers: {
         "Authorization": `token ${ghToken}`,
-        "User-Agent": "DodoCmsEngine",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: `Admin CMS: deleted custom section ${filename}.json`,
-        sha: shaData.sha,
-        branch: branch
-      })
+        "User-Agent": "DodoCmsEngine"
+      }
     });
 
-    if (!deleteRes.ok) {
-      const errText = await deleteRes.text();
-      throw new Error(`Failed to delete file from GitHub: ${errText}`);
+    if (schemaShaRes.ok) {
+      const schemaShaData = await schemaShaRes.json() as { sha: string };
+      const deleteSchemaRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.schema.json`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `token ${ghToken}`,
+          "User-Agent": "DodoCmsEngine",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `Admin CMS: deleted schema ${filename}.schema.json`,
+          sha: schemaShaData.sha,
+          branch: branch
+        })
+      });
+
+      if (!deleteSchemaRes.ok) {
+        const errText = await deleteSchemaRes.text();
+        console.error(`Failed to delete schema companion file: ${errText}`);
+      }
     }
 
-    return c.json({ success: true, message: `Successfully deleted ${filename}.json from GitHub` });
+    return c.json({ success: true, message: `Successfully deleted custom section ${filename} from GitHub` });
   } catch (err: any) {
     return c.json({ error: `CMS delete failed: ${err.message}` }, 500);
   }
