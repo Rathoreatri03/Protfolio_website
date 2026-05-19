@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { NeuralBackground } from "@/components/NeuralBackground";
 import { usePortfolioData } from "@/hooks/usePortfolioData";
 import { useRef, useState, useEffect } from "react";
-import { DodoAI } from "@/components/DodoAI";
+import { DodoAI } from "@/components/dodo/DodoAI";
 import { Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
 
