@@ -90,14 +90,36 @@ cmsApp.get("/api/cms/load", async (c) => {
       }
     });
 
-    const allResponses = await Promise.all([...fetchesJson, structFetch]);
+    const promptFetch = fetch(`https://api.github.com/repos/${repo}/contents/dodo_prompt.json?ref=${branch}`, {
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine"
+      }
+    });
+
+    const compileFetch = fetch(`https://api.github.com/repos/${repo}/contents/compile_prompt.py?ref=${branch}`, {
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine"
+      }
+    });
+
+    const allResponses = await Promise.all([
+      ...fetchesJson, 
+      structFetch,
+      promptFetch,
+      compileFetch
+    ]);
     
     const jsonResponses = allResponses.slice(0, jsonFiles.length);
     const structResponse = allResponses[jsonFiles.length];
+    const promptResponse = allResponses[jsonFiles.length + 1];
+    const compileResponse = allResponses[jsonFiles.length + 2];
 
     // Parse unified schema config
     const schemas: Record<string, { title: string; type: "list" | "object" | "tags" | "categories"; schema: any[]; sha: string }> = {};
     let structureSha = "";
+    let structureContent: any = null;
 
     if (structResponse.ok) {
       try {
@@ -109,7 +131,7 @@ cmsApp.get("/api/cms/load", async (c) => {
             .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
             .join("")
         );
-        const structureContent = JSON.parse(decoded);
+        structureContent = JSON.parse(decoded);
         for (const key of Object.keys(structureContent)) {
           schemas[key] = {
             title: structureContent[key].title,
@@ -123,7 +145,7 @@ cmsApp.get("/api/cms/load", async (c) => {
       }
     }
 
-    const db: Record<string, { content: any; sha: string; schema?: any[]; type?: string; title?: string; schemaSha?: string }> = {};
+    const db: Record<string, { content: any; sha: string; schema?: any[]; type?: string; title?: string; schemaSha?: string; isSystemFile?: boolean; readOnly?: boolean }> = {};
 
     for (let i = 0; i < jsonFiles.length; i++) {
       const res = jsonResponses[i];
@@ -180,6 +202,61 @@ cmsApp.get("/api/cms/load", async (c) => {
         db[key].schema = schemas[key].schema;
         db[key].schemaSha = schemas[key].sha;
       }
+    }
+
+    // Attach system files as read-only db keys
+    if (structResponse.ok && structureContent) {
+      db["admin_config/json_structure"] = {
+        content: structureContent,
+        sha: structureSha,
+        title: "Schema Registry",
+        type: "object",
+        schema: [],
+        isSystemFile: true,
+        readOnly: true
+      };
+    }
+
+    if (promptResponse.ok) {
+      try {
+        const fileData = await promptResponse.json() as { content: string; sha: string };
+        const decoded = decodeURIComponent(
+          atob(fileData.content.replace(/\s/g, ""))
+            .split("")
+            .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        db["dodo_prompt"] = {
+          content: JSON.parse(decoded),
+          sha: fileData.sha,
+          title: "Compiled Prompt",
+          type: "object",
+          schema: [],
+          isSystemFile: true,
+          readOnly: true
+        };
+      } catch (e) {}
+    }
+
+    if (compileResponse.ok) {
+      try {
+        const fileData = await compileResponse.json() as { content: string; sha: string };
+        const decoded = decodeURIComponent(
+          atob(fileData.content.replace(/\s/g, ""))
+            .split("")
+            .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        db["compile_prompt_py"] = {
+          content: { code: decoded },
+          sha: fileData.sha,
+          title: "Prompt Compiler Script",
+          type: "object",
+          schema: [],
+          isSystemFile: true,
+          readOnly: true
+        };
+      } catch (e) {}
     }
 
     return c.json({ db });
