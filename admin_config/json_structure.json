@@ -391,8 +391,8 @@
     "isSystemFile": true,
     "readOnly": true
   },
-  "test": {
-    "title": "test",
+  "test1": {
+    "title": "test1",
     "type": "list",
     "schema": [
       {
@@ -402,7 +402,7 @@
       }
     ],
     "isSystemFile": true,
-    "readOnly": true,
+    "readOnly": false,
     "skipPromptCompile": true
   }
 }
