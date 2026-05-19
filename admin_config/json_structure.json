@@ -39,6 +39,7 @@
   "dodoPromptConfig": {
     "title": "Assistant Rules",
     "type": "object",
+    "skipPromptCompile": true,
     "schema": [
       {
         "key": "system_instruction",
@@ -377,6 +378,7 @@
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
+    "skipPromptCompile": true,
     "schema": []
   }
 }
