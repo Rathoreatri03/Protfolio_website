@@ -103,6 +103,8 @@ interface CustomSectionPanelProps {
   publishing: string | null;
   handleDeleteCustomSection: (sectionKey: string) => void;
   token: string | null;
+  onRefresh: () => void | Promise<void>;
+  isRefreshing: boolean;
 }
 
 export function CustomSectionPanel({
@@ -112,7 +114,9 @@ export function CustomSectionPanel({
   saveFile,
   publishing,
   handleDeleteCustomSection,
-  token
+  token,
+  onRefresh,
+  isRefreshing
 }: CustomSectionPanelProps) {
   const [showEditSchema, setShowEditSchema] = useState(false);
   const [showAddFieldModal, setShowAddFieldModal] = useState(false);
@@ -260,6 +264,14 @@ export function CustomSectionPanel({
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold tracking-tight">{section.title}</h2>
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="p-1 text-muted-foreground hover:text-[#00ff88] hover:bg-white/5 border border-transparent hover:border-white/10 rounded transition-all cursor-pointer disabled:opacity-50"
+              title="Refresh remote data"
+            >
+              <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin text-[#00ff88]' : ''}`} />
+            </button>
             <span className="text-[9px] font-mono-fira px-2 py-0.5 rounded-full border border-white/10 text-muted-foreground uppercase bg-white/[0.02]">
               {section.type === "list" 
                 ? "Dynamic List" 

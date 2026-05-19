@@ -10,6 +10,8 @@ interface JsonEditorPanelProps {
   saveFile: (fileKey: CMSFile) => Promise<void>;
   publishing: string | null;
   onClose: () => void;
+  onRefresh: () => void | Promise<void>;
+  isRefreshing: boolean;
 }
 
 export function JsonEditorPanel({
@@ -18,7 +20,9 @@ export function JsonEditorPanel({
   setDb,
   saveFile,
   publishing,
-  onClose
+  onClose,
+  onRefresh,
+  isRefreshing
 }: JsonEditorPanelProps) {
   const isSystemFile = db[activeTab as keyof DBState]?.isSystemFile || false;
   const isReadOnly = db[activeTab as keyof DBState]?.readOnly || false;
@@ -104,6 +108,14 @@ export function JsonEditorPanel({
             <h2 className="text-xl font-bold tracking-tight text-white">
               {activeTab === "compile_prompt_py" ? "compile_prompt.py" : activeTab.endsWith(".json") ? activeTab : `${activeTab}.json`}
             </h2>
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="p-1 text-muted-foreground hover:text-[#00ff88] hover:bg-white/5 border border-transparent hover:border-white/10 rounded transition-all cursor-pointer disabled:opacity-50"
+              title="Refresh remote data"
+            >
+              <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin text-[#00ff88]' : ''}`} />
+            </button>
             <span className={`text-[9px] font-mono-fira px-2 py-0.5 rounded-full border uppercase ${
               isReadOnly 
                 ? "border-amber-500/20 text-amber-400 bg-amber-500/5" 

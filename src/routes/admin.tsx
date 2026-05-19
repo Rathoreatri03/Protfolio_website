@@ -55,6 +55,24 @@ function AdminComponent() {
   
   const [activeTab, setActiveTab] = useState<string>("systemMetadata");
   const [editMode, setEditMode] = useState<"visual" | "json">("visual");
+  const [isReloading, setIsReloading] = useState(false);
+
+  const reloadDatabase = async () => {
+    if (!token) {
+      toast.error("Access token not available. Please verify session.");
+      return;
+    }
+    setIsReloading(true);
+    toast.loading("Reloading dynamic files from GitHub...", { id: "refresh-db" });
+    try {
+      await loadDatabase(token);
+      toast.success("All data files updated to latest remote version!", { id: "refresh-db" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reload databases.", { id: "refresh-db" });
+    } finally {
+      setIsReloading(false);
+    }
+  };
 
   // Custom Schema Wizard States
   const [showWizard, setShowWizard] = useState(false);
@@ -529,6 +547,8 @@ function AdminComponent() {
             saveFile={saveFile}
             publishing={publishing}
             onClose={() => {}}
+            onRefresh={reloadDatabase}
+            isRefreshing={isReloading}
           />
         ) : editMode === "json" && db ? (
           <JsonEditorPanel
@@ -538,6 +558,8 @@ function AdminComponent() {
             saveFile={saveFile}
             publishing={publishing}
             onClose={() => setEditMode("visual")}
+            onRefresh={reloadDatabase}
+            isRefreshing={isReloading}
           />
         ) : (
           <>
@@ -551,6 +573,8 @@ function AdminComponent() {
                 publishing={publishing}
                 handleDeleteCustomSection={handleDeleteCustomSection}
                 token={token}
+                onRefresh={reloadDatabase}
+                isRefreshing={isReloading}
               />
             )}
 
