@@ -34,5 +34,53 @@
   },
   "footer": {
     "copyright_text": "ALL_SYSTEMS_DODO"
+  },
+  "customSections": {
+    "test": {
+      "title": "test",
+      "type": "list",
+      "schema": [
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "string"
+        },
+        {
+          "key": "new",
+          "label": "new",
+          "type": "longtext"
+        },
+        {
+          "key": "test",
+          "label": "test",
+          "type": "string"
+        },
+        {
+          "key": "wow",
+          "label": "wow",
+          "type": "string"
+        }
+      ],
+      "content": [
+        {
+          "title": "",
+          "new": "",
+          "test": "",
+          "wow": ""
+        },
+        {
+          "title": "",
+          "new": "",
+          "test": "",
+          "wow": ""
+        },
+        {
+          "title": "",
+          "new": "",
+          "test": "",
+          "wow": ""
+        }
+      ]
+    }
   }
 }
