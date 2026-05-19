@@ -34,11 +34,13 @@ function setNestedValue(obj: any, path: string, value: any): any {
 function CustomSelect({
   value,
   onChange,
-  options
+  options,
+  onOpenChange
 }: {
   value: string;
   onChange: (val: string) => void;
   options: { value: string; label: string }[];
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +54,10 @@ function CustomSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
 
   const selectedOpt = options.find(o => o.value === value) || options[0];
 
@@ -76,7 +82,7 @@ function CustomSelect({
                 onChange(opt.value);
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-3 py-1.5 text-[10px] font-sans transition-all hover:bg-[#00ff88]/10 hover:text-[#00ff88] block truncate ${
+              className={`w-full text-left px-3 py-1.5 text-[10px] font-sans transition-all hover:bg-[#00ff88]/10 hover:text-[#00ff88] block truncate cursor-pointer ${
                 opt.value === value ? "text-[#00ff88] bg-[#00ff88]/5 font-bold" : "text-white/70"
               }`}
             >
@@ -113,14 +119,18 @@ export function CustomSectionPanel({
 
   const [formatMap, setFormatMap] = useState<Record<string, "percent" | "out10" | "custom" | "tier">>({});
   const [customMaxMap, setCustomMaxMap] = useState<Record<string, number>>({});
+  const [activeOpenSelect, setActiveOpenSelect] = useState<string | null>(null);
   
-  const getSkillFormat = (progress: number, key: string) => {
+  const getSkillFormat = (skill: any, key: string) => {
+    if (skill?.format) return skill.format;
     if (formatMap[key]) return formatMap[key];
+    const progress = skill?.progress || 0;
     if (progress === 95 || progress === 80 || progress === 60 || progress === 40) return "tier";
     return "percent";
   };
 
-  const getCustomMax = (key: string) => {
+  const getCustomMax = (skill: any, key: string) => {
+    if (skill?.customMax !== undefined) return skill.customMax;
     return customMaxMap[key] || 100;
   };
 
@@ -251,7 +261,13 @@ export function CustomSectionPanel({
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold tracking-tight">{section.title}</h2>
             <span className="text-[9px] font-mono-fira px-2 py-0.5 rounded-full border border-white/10 text-muted-foreground uppercase bg-white/[0.02]">
-              {section.type === "list" ? "Dynamic List" : "Single Config"}
+              {section.type === "list" 
+                ? "Dynamic List" 
+                : section.type === "categories" 
+                  ? "Skills Matrix" 
+                  : section.type === "tags" 
+                    ? "Tech Stack" 
+                    : "Single Config"}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">Stored independently on GitHub as <span className="font-mono-fira text-[#00ff88]">{activeTab}.json</span>.</p>
@@ -596,8 +612,15 @@ export function CustomSectionPanel({
             </div>
           ) : (
             <div className="space-y-6">
-              {(db[activeTab].content.categories || []).map((cat: any, catIdx: number) => (
-                <div key={catIdx} className="glass-card rounded-2xl p-6 border border-white/5 bg-white/[0.005] space-y-4">
+              {(db[activeTab].content.categories || []).map((cat: any, catIdx: number) => {
+                const isCategoryActive = activeOpenSelect?.startsWith(`${catIdx}-`);
+                return (
+                  <div
+                    key={catIdx}
+                    className={`glass-card rounded-2xl p-6 border border-white/5 bg-white/[0.005] space-y-4 relative transition-all duration-200 ${
+                      isCategoryActive ? "z-30" : "z-10"
+                    }`}
+                  >
                   {/* Category Header */}
                   <div className="flex items-center justify-between border-b border-white/5 pb-3 gap-4">
                     <div className="flex-1 max-w-sm">
@@ -619,7 +642,7 @@ export function CustomSectionPanel({
                         onClick={() => {
                           const currentData = db[activeTab].content;
                           const newCats = [...currentData.categories];
-                          newCats[catIdx].skills.push({ name: "New Skill", progress: 80 });
+                          newCats[catIdx].skills.push({ name: "New Skill", progress: 80, format: "percent" });
                           updateCustomContent({ ...currentData, categories: newCats });
                           toast.success("Added new item to category.");
                         }}
@@ -656,169 +679,196 @@ export function CustomSectionPanel({
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {cat.skills.map((skill: any, skillIdx: number) => (
-                        <div key={skillIdx} className="p-3 bg-white/[0.005] border border-white/5 rounded-2xl flex flex-col gap-2 relative group">
-                          <button
-                            onClick={() => {
-                              setConfirmModal({
-                                isOpen: true,
-                                title: "Remove Skill Item",
-                                message: `Are you sure you want to remove the skill item "${skill.name || 'unnamed'}" from this category?`,
-                                onConfirm: () => {
-                                  setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                                  const currentData = db[activeTab].content;
-                                  const newCats = [...currentData.categories];
-                                  newCats[catIdx].skills = newCats[catIdx].skills.filter((_: any, idx: number) => idx !== skillIdx);
-                                  updateCustomContent({ ...currentData, categories: newCats });
-                                  toast.success("Item removed.");
-                                }
-                              });
-                            }}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all p-1 rounded hover:bg-white/5 cursor-pointer"
-                            title="Remove Item"
+                      {cat.skills.map((skill: any, skillIdx: number) => {
+                        const isDropdownActive = activeOpenSelect === `${catIdx}-${skillIdx}`;
+                        return (
+                          <div
+                            key={skillIdx}
+                            className={`p-3 bg-white/[0.005] border rounded-2xl flex flex-col gap-2 relative group transition-all duration-200 ${
+                              isDropdownActive 
+                                ? "z-40 border-[#00ff88]/30 bg-[#070707] shadow-[0_0_20px_rgba(0,255,136,0.04)]" 
+                                : "border-white/5 z-10"
+                            }`}
                           >
-                            <Trash className="size-3" />
-                          </button>
-
-                          <div className="space-y-1">
-                            <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Name</span>
-                            <input
-                              type="text"
-                              value={skill.name || ""}
-                              placeholder="e.g. Python"
-                              onChange={(e) => {
-                                const currentData = db[activeTab].content;
-                                const newCats = [...currentData.categories];
-                                newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], name: e.target.value };
-                                updateCustomContent({ ...currentData, categories: newCats });
-                              }}
-                              className="cyber-input text-xs w-full font-bold"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 mt-1">
-                            <div className="space-y-1">
-                              <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Format</span>
-                              <CustomSelect
-                                value={getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`)}
-                                onChange={(val) => {
-                                  const format = val as any;
-                                  setFormatMap({ ...formatMap, [`${catIdx}-${skillIdx}`]: format });
-                                  
-                                  let newProgress = skill.progress || 0;
-                                  if (format === "tier") {
-                                    newProgress = 95;
+                            <button
+                              onClick={() => {
+                                setConfirmModal({
+                                  isOpen: true,
+                                  title: "Remove Skill Item",
+                                  message: `Are you sure you want to remove the skill item "${skill.name || 'unnamed'}" from this category?`,
+                                  onConfirm: () => {
+                                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                    const currentData = db[activeTab].content;
+                                    const newCats = [...currentData.categories];
+                                    newCats[catIdx].skills = newCats[catIdx].skills.filter((_: any, idx: number) => idx !== skillIdx);
+                                    updateCustomContent({ ...currentData, categories: newCats });
+                                    toast.success("Item removed.");
                                   }
+                                });
+                              }}
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all p-1 rounded hover:bg-white/5 cursor-pointer"
+                              title="Remove Item"
+                            >
+                              <Trash className="size-3" />
+                            </button>
+
+                            <div className="space-y-1">
+                              <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Name</span>
+                              <input
+                                type="text"
+                                value={skill.name || ""}
+                                placeholder="e.g. Python"
+                                onChange={(e) => {
                                   const currentData = db[activeTab].content;
                                   const newCats = [...currentData.categories];
-                                  newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: newProgress };
+                                  newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], name: e.target.value };
                                   updateCustomContent({ ...currentData, categories: newCats });
                                 }}
-                                options={[
-                                  { value: "percent", label: "Percentage (%)" },
-                                  { value: "out10", label: "Out of 10" },
-                                  { value: "custom", label: "Custom Max" },
-                                  { value: "tier", label: "Expertise Tier" }
-                                ]}
+                                className="cyber-input text-xs w-full font-bold"
                               />
                             </div>
 
-                            <div className="space-y-1">
-                              <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Value</span>
-                              {getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "tier" ? (
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              <div className="space-y-1">
+                                <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Format</span>
                                 <CustomSelect
-                                  value={String(skill.progress >= 90 ? "95" : skill.progress >= 75 ? "80" : skill.progress >= 50 ? "60" : "40")}
-                                  onChange={(val) => {
-                                    const currentData = db[activeTab].content;
-                                    const newCats = [...currentData.categories];
-                                    newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: parseInt(val) };
-                                    updateCustomContent({ ...currentData, categories: newCats });
+                                  value={getSkillFormat(skill, `${catIdx}-${skillIdx}`)}
+                                  onOpenChange={(open) => {
+                                    if (open) setActiveOpenSelect(`${catIdx}-${skillIdx}`);
+                                    else if (activeOpenSelect === `${catIdx}-${skillIdx}`) setActiveOpenSelect(null);
                                   }}
-                                  options={[
-                                    { value: "95", label: "Expert (95%)" },
-                                    { value: "80", label: "Advanced (80%)" },
-                                    { value: "60", label: "Intermediate (60%)" },
-                                    { value: "40", label: "Beginner (40%)" }
-                                  ]}
-                                />
-                              ) : getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "custom" ? (
-                                <div className="flex gap-1">
-                                  <input
-                                    type="number"
-                                    placeholder="Val"
-                                    value={Math.round((skill.progress || 0) / 100 * getCustomMax(`${catIdx}-${skillIdx}`))}
-                                    onChange={(e) => {
-                                      const numVal = parseFloat(e.target.value) || 0;
-                                      const maxLimit = getCustomMax(`${catIdx}-${skillIdx}`);
-                                      const pct = Math.min(100, Math.max(0, Math.round((numVal / maxLimit) * 100)));
-                                      const currentData = db[activeTab].content;
-                                      const newCats = [...currentData.categories];
-                                      newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: pct };
-                                      updateCustomContent({ ...currentData, categories: newCats });
-                                    }}
-                                    className="w-1/2 cyber-input text-[10px] text-white font-bold py-1 px-1 text-center"
-                                    title="Current Value"
-                                  />
-                                  <span className="text-[10px] text-muted-foreground self-center">/</span>
-                                  <input
-                                    type="number"
-                                    placeholder="Max"
-                                    value={getCustomMax(`${catIdx}-${skillIdx}`)}
-                                    onChange={(e) => {
-                                      const newMax = parseFloat(e.target.value) || 100;
-                                      setCustomMaxMap({ ...customMaxMap, [`${catIdx}-${skillIdx}`]: newMax });
-                                      
-                                      const currentVal = Math.round((skill.progress || 0) / 100 * getCustomMax(`${catIdx}-${skillIdx}`));
-                                      const pct = Math.min(100, Math.max(0, Math.round((currentVal / newMax) * 100)));
-                                      const currentData = db[activeTab].content;
-                                      const newCats = [...currentData.categories];
-                                      newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: pct };
-                                      updateCustomContent({ ...currentData, categories: newCats });
-                                    }}
-                                    className="w-1/2 cyber-input text-[10px] text-[#00ff88] font-bold py-1 px-1 text-center"
-                                    title="Max limit"
-                                  />
-                                </div>
-                              ) : (
-                                <input
-                                  type="number"
-                                  value={
-                                    getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "out10"
-                                      ? parseFloat(((skill.progress || 0) / 10).toFixed(1))
-                                      : skill.progress || 0
-                                  }
-                                  min="0"
-                                  max={
-                                    getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "out10"
-                                      ? 10
-                                      : 100
-                                  }
-                                  step="0.1"
-                                  onChange={(e) => {
-                                    const format = getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`);
-                                    const numVal = parseFloat(e.target.value) || 0;
-                                    let newProgress = numVal;
-                                    if (format === "out10") {
-                                      newProgress = Math.min(100, Math.max(0, Math.round(numVal * 10)));
-                                    } else {
-                                      newProgress = Math.min(100, Math.max(0, Math.round(numVal)));
+                                  onChange={(val) => {
+                                    const format = val as any;
+                                    setFormatMap({ ...formatMap, [`${catIdx}-${skillIdx}`]: format });
+                                    
+                                    let newProgress = skill.progress || 0;
+                                    if (format === "tier") {
+                                      newProgress = 95;
                                     }
                                     const currentData = db[activeTab].content;
                                     const newCats = [...currentData.categories];
-                                    newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: newProgress };
+                                    newCats[catIdx].skills[skillIdx] = { 
+                                      ...newCats[catIdx].skills[skillIdx], 
+                                      progress: newProgress,
+                                      format: format
+                                    };
                                     updateCustomContent({ ...currentData, categories: newCats });
                                   }}
-                                  className="w-full cyber-input text-[10px] text-white font-bold py-1.5 px-3 text-center"
+                                  options={[
+                                    { value: "percent", label: "Percentage (%)" },
+                                    { value: "out10", label: "Out of 10" },
+                                    { value: "custom", label: "Custom Max" },
+                                    { value: "tier", label: "Expertise Tier" }
+                                  ]}
                                 />
-                              )}
+                              </div>
+
+                              <div className="space-y-1">
+                                <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Value</span>
+                                {getSkillFormat(skill, `${catIdx}-${skillIdx}`) === "tier" ? (
+                                  <CustomSelect
+                                    value={String(skill.progress >= 90 ? "95" : skill.progress >= 75 ? "80" : skill.progress >= 50 ? "60" : "40")}
+                                    onOpenChange={(open) => {
+                                      if (open) setActiveOpenSelect(`${catIdx}-${skillIdx}`);
+                                      else if (activeOpenSelect === `${catIdx}-${skillIdx}`) setActiveOpenSelect(null);
+                                    }}
+                                    onChange={(val) => {
+                                      const currentData = db[activeTab].content;
+                                      const newCats = [...currentData.categories];
+                                      newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: parseInt(val) };
+                                      updateCustomContent({ ...currentData, categories: newCats });
+                                    }}
+                                    options={[
+                                      { value: "95", label: "Expert (95%)" },
+                                      { value: "80", label: "Advanced (80%)" },
+                                      { value: "60", label: "Intermediate (60%)" },
+                                      { value: "40", label: "Beginner (40%)" }
+                                    ]}
+                                  />
+                                ) : getSkillFormat(skill, `${catIdx}-${skillIdx}`) === "custom" ? (
+                                  <div className="flex gap-1">
+                                    <input
+                                      type="number"
+                                      placeholder="Val"
+                                      value={Math.round((skill.progress || 0) / 100 * getCustomMax(skill, `${catIdx}-${skillIdx}`))}
+                                      onChange={(e) => {
+                                        const numVal = parseFloat(e.target.value) || 0;
+                                        const maxLimit = getCustomMax(skill, `${catIdx}-${skillIdx}`);
+                                        const pct = Math.min(100, Math.max(0, Math.round((numVal / maxLimit) * 100)));
+                                        const currentData = db[activeTab].content;
+                                        const newCats = [...currentData.categories];
+                                        newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: pct };
+                                        updateCustomContent({ ...currentData, categories: newCats });
+                                      }}
+                                      className="w-1/2 cyber-input text-[10px] text-white font-bold py-1 px-1 text-center"
+                                      title="Current Value"
+                                    />
+                                    <span className="text-[10px] text-muted-foreground self-center">/</span>
+                                    <input
+                                      type="number"
+                                      placeholder="Max"
+                                      value={getCustomMax(skill, `${catIdx}-${skillIdx}`)}
+                                      onChange={(e) => {
+                                        const newMax = parseFloat(e.target.value) || 100;
+                                        setCustomMaxMap({ ...customMaxMap, [`${catIdx}-${skillIdx}`]: newMax });
+                                        
+                                        const currentVal = Math.round((skill.progress || 0) / 100 * getCustomMax(skill, `${catIdx}-${skillIdx}`));
+                                        const pct = Math.min(100, Math.max(0, Math.round((currentVal / newMax) * 100)));
+                                        const currentData = db[activeTab].content;
+                                        const newCats = [...currentData.categories];
+                                        newCats[catIdx].skills[skillIdx] = { 
+                                          ...newCats[catIdx].skills[skillIdx], 
+                                          progress: pct,
+                                          customMax: newMax
+                                        };
+                                        updateCustomContent({ ...currentData, categories: newCats });
+                                      }}
+                                      className="w-1/2 cyber-input text-[10px] text-[#00ff88] font-bold py-1 px-1 text-center"
+                                      title="Max limit"
+                                    />
+                                  </div>
+                                ) : (
+                                  <input
+                                    type="number"
+                                    value={
+                                      getSkillFormat(skill, `${catIdx}-${skillIdx}`) === "out10"
+                                        ? parseFloat(((skill.progress || 0) / 10).toFixed(1))
+                                        : skill.progress || 0
+                                    }
+                                    min="0"
+                                    max={
+                                      getSkillFormat(skill, `${catIdx}-${skillIdx}`) === "out10"
+                                        ? 10
+                                        : 100
+                                    }
+                                    step="0.1"
+                                    onChange={(e) => {
+                                      const format = getSkillFormat(skill, `${catIdx}-${skillIdx}`);
+                                      const numVal = parseFloat(e.target.value) || 0;
+                                      let newProgress = numVal;
+                                      if (format === "out10") {
+                                        newProgress = Math.min(100, Math.max(0, Math.round(numVal * 10)));
+                                      } else {
+                                        newProgress = Math.min(100, Math.max(0, Math.round(numVal)));
+                                      }
+                                      const currentData = db[activeTab].content;
+                                      const newCats = [...currentData.categories];
+                                      newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: newProgress };
+                                      updateCustomContent({ ...currentData, categories: newCats });
+                                    }}
+                                    className="w-full cyber-input text-[10px] text-white font-bold py-1.5 px-3 text-center"
+                                  />
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

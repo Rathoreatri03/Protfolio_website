@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { usePortfolioData, SkillCategory } from "@/hooks/usePortfolioData";
+import { usePortfolioData, SkillCategory, Skill } from "@/hooks/usePortfolioData";
 import { useState } from "react";
 import { X, Maximize2 } from "lucide-react";
 
@@ -15,6 +15,24 @@ const CHART_COLORS = [
   "#00FF9D",
   "#9D00FF",
 ];
+
+export function formatSkillValue(s: Skill) {
+  const format = s.format || (s.progress === 95 || s.progress === 80 || s.progress === 60 || s.progress === 40 ? "tier" : "percent");
+  if (format === "tier") {
+    if (s.progress >= 90) return "Expert";
+    if (s.progress >= 75) return "Advanced";
+    if (s.progress >= 50) return "Intermediate";
+    return "Beginner";
+  }
+  if (format === "out10") {
+    return `${(s.progress / 10).toFixed(1)}/10`;
+  }
+  if (format === "custom") {
+    const max = s.customMax || 100;
+    return `${Math.round((s.progress / 100) * max)}/${max}`;
+  }
+  return `${s.progress}%`;
+}
 
 function CategoryRadarModal({ category, onClose }: { category: SkillCategory; onClose: () => void }) {
   const [highlightedSkill, setHighlightedSkill] = useState<string | null>(null);
@@ -123,7 +141,7 @@ function CategoryRadarModal({ category, onClose }: { category: SkillCategory; on
                   <span className="text-[8px] sm:text-[9px] font-display font-bold tracking-widest text-white/70 uppercase truncate">{skill.name}</span>
                 </div>
                 <div className="flex justify-between items-baseline">
-                  <span className={`text-lg sm:text-xl font-display font-bold transition-colors duration-300 ${highlightedSkill === skill.name ? "text-primary" : "text-white"}`}>{skill.progress}%</span>
+                  <span className={`text-lg sm:text-xl font-display font-bold transition-colors duration-300 ${highlightedSkill === skill.name ? "text-primary" : "text-white"}`}>{formatSkillValue(skill)}</span>
                   <span className="text-[7px] font-mono text-primary/60 uppercase">Optimal</span>
                 </div>
               </div>
@@ -184,7 +202,7 @@ function Skills() {
                           {s.name}
                         </p>
                         <span className="text-[10px] font-mono font-bold text-white/10 group-hover/skill:text-primary transition-colors">
-                          {s.progress}%
+                          {formatSkillValue(s)}
                         </span>
                       </div>
                       <div className="relative flex gap-[1.5px] h-2.5 sm:h-3">

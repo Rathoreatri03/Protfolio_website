@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { NeuralBackground } from "../components/NeuralBackground";
-import { CMSFile, DBState } from "../components/admin/types";
+import { CMSFile, DBState, DEFAULT_SCHEMAS } from "../components/admin/types";
 import { CustomSectionPanel } from "../components/admin/CustomSectionPanel";
 import { CustomSectionWizard } from "../components/admin/CustomSectionWizard";
 import { JsonEditorPanel } from "../components/admin/JsonEditorPanel";
@@ -96,15 +96,41 @@ function AdminComponent() {
             throw new Error(errData.error || `Failed to delete ${sectionKey} from GitHub`);
           }
 
-          // 2. Remove from active DB state in-memory
-          const updatedDb = { ...db };
-          delete updatedDb[sectionKey];
-          setDb(updatedDb);
+          // 2. Remove from active DB state in-memory or reset if standard section
+          const isStandard = [
+            "systemMetadata", "professionalLinks", "logo", "BannerDetails", 
+            "experience", "projects", "researchInsights", "successStories", 
+            "skillsData", "techstack", "dodoPromptConfig"
+          ].includes(sectionKey);
 
-          if (activeTab === sectionKey) {
-            const remainingKeys = Object.keys(updatedDb);
-            setActiveTab(remainingKeys[0] || "");
+          const updatedDb = { ...db };
+          if (isStandard) {
+            updatedDb[sectionKey] = {
+              content: sectionKey === "experience" || sectionKey === "projects" || sectionKey === "researchInsights" || sectionKey === "successStories" || sectionKey === "techstack"
+                ? []
+                : sectionKey === "skillsData"
+                  ? { categories: [] }
+                  : sectionKey === "dodoPromptConfig"
+                    ? {
+                        system_instruction: "",
+                        personality_protocol: "",
+                        behavioral_guidelines: "",
+                        atris_information: ""
+                      }
+                    : {},
+              sha: "",
+              schema: DEFAULT_SCHEMAS[sectionKey]?.schema || [],
+              type: DEFAULT_SCHEMAS[sectionKey]?.type || "object",
+              title: DEFAULT_SCHEMAS[sectionKey]?.title || sectionKey
+            };
+          } else {
+            delete updatedDb[sectionKey];
+            if (activeTab === sectionKey) {
+              const remainingKeys = Object.keys(updatedDb);
+              setActiveTab(remainingKeys[0] || "");
+            }
           }
+          setDb(updatedDb);
 
           toast.success(`Successfully deleted "${sectionKey}" from GitHub!`);
         } catch (err: any) {
@@ -234,6 +260,35 @@ function AdminComponent() {
         }
       }
 
+      // Ensure all standard keys exist. If they are missing (deleted or not on GitHub), populate with default empty structures.
+      const standardKeys = [
+        "systemMetadata", "professionalLinks", "logo", "BannerDetails", 
+        "experience", "projects", "researchInsights", "successStories", 
+        "skillsData", "techstack", "dodoPromptConfig"
+      ];
+      for (const key of standardKeys) {
+        if (!loadedDb[key]) {
+          loadedDb[key] = {
+            content: key === "experience" || key === "projects" || key === "researchInsights" || key === "successStories" || key === "techstack"
+              ? []
+              : key === "skillsData"
+                ? { categories: [] }
+                : key === "dodoPromptConfig"
+                  ? {
+                      system_instruction: "",
+                      personality_protocol: "",
+                      behavioral_guidelines: "",
+                      atris_information: ""
+                    }
+                  : {},
+            sha: "",
+            schema: DEFAULT_SCHEMAS[key]?.schema || [],
+            type: DEFAULT_SCHEMAS[key]?.type || "object",
+            title: DEFAULT_SCHEMAS[key]?.title || key
+          };
+        }
+      }
+
       setDb(loadedDb);
       toast.success("Primal dynamic databases compiled successfully!");
     } catch (err: any) {
@@ -266,9 +321,15 @@ function AdminComponent() {
         throw new Error(errData.error || `Failed to save ${fileKey}.json`);
       }
 
-      // 2. Save the companion schema file if schema metadata exists
+      // 2. Save the companion schema file if schema metadata exists or it is a custom layout section
       const schemaFields = db[fileKey].schema;
-      if (schemaFields && schemaFields.length > 0) {
+      const isCustomSection = ![
+        "systemMetadata", "professionalLinks", "logo", "BannerDetails", 
+        "experience", "projects", "researchInsights", "successStories", 
+        "skillsData", "techstack", "dodoPromptConfig"
+      ].includes(fileKey);
+
+      if (isCustomSection || (schemaFields && schemaFields.length > 0)) {
         const resSchema = await fetch(`${WORKER_BASE}/api/cms/save`, {
           method: "POST",
           headers: {
@@ -280,7 +341,7 @@ function AdminComponent() {
             content: {
               title: db[fileKey].title || fileKey,
               type: db[fileKey].type || "list",
-              schema: schemaFields
+              schema: schemaFields || []
             }
           })
         });
