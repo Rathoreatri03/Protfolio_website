@@ -27,6 +27,20 @@ const verifyAuth = (c: any) => {
   return token === secret;
 };
 
+async function fetchInBatches<T, R>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 // 2. Authentication Verification Endpoint
 cmsApp.get("/api/cms/verify", (c) => {
   if (!verifyAuth(c)) {
@@ -73,48 +87,36 @@ cmsApp.get("/api/cms/load", async (c) => {
       )
       .map(item => item.name);
 
-    // Fetch all content files and the unified schema configuration file in parallel
-    const fetchesJson = jsonFiles.map(filename => 
+    // Fetch JSON content files in batches of 4 to prevent connection limit errors
+    const fetchJsonFile = (filename: string) => 
       fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
         headers: {
           "Authorization": `token ${ghToken}`,
           "User-Agent": "DodoCmsEngine"
         }
-      })
-    );
+      });
 
-    const structFetch = fetch(`https://api.github.com/repos/${repo}/contents/admin_config/json_structure.json?ref=${branch}`, {
-      headers: {
-        "Authorization": `token ${ghToken}`,
-        "User-Agent": "DodoCmsEngine"
-      }
-    });
+    const jsonResponses = await fetchInBatches(jsonFiles, 4, fetchJsonFile);
 
-    const promptFetch = fetch(`https://api.github.com/repos/${repo}/contents/dodo_prompt.json?ref=${branch}`, {
-      headers: {
-        "Authorization": `token ${ghToken}`,
-        "User-Agent": "DodoCmsEngine"
-      }
-    });
+    // Fetch system/helper configuration files in parallel
+    const systemFiles = [
+      "admin_config/json_structure.json",
+      "dodo_prompt.json",
+      "compile_prompt.py"
+    ];
 
-    const compileFetch = fetch(`https://api.github.com/repos/${repo}/contents/compile_prompt.py?ref=${branch}`, {
-      headers: {
-        "Authorization": `token ${ghToken}`,
-        "User-Agent": "DodoCmsEngine"
-      }
-    });
+    const fetchSystemFile = (path: string) =>
+      fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`, {
+        headers: {
+          "Authorization": `token ${ghToken}`,
+          "User-Agent": "DodoCmsEngine"
+        }
+      });
 
-    const allResponses = await Promise.all([
-      ...fetchesJson, 
-      structFetch,
-      promptFetch,
-      compileFetch
-    ]);
-    
-    const jsonResponses = allResponses.slice(0, jsonFiles.length);
-    const structResponse = allResponses[jsonFiles.length];
-    const promptResponse = allResponses[jsonFiles.length + 1];
-    const compileResponse = allResponses[jsonFiles.length + 2];
+    const systemResponses = await fetchInBatches(systemFiles, 3, fetchSystemFile);
+    const structResponse = systemResponses[0];
+    const promptResponse = systemResponses[1];
+    const compileResponse = systemResponses[2];
 
     // Parse unified schema config
     const schemas: Record<string, { title: string; type: "list" | "object" | "tags" | "categories"; schema: any[]; sha: string }> = {};
