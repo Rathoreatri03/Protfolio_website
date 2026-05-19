@@ -384,6 +384,19 @@
     "type": "tags",
     "schema": []
   },
+  "test1": {
+    "title": "test1",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      }
+    ],
+    "isSystemFile": true,
+    "readOnly": false
+  },
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
