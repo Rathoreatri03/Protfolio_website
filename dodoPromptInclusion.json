@@ -1,8 +1,5 @@
 {
   "included_datasets": {
-    "certifications": false,
-    "systemMetadata": false,
-    "dodoPromptInclusion": false,
-    "techstack": false
+    "certifications": false
   }
 }
