@@ -35,7 +35,7 @@ cmsApp.get("/api/cms/verify", (c) => {
   return c.json({ status: "authorized", systems: "online" });
 });
 
-// 3. Load entire dynamic database from GitHub in parallel!
+// 3. Load entire dynamic database from GitHub dynamically!
 cmsApp.get("/api/cms/load", async (c) => {
   if (!verifyAuth(c)) return c.json({ error: "Unauthorized" }, 401);
 
@@ -46,24 +46,35 @@ cmsApp.get("/api/cms/load", async (c) => {
 
   const repo = "Rathoreatri03/Portfolio_website";
   const branch = "Json_data";
-  
-  const files = [
-    "systemMetadata.json",
-    "professionalLinks.json",
-    "logo.json",
-    "BannerDetails.json",
-    "experience.json",
-    "projects.json",
-    "researchInsights.json",
-    "successStories.json",
-    "skillsData.json",
-    "techstack.json",
-    "dodoPromptConfig.json"
-  ];
 
   try {
-    // Fetch all files from GitHub Content API in parallel
-    const fetches = files.map(filename => 
+    // 1. Fetch directory listing for the root of the Json_data branch
+    const dirRes = await fetch(`https://api.github.com/repos/${repo}/contents?ref=${branch}`, {
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine"
+      }
+    });
+
+    if (!dirRes.ok) {
+      throw new Error(`Failed to list repo contents: ${dirRes.statusText}`);
+    }
+
+    const items = await dirRes.json() as Array<{ name: string; type: string }>;
+    
+    // Filter to JSON files only, excluding package.json, tsconfig.json, dodo_prompt.json
+    const jsonFiles = items
+      .filter(item => 
+        item.type === "file" && 
+        item.name.endsWith(".json") && 
+        item.name !== "dodo_prompt.json" && 
+        item.name !== "package.json" && 
+        item.name !== "tsconfig.json"
+      )
+      .map(item => item.name);
+
+    // Fetch all of them in parallel
+    const fetches = jsonFiles.map(filename => 
       fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
         headers: {
           "Authorization": `token ${ghToken}`,
@@ -75,9 +86,9 @@ cmsApp.get("/api/cms/load", async (c) => {
     const responses = await Promise.all(fetches);
     const db: Record<string, { content: any; sha: string }> = {};
 
-    for (let i = 0; i < files.length; i++) {
+    for (let i = 0; i < jsonFiles.length; i++) {
       const res = responses[i];
-      const filename = files[i];
+      const filename = jsonFiles[i];
       const key = filename.replace(".json", "");
 
       if (!res.ok) {
@@ -201,6 +212,59 @@ cmsApp.post("/api/cms/save", async (c) => {
     return c.json({ error: `CMS save failed: ${err.message}` }, 500);
   }
 });
+
+// 4.5 Delete a custom JSON file securely on GitHub
+cmsApp.post("/api/cms/delete", async (c) => {
+  if (!verifyAuth(c)) return c.json({ error: "Unauthorized" }, 401);
+
+  const ghToken = c.env.GITHUB_PAT;
+  if (!ghToken) return c.json({ error: "GITHUB_PAT is missing" }, 500);
+
+  const { filename } = await c.req.json<{ filename: string }>();
+  const repo = "Rathoreatri03/Portfolio_website";
+  const branch = "Json_data";
+
+  try {
+    // 1. Fetch the file SHA first
+    const shaRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.json?ref=${branch}`, {
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine"
+      }
+    });
+
+    if (!shaRes.ok) {
+      return c.json({ success: true, message: "File already deleted or does not exist." });
+    }
+
+    const shaData = await shaRes.json() as { sha: string };
+
+    // 2. Delete the file using the GitHub API
+    const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filename}.json`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: `Admin CMS: deleted custom section ${filename}.json`,
+        sha: shaData.sha,
+        branch: branch
+      })
+    });
+
+    if (!deleteRes.ok) {
+      const errText = await deleteRes.text();
+      throw new Error(`Failed to delete file from GitHub: ${errText}`);
+    }
+
+    return c.json({ success: true, message: `Successfully deleted ${filename}.json from GitHub` });
+  } catch (err: any) {
+    return c.json({ error: `CMS delete failed: ${err.message}` }, 500);
+  }
+});
+
 
 // 5. Explicit endpoint to run Master Prompt Edge-Compiler manually
 cmsApp.post("/api/cms/compile", async (c) => {
