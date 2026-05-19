@@ -393,16 +393,12 @@
         "label": "Title",
         "type": "string"
       }
-    ],
-    "isSystemFile": true,
-    "readOnly": false
+    ]
   },
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
-    "schema": [],
-    "isSystemFile": true,
-    "readOnly": true
+    "schema": []
   },
   "ts": {
     "title": "ts",
@@ -413,8 +409,7 @@
         "label": "Title",
         "type": "string"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "tse": {
     "title": "tse",
