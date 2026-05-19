@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GripVertical, ArrowUp, ArrowDown, Trash, Plus, Terminal, Layers } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface CustomListEditorProps {
   schema: Array<{ key: string; label: string; type: string }>;
@@ -14,6 +15,18 @@ export function CustomListEditor({ schema, content, onChange, renderUrlInput }: 
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [dropPlacement, setDropPlacement] = useState<"above" | "below" | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
 
   const list = content || [];
 
@@ -93,10 +106,20 @@ export function CustomListEditor({ schema, content, onChange, renderUrlInput }: 
   };
 
   const handleDelete = (idx: number) => {
-    const newList = [...list];
-    newList.splice(idx, 1);
-    onChange(newList);
-    setSelectedIdx(Math.max(0, idx - 1));
+    const itemLabel = getItemLabel(list[idx], idx);
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Entry Record",
+      message: `Are you sure you want to permanently delete "${itemLabel}" from this list?`,
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        const newList = [...list];
+        newList.splice(idx, 1);
+        onChange(newList);
+        setSelectedIdx(Math.max(0, idx - 1));
+        toast.success("Entry removed from list.");
+      }
+    });
   };
 
   const handleMove = (idx: number, direction: "up" | "down") => {
@@ -369,6 +392,13 @@ export function CustomListEditor({ schema, content, onChange, renderUrlInput }: 
           </div>
         )}
       </div>
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

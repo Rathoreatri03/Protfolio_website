@@ -24,23 +24,16 @@ import {
   ChevronRight,
   LogOut,
   X,
-  Code2
+  Code2,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { NeuralBackground } from "../components/NeuralBackground";
 import { CMSFile, DBState } from "../components/admin/types";
-import { CustomListEditor } from "../components/admin/CustomListEditor";
-import { ObjectTabPanel } from "../components/admin/ObjectTabPanel";
-import { SkillsDataPanel } from "../components/admin/SkillsDataPanel";
-import { TechStackPanel } from "../components/admin/TechStackPanel";
-import { DodoPromptConfigPanel } from "../components/admin/DodoPromptConfigPanel";
 import { CustomSectionPanel } from "../components/admin/CustomSectionPanel";
 import { CustomSectionWizard } from "../components/admin/CustomSectionWizard";
-import { ExperiencePanel } from "../components/admin/ExperiencePanel";
-import { ProjectsPanel } from "../components/admin/ProjectsPanel";
-import { ResearchInsightsPanel } from "../components/admin/ResearchInsightsPanel";
-import { SuccessStoriesPanel } from "../components/admin/SuccessStoriesPanel";
 import { JsonEditorPanel } from "../components/admin/JsonEditorPanel";
+import { ConfirmModal } from "../components/admin/ConfirmModal";
 
 
 
@@ -63,64 +56,64 @@ function AdminComponent() {
 
   // Custom Schema Wizard States
   const [showWizard, setShowWizard] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
 
   const handleDeleteCustomSection = async (sectionKey: string) => {
-    if (!db || !token || !window.confirm(`Are you sure you want to permanently delete custom section "${sectionKey}" from GitHub?`)) return;
-    
-    setPublishing(sectionKey);
-    try {
-      // 1. Instantly delete the file from GitHub
-      const res = await fetch(`${WORKER_BASE}/api/cms/delete`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ filename: sectionKey })
-      });
+    if (!db || !token) return;
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || `Failed to delete ${sectionKey}.json from GitHub`);
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Section Data",
+      message: `Are you sure you want to permanently delete the section "${sectionKey}" and its JSON data schema from GitHub? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setPublishing(sectionKey);
+        try {
+          // 1. Instantly delete the content and schema files from GitHub
+          const res = await fetch(`${WORKER_BASE}/api/cms/delete`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ filename: sectionKey })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || `Failed to delete ${sectionKey} from GitHub`);
+          }
+
+          // 2. Remove from active DB state in-memory
+          const updatedDb = { ...db };
+          delete updatedDb[sectionKey];
+          setDb(updatedDb);
+
+          if (activeTab === sectionKey) {
+            const remainingKeys = Object.keys(updatedDb);
+            setActiveTab(remainingKeys[0] || "");
+          }
+
+          toast.success(`Successfully deleted "${sectionKey}" from GitHub!`);
+        } catch (err: any) {
+          toast.error(err.message);
+        } finally {
+          setPublishing(null);
+        }
       }
-
-      // 2. Also remove from legacy systemMetadata registry if present
-      const updatedMetadata = { ...db.systemMetadata };
-      if (updatedMetadata.content.customSections) {
-        const custom = { ...updatedMetadata.content.customSections };
-        delete custom[sectionKey];
-        updatedMetadata.content.customSections = custom;
-      }
-
-      // 3. Remove from active DB state in-memory
-      const updatedDb = { ...db };
-      delete updatedDb[sectionKey];
-      updatedDb.systemMetadata = updatedMetadata;
-      setDb(updatedDb);
-
-      if (activeTab === sectionKey) {
-        setActiveTab("systemMetadata");
-      }
-
-      // 4. Save metadata registry update to GitHub
-      await fetch(`${WORKER_BASE}/api/cms/save`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          filename: "systemMetadata",
-          content: updatedMetadata.content
-        })
-      });
-
-      toast.success(`Successfully deleted "${sectionKey}" from GitHub!`);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setPublishing(null);
-    }
+    });
   };
 
   const [publishing, setPublishing] = useState<string | null>(null);
@@ -234,25 +227,10 @@ function AdminComponent() {
       const data = await res.json() as { db: DBState };
       const loadedDb = data.db;
 
-      // ── Backward Compatibility Migration ──
-      // If legacy customSections metadata exists in systemMetadata but lacks a standalone file,
-      // reconstruct it in memory.
-      const customSectionsRegistry = loadedDb.systemMetadata?.content?.customSections || {};
-      for (const [key, sec] of Object.entries(customSectionsRegistry) as [string, any][]) {
-        if (!loadedDb[key] || loadedDb[key].content?.schema === undefined) {
-          const contentValue = loadedDb[key]?.content !== undefined 
-            ? loadedDb[key].content 
-            : (sec.content !== undefined ? sec.content : (sec.type === "list" ? [] : {}));
-            
-          loadedDb[key] = {
-            content: {
-              title: sec.title || key,
-              type: sec.type || "object",
-              schema: sec.schema || [],
-              content: contentValue
-            },
-            sha: loadedDb[key]?.sha || ""
-          };
+      // Unwrap any potential legacy wrapped values cleanly
+      for (const key of Object.keys(loadedDb)) {
+        if (loadedDb[key]?.content && typeof loadedDb[key].content === "object" && "schema" in loadedDb[key].content && "content" in loadedDb[key].content) {
+          loadedDb[key].content = (loadedDb[key].content as any).content;
         }
       }
 
@@ -269,23 +247,48 @@ function AdminComponent() {
     setPublishing(fileKey);
 
     try {
-      const payload = {
-        filename: fileKey,
-        content: db[fileKey].content
-      };
-
-      const res = await fetch(`${WORKER_BASE}/api/cms/save`, {
+      // 1. Save the content file (clean content only)
+      const contentToSave = db[fileKey].content;
+      const resSection = await fetch(`${WORKER_BASE}/api/cms/save`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          filename: fileKey,
+          content: contentToSave
+        })
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
+      if (!resSection.ok) {
+        const errData = await resSection.json();
         throw new Error(errData.error || `Failed to save ${fileKey}.json`);
+      }
+
+      // 2. Save the companion schema file if schema metadata exists
+      const schemaFields = db[fileKey].schema;
+      if (schemaFields && schemaFields.length > 0) {
+        const resSchema = await fetch(`${WORKER_BASE}/api/cms/save`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            filename: `${fileKey}.schema`,
+            content: {
+              title: db[fileKey].title || fileKey,
+              type: db[fileKey].type || "list",
+              schema: schemaFields
+            }
+          })
+        });
+
+        if (!resSchema.ok) {
+          const errData = await resSchema.json();
+          throw new Error(errData.error || `Failed to save companion schema for ${fileKey}.schema.json`);
+        }
       }
 
       toast.success(`Successfully saved and recompiled ${fileKey}!`);
@@ -482,7 +485,30 @@ function AdminComponent() {
               <ChevronRight className={`size-3.5 transition-transform duration-300 ${sidebarMinimized ? "" : "rotate-180 text-[#00ff88]"}`} />
             </button>
           </div>
- 
+
+          {/* Search bar & Global Add button (if not minimized) */}
+          {!sidebarMinimized && (
+            <div className="flex items-center gap-2 mb-4 px-1 shrink-0">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Search files..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-2 py-1.5 bg-white/[0.015] border border-white/5 rounded-lg text-[10px] font-sans text-white focus:outline-none focus:border-[#00ff88]/50 focus:bg-white/[0.035] transition-all placeholder:text-muted-foreground/50"
+                />
+                <Search className="size-3 text-muted-foreground/60 absolute left-2.5 top-2.5" />
+              </div>
+              <button
+                onClick={() => setShowWizard(true)}
+                className="p-1.5 bg-[#00ff88]/10 hover:bg-[#00ff88]/20 border border-[#00ff88]/30 hover:border-[#00ff88] text-[#00ff88] rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0"
+                title="New Custom Section"
+              >
+                <Plus className="size-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Navigation Links - Standard + Dynamic Custom Sections */}
           <nav className="flex-1 overflow-y-auto pr-1 flex flex-col gap-1.5 scrollbar-width-none">
             {[
@@ -497,7 +523,15 @@ function AdminComponent() {
               { id: "skillsData", title: "Skills Matrix", label: "skillsData.json", icon: Layers },
               { id: "techstack", title: "Tech Stack", label: "techstack.json", icon: Wrench },
               { id: "dodoPromptConfig", title: "Assistant Rules", label: "dodoPromptConfig.json", icon: Terminal },
-            ].map(tab => {
+            ]
+            .filter(tab => 
+              (!db || db[tab.id] !== undefined) && (
+                tab.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                tab.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                tab.label.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+            )
+            .map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
@@ -531,13 +565,22 @@ function AdminComponent() {
               );
             })}
 
-            {/* Render Custom Dynamic Sections Registry */}
+            {/* Render Custom Dynamic Sections */}
             {db && Object.keys(db)
-              .filter(key => !["systemMetadata", "professionalLinks", "logo", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig"].includes(key))
+              .filter(key => 
+                !["systemMetadata", "professionalLinks", "logo", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig"].includes(key)
+              )
+              .filter(key => {
+                const title = db[key]?.title || key;
+                return (
+                  title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  key.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+              })
               .map(key => {
-                const sec = db[key]?.content;
-                if (!sec || !sec.title) return null;
                 const isActive = activeTab === key;
+                const title = db[key]?.title || key;
+                const type = db[key]?.type || "list";
                 return (
                   <button
                     key={key}
@@ -552,16 +595,16 @@ function AdminComponent() {
                         ? "bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20 active-tab-glow" 
                         : "text-muted-foreground hover:bg-white/5 hover:text-white border border-transparent"
                     }`}
-                    title={sidebarMinimized ? sec.title : undefined}
+                    title={sidebarMinimized ? title : undefined}
                   >
                     <Layers className={`size-3.5 shrink-0 ${isActive ? "text-[#00ff88]" : "text-muted-foreground"} mt-0.5`} />
                     {!sidebarMinimized && (
                       <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
                         <span className={`text-[10px] font-bold tracking-wide uppercase truncate ${isActive ? "text-white" : "text-muted-foreground"}`}>
-                          {sec.title}
+                          {title}
                         </span>
-                        <span className="text-[8px] font-mono-fira text-[#00ff88]/60 truncate mt-0.5">
-                          {sec.type === "list" ? "Dynamic List" : "Single Config"}
+                        <span className="text-[8px] font-mono-fira text-muted-foreground/50 truncate mt-0.5">
+                          {key}.json
                         </span>
                       </div>
                     )}
@@ -569,21 +612,14 @@ function AdminComponent() {
                 );
               })}
 
-            {/* Create Custom Section Action Button */}
-            {db && (
+            {/* Create Custom Section Action Button (when minimized) */}
+            {db && sidebarMinimized && (
               <button
                 onClick={() => setShowWizard(true)}
-                className={`flex items-center gap-3 py-2 px-3 rounded-lg text-left transition-all duration-300 border border-dashed border-white/10 hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 text-muted-foreground hover:text-[#00ff88] shrink-0 ${
-                  sidebarMinimized ? "justify-center px-0 py-3" : ""
-                }`}
+                className="flex items-center justify-center py-3 rounded-lg border border-dashed border-white/10 hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 text-muted-foreground hover:text-[#00ff88] shrink-0 cursor-pointer"
                 title="Create Dynamic Custom Section"
               >
                 <Plus className="size-3.5 shrink-0" />
-                {!sidebarMinimized && (
-                  <span className="text-[9px] font-bold tracking-wider uppercase">
-                    New Custom Section
-                  </span>
-                )}
               </button>
             )}
           </nav>
@@ -655,130 +691,8 @@ function AdminComponent() {
           />
         ) : (
           <>
-            {/* ── TAB 1: systemMetadata.json ── */}
-            {activeTab === "systemMetadata" && (
-              <ObjectTabPanel
-                fileKey="systemMetadata"
-                title="systemMetadata.json"
-                description="Configure your personal profile details, user variables, and latency metrics."
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 2: professionalLinks.json ── */}
-            {activeTab === "professionalLinks" && (
-              <ObjectTabPanel
-                fileKey="professionalLinks"
-                title="professionalLinks.json"
-                description="Manage your professional online profiles, contact parameters, and resume paths."
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 3: logo.json ── */}
-            {activeTab === "logo" && (
-              <ObjectTabPanel
-                fileKey="logo"
-                title="logo.json"
-                description="Configure the primary system logo and branding URL settings."
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 4: BannerDetails.json ── */}
-            {activeTab === "BannerDetails" && (
-              <ObjectTabPanel
-                fileKey="BannerDetails"
-                title="BannerDetails.json"
-                description="Manage your primary executive bio, summary statement, and active subtitles."
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 5: experience.json ── */}
-            {activeTab === "experience" && (
-              <ExperiencePanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 6: projects.json ── */}
-            {activeTab === "projects" && (
-              <ProjectsPanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 7: researchInsights.json ── */}
-            {activeTab === "researchInsights" && (
-              <ResearchInsightsPanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 8: successStories.json ── */}
-            {activeTab === "successStories" && (
-              <SuccessStoriesPanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 9: skillsData.json ── */}
-            {activeTab === "skillsData" && (
-              <SkillsDataPanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 10: techstack.json ── */}
-            {activeTab === "techstack" && (
-              <TechStackPanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── TAB 11: dodoPromptConfig.json ── */}
-            {activeTab === "dodoPromptConfig" && (
-              <DodoPromptConfigPanel
-                db={db}
-                setDb={setDb}
-                saveFile={saveFile}
-                publishing={publishing}
-              />
-            )}
-
-            {/* ── CUSTOM DYNAMIC SECTIONS RENDERING ENGINE ── */}
-            {db && !["systemMetadata", "professionalLinks", "logo", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig"].includes(activeTab) && (
+            {/* ── UNIFIED SCHEMA/CONTENT SECTION PANEL (Covers standard dynamic lists, objects, tag clouds, matrices, & custom sections!) ── */}
+            {db && (
               <CustomSectionPanel
                 activeTab={activeTab}
                 db={db}
@@ -786,6 +700,7 @@ function AdminComponent() {
                 saveFile={saveFile}
                 publishing={publishing}
                 handleDeleteCustomSection={handleDeleteCustomSection}
+                token={token}
               />
             )}
 
@@ -796,10 +711,18 @@ function AdminComponent() {
                 setDb={setDb}
                 onClose={() => setShowWizard(false)}
                 setActiveTab={setActiveTab}
+                token={token}
               />
             )}
           </>
         )}
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        />
       </main>
     </div>
   );

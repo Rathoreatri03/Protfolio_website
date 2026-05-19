@@ -1,10 +1,93 @@
-import React, { useState } from "react";
-import { RefreshCw, Save, Layers, Settings, Plus, Trash, X } from "lucide-react";
-import { DBState, CMSFile } from "./types";
+import React, { useState, useEffect, useRef } from "react";
+import { RefreshCw, Save, Layers, Settings, Plus, Trash, X, Tag, FolderTree } from "lucide-react";
+import { DBState, CMSFile, DEFAULT_SCHEMAS } from "./types";
 import { CustomListEditor } from "./CustomListEditor";
 import { CustomSectionWizard } from "./CustomSectionWizard";
 import { renderUrlInput } from "./helpers";
 import { toast } from "sonner";
+import { ConfirmModal } from "./ConfirmModal";
+
+function getNestedValue(obj: any, path: string): any {
+  if (!obj) return undefined;
+  const parts = path.split(".");
+  let current = obj;
+  for (const part of parts) {
+    if (current === null || typeof current !== "object" || current[part] === undefined) return undefined;
+    current = current[part];
+  }
+  return current;
+}
+
+function setNestedValue(obj: any, path: string, value: any): any {
+  const parts = path.split(".");
+  const newObj = { ...obj };
+  let current = newObj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    current[part] = current[part] && typeof current[part] === "object" ? { ...current[part] } : {};
+    current = current[part];
+  }
+  current[parts[parts.length - 1]] = value;
+  return newObj;
+}
+
+function CustomSelect({
+  value,
+  onChange,
+  options
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOpt = options.find(o => o.value === value) || options[0];
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between cyber-input text-[10px] font-sans bg-[#050505] border-white/10 hover:border-[#00ff88]/20 text-white cursor-pointer py-1.5 px-2 rounded-lg transition-all"
+      >
+        <span className="truncate">{selectedOpt?.label}</span>
+        <span className="text-[8px] text-muted-foreground ml-1">▼</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-1 bg-[#0a0a0a]/95 border border-[#00ff88]/20 rounded-lg shadow-[0_4px_20px_rgba(0,255,136,0.1)] z-50 py-1 max-h-48 overflow-y-auto backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-150">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-3 py-1.5 text-[10px] font-sans transition-all hover:bg-[#00ff88]/10 hover:text-[#00ff88] block truncate ${
+                opt.value === value ? "text-[#00ff88] bg-[#00ff88]/5 font-bold" : "text-white/70"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface CustomSectionPanelProps {
   activeTab: string;
@@ -13,6 +96,7 @@ interface CustomSectionPanelProps {
   saveFile: (fileKey: CMSFile) => Promise<void>;
   publishing: string | null;
   handleDeleteCustomSection: (sectionKey: string) => void;
+  token: string | null;
 }
 
 export function CustomSectionPanel({
@@ -21,17 +105,48 @@ export function CustomSectionPanel({
   setDb,
   saveFile,
   publishing,
-  handleDeleteCustomSection
+  handleDeleteCustomSection,
+  token
 }: CustomSectionPanelProps) {
   const [showEditSchema, setShowEditSchema] = useState(false);
   const [showAddFieldModal, setShowAddFieldModal] = useState(false);
+
+  const [formatMap, setFormatMap] = useState<Record<string, "percent" | "out10" | "custom" | "tier">>({});
+  const [customMaxMap, setCustomMaxMap] = useState<Record<string, number>>({});
+  
+  const getSkillFormat = (progress: number, key: string) => {
+    if (formatMap[key]) return formatMap[key];
+    if (progress === 95 || progress === 80 || progress === 60 || progress === 40) return "tier";
+    return "percent";
+  };
+
+  const getCustomMax = (key: string) => {
+    return customMaxMap[key] || 100;
+  };
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
   
   // Field Creation States
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldKey, setNewFieldKey] = useState("");
   const [newFieldType, setNewFieldType] = useState<"string" | "longtext" | "url" | "percentage" | "number" | "boolean">("string");
 
-  const section = db[activeTab]?.content;
+  const section = db[activeTab] ? {
+    title: db[activeTab].title || DEFAULT_SCHEMAS[activeTab]?.title || activeTab,
+    type: db[activeTab].type || DEFAULT_SCHEMAS[activeTab]?.type || "list",
+    schema: db[activeTab].schema || DEFAULT_SCHEMAS[activeTab]?.schema || []
+  } : null;
+
   if (!section) return null;
 
   const handleCustomSectionSave = () => {
@@ -43,10 +158,7 @@ export function CustomSectionPanel({
       ...db,
       [activeTab]: {
         ...db[activeTab],
-        content: {
-          ...section,
-          content: newContent
-        }
+        content: newContent
       }
     });
   };
@@ -74,22 +186,19 @@ export function CustomSectionPanel({
     };
 
     const newSchema = [...schema, newField];
-    
-    let updatedContent = section.content;
+
+    let updatedContent = db[activeTab]?.content;
     if (section.type === "object") {
       const defaultVal = newFieldType === "percentage" || newFieldType === "number" ? 0 : newFieldType === "boolean" ? false : "";
-      updatedContent = { ...(section.content || {}), [newFieldKey]: defaultVal };
+      updatedContent = { ...(db[activeTab]?.content || {}), [newFieldKey]: defaultVal };
     }
 
     setDb({
       ...db,
       [activeTab]: {
         ...db[activeTab],
-        content: {
-          ...section,
-          schema: newSchema,
-          content: updatedContent
-        }
+        schema: newSchema,
+        content: updatedContent
       }
     });
 
@@ -101,35 +210,38 @@ export function CustomSectionPanel({
   };
 
   const handleDeleteField = (fieldKey: string, fieldLabel: string) => {
-    if (!window.confirm(`Are you sure you want to permanently delete field "${fieldLabel}"? This will erase its value for all entries.`)) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Remove Field From Schema",
+      message: `Are you sure you want to permanently delete field "${fieldLabel}"? This will erase its value for all entries in the database.`,
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        const newSchema = (section.schema || []).filter((f: any) => f.key !== fieldKey);
+        let newContent = db[activeTab]?.content;
 
-    const newSchema = (section.schema || []).filter((f: any) => f.key !== fieldKey);
-    let newContent = section.content;
-
-    if (section.type === "object") {
-      newContent = { ...(section.content || {}) };
-      delete newContent[fieldKey];
-    } else if (section.type === "list") {
-      newContent = (section.content || []).map((item: any) => {
-        const updatedItem = { ...item };
-        delete updatedItem[fieldKey];
-        return updatedItem;
-      });
-    }
-
-    setDb({
-      ...db,
-      [activeTab]: {
-        ...db[activeTab],
-        content: {
-          ...section,
-          schema: newSchema,
-          content: newContent
+        if (section.type === "object") {
+          newContent = { ...(db[activeTab]?.content || {}) };
+          delete newContent[fieldKey];
+        } else if (section.type === "list") {
+          newContent = (db[activeTab]?.content || []).map((item: any) => {
+            const updatedItem = { ...item };
+            delete updatedItem[fieldKey];
+            return updatedItem;
+          });
         }
+
+        setDb({
+          ...db,
+          [activeTab]: {
+            ...db[activeTab],
+            schema: newSchema,
+            content: newContent
+          }
+        });
+
+        toast.success(`Removed field "${fieldLabel}" from schema.`);
       }
     });
-
-    toast.success(`Removed field "${fieldLabel}" from schema.`);
   };
 
   return (
@@ -142,7 +254,7 @@ export function CustomSectionPanel({
               {section.type === "list" ? "Dynamic List" : "Single Config"}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Dynamic custom collection saved in systemMetadata.json.</p>
+          <p className="text-xs text-muted-foreground mt-1">Stored independently on GitHub as <span className="font-mono-fira text-[#00ff88]">{activeTab}.json</span>.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -194,9 +306,9 @@ export function CustomSectionPanel({
           ) : (
             <div className="space-y-5">
               {section.schema?.map((field: any) => {
-                const val = section.content?.[field.key];
+                const val = getNestedValue(db[activeTab]?.content, field.key);
                 const handleObjectFieldChange = (newVal: any) => {
-                  const updatedContent = { ...(section.content || {}), [field.key]: newVal };
+                  const updatedContent = setNestedValue(db[activeTab]?.content || {}, field.key, newVal);
                   updateCustomContent(updatedContent);
                 };
 
@@ -336,10 +448,379 @@ export function CustomSectionPanel({
 
           <CustomListEditor
             schema={section.schema || []}
-            content={section.content || []}
+            content={db[activeTab]?.content || []}
             onChange={updateCustomContent}
             renderUrlInput={renderUrlInput}
           />
+        </div>
+      )}
+
+      {/* If Section Type is Tags (Tag Cloud) */}
+      {section.type === "tags" && (
+        <div className="glass-card rounded-2xl p-6 space-y-6 w-full">
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="flex items-center gap-3">
+              <Tag className="size-4 text-[#00ff88]" />
+              <h3 className="text-xs font-bold tracking-wider uppercase text-white">{section.title} Tags Cloud</h3>
+            </div>
+            {(db[activeTab]?.content || []).length > 0 && (
+              <button
+                onClick={() => {
+                  updateCustomContent([]);
+                  toast.success("All tags cleared.");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-red-500/20 hover:border-red-500 hover:bg-red-500/10 text-red-400 text-[10px] font-bold rounded-lg uppercase transition-all cursor-pointer"
+              >
+                <Trash className="size-3" /> Clear All
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div 
+              className="flex flex-wrap gap-2.5 p-5 bg-white/[0.007] border border-white/5 rounded-2xl min-h-[120px] items-center content-start transition-all duration-300"
+            >
+              {(db[activeTab]?.content || []).length > 0 ? (
+                (db[activeTab]?.content || []).map((tag: string, idx: number) => (
+                  <div
+                    key={idx}
+                    className="group relative flex items-center gap-2 px-3 py-1.5 bg-[#00ff88]/5 border border-[#00ff88]/20 hover:border-[#00ff88] text-white hover:text-[#00ff88] text-xs font-bold rounded-xl active-tab-glow transition-all duration-300 scale-100 hover:scale-105 active:scale-95 shadow-[0_2px_10px_rgba(0,255,136,0.02)]"
+                  >
+                    <span className="font-mono-fira text-[11px] tracking-wide uppercase">{tag}</span>
+                    <button
+                      onClick={() => {
+                        const newTags = [...(db[activeTab]?.content || [])];
+                        newTags.splice(idx, 1);
+                        updateCustomContent(newTags);
+                        toast.success(`Removed ${tag}`);
+                      }}
+                      className="text-muted-foreground hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-white/5 cursor-pointer"
+                      title={`Remove ${tag}`}
+                    >
+                      <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="w-full text-center py-8 text-muted-foreground text-xs font-mono-fira uppercase tracking-wider animate-pulse">
+                  🛠️ Tags list is empty. Add items below!
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-white/5">
+              <label className="block text-muted-foreground mb-2 text-[10px] uppercase font-semibold tracking-wider">
+                Add New Tag
+              </label>
+              <div className="flex gap-3 max-w-md">
+                <input
+                  type="text"
+                  id="new-tag-input"
+                  placeholder="e.g. Next.js, PyTorch, Kubernetes"
+                  className="flex-1 cyber-input font-bold"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const inputEl = e.currentTarget;
+                      const val = inputEl.value.trim().toUpperCase();
+                      if (val) {
+                        const currentTags = db[activeTab]?.content || [];
+                        if (currentTags.includes(val)) {
+                          toast.error(`${val} is already in the tags!`);
+                          return;
+                        }
+                        const newTags = [...currentTags, val];
+                        updateCustomContent(newTags);
+                        inputEl.value = "";
+                        toast.success(`Added ${val}!`);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const inputEl = document.getElementById("new-tag-input") as HTMLInputElement;
+                    const val = inputEl?.value.trim().toUpperCase();
+                    if (val) {
+                      const currentTags = db[activeTab]?.content || [];
+                      if (currentTags.includes(val)) {
+                        toast.error(`${val} is already in the tags!`);
+                        return;
+                      }
+                      const newTags = [...currentTags, val];
+                      updateCustomContent(newTags);
+                      inputEl.value = "";
+                      toast.success(`Added ${val}!`);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#00ff88] hover:bg-[#00ff88]/90 text-[#050505] text-xs font-bold rounded-lg uppercase tracking-wider transition-all shadow-[0_4px_12px_rgba(0,255,136,0.15)] hover:scale-105 active:scale-95 active:shadow-none cursor-pointer"
+                >
+                  <Plus className="size-3.5 stroke-[3]" /> Add Tag
+                </button>
+              </div>
+              <p className="text-[9px] text-muted-foreground font-sans mt-2 uppercase tracking-wider">
+                Tip: Press <kbd className="px-1 py-0.5 bg-white/5 border border-white/10 rounded font-mono">Enter</kbd> to add tags quickly!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* If Section Type is Categories (Matrix/Tiers) */}
+      {section.type === "categories" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="flex items-center gap-3">
+              <FolderTree className="size-4 text-[#00ff88]" />
+              <h3 className="text-xs font-bold tracking-wider uppercase text-white">{section.title} Categories</h3>
+            </div>
+            <button
+              onClick={() => {
+                const currentData = db[activeTab]?.content || { categories: [] };
+                const newCategories = [...(currentData.categories || [])];
+                newCategories.push({ title: "New Category", skills: [] });
+                updateCustomContent({ ...currentData, categories: newCategories });
+                toast.success("Added new category.");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00ff88]/5 hover:bg-[#00ff88]/10 text-[#00ff88] text-[10px] font-bold uppercase rounded-lg border border-[#00ff88]/20 transition-all cursor-pointer animate-pulse-glow"
+            >
+              <Plus className="size-3" />
+              <span>Add Category</span>
+            </button>
+          </div>
+
+          {(!(db[activeTab]?.content?.categories) || db[activeTab].content.categories.length === 0) ? (
+            <div className="glass-card rounded-2xl p-8 text-center text-muted-foreground text-xs font-mono-fira uppercase tracking-wider">
+              No categories configured. Click "Add Category" to get started.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {(db[activeTab].content.categories || []).map((cat: any, catIdx: number) => (
+                <div key={catIdx} className="glass-card rounded-2xl p-6 border border-white/5 bg-white/[0.005] space-y-4">
+                  {/* Category Header */}
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3 gap-4">
+                    <div className="flex-1 max-w-sm">
+                      <input
+                        type="text"
+                        value={cat.title || ""}
+                        placeholder="Category Title"
+                        onChange={(e) => {
+                          const currentData = db[activeTab].content;
+                          const newCats = [...currentData.categories];
+                          newCats[catIdx] = { ...newCats[catIdx], title: e.target.value };
+                          updateCustomContent({ ...currentData, categories: newCats });
+                        }}
+                        className="cyber-input font-bold text-sm w-full"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          const currentData = db[activeTab].content;
+                          const newCats = [...currentData.categories];
+                          newCats[catIdx].skills.push({ name: "New Skill", progress: 80 });
+                          updateCustomContent({ ...currentData, categories: newCats });
+                          toast.success("Added new item to category.");
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-[#00ff88]/5 hover:bg-[#00ff88]/10 border border-[#00ff88]/20 text-[#00ff88] text-[10px] font-bold rounded-lg uppercase transition-all animate-none cursor-pointer"
+                      >
+                        <Plus className="size-3" /> Add Item
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmModal({
+                            isOpen: true,
+                            title: "Delete Category Sector",
+                            message: `Are you sure you want to permanently delete category "${cat.title || 'unnamed'}"? This will delete all skills/items under this category.`,
+                            onConfirm: () => {
+                              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                              const currentData = db[activeTab].content;
+                              const newCats = currentData.categories.filter((_: any, idx: number) => idx !== catIdx);
+                              updateCustomContent({ ...currentData, categories: newCats });
+                              toast.success("Category deleted.");
+                            }
+                          });
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1.5 border border-red-500/20 hover:border-red-500 hover:bg-red-500/10 text-red-400 text-[10px] font-bold rounded-lg uppercase transition-all cursor-pointer"
+                      >
+                        <Trash className="size-3" /> Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Skills List */}
+                  {(!cat.skills || cat.skills.length === 0) ? (
+                    <div className="py-4 text-center text-muted-foreground text-[10px] font-mono-fira uppercase tracking-wider">
+                      No items in this category yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {cat.skills.map((skill: any, skillIdx: number) => (
+                        <div key={skillIdx} className="p-3 bg-white/[0.005] border border-white/5 rounded-2xl flex flex-col gap-2 relative group">
+                          <button
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: "Remove Skill Item",
+                                message: `Are you sure you want to remove the skill item "${skill.name || 'unnamed'}" from this category?`,
+                                onConfirm: () => {
+                                  setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                  const currentData = db[activeTab].content;
+                                  const newCats = [...currentData.categories];
+                                  newCats[catIdx].skills = newCats[catIdx].skills.filter((_: any, idx: number) => idx !== skillIdx);
+                                  updateCustomContent({ ...currentData, categories: newCats });
+                                  toast.success("Item removed.");
+                                }
+                              });
+                            }}
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all p-1 rounded hover:bg-white/5 cursor-pointer"
+                            title="Remove Item"
+                          >
+                            <Trash className="size-3" />
+                          </button>
+
+                          <div className="space-y-1">
+                            <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Name</span>
+                            <input
+                              type="text"
+                              value={skill.name || ""}
+                              placeholder="e.g. Python"
+                              onChange={(e) => {
+                                const currentData = db[activeTab].content;
+                                const newCats = [...currentData.categories];
+                                newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], name: e.target.value };
+                                updateCustomContent({ ...currentData, categories: newCats });
+                              }}
+                              className="cyber-input text-xs w-full font-bold"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mt-1">
+                            <div className="space-y-1">
+                              <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Format</span>
+                              <CustomSelect
+                                value={getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`)}
+                                onChange={(val) => {
+                                  const format = val as any;
+                                  setFormatMap({ ...formatMap, [`${catIdx}-${skillIdx}`]: format });
+                                  
+                                  let newProgress = skill.progress || 0;
+                                  if (format === "tier") {
+                                    newProgress = 95;
+                                  }
+                                  const currentData = db[activeTab].content;
+                                  const newCats = [...currentData.categories];
+                                  newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: newProgress };
+                                  updateCustomContent({ ...currentData, categories: newCats });
+                                }}
+                                options={[
+                                  { value: "percent", label: "Percentage (%)" },
+                                  { value: "out10", label: "Out of 10" },
+                                  { value: "custom", label: "Custom Max" },
+                                  { value: "tier", label: "Expertise Tier" }
+                                ]}
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Value</span>
+                              {getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "tier" ? (
+                                <CustomSelect
+                                  value={String(skill.progress >= 90 ? "95" : skill.progress >= 75 ? "80" : skill.progress >= 50 ? "60" : "40")}
+                                  onChange={(val) => {
+                                    const currentData = db[activeTab].content;
+                                    const newCats = [...currentData.categories];
+                                    newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: parseInt(val) };
+                                    updateCustomContent({ ...currentData, categories: newCats });
+                                  }}
+                                  options={[
+                                    { value: "95", label: "Expert (95%)" },
+                                    { value: "80", label: "Advanced (80%)" },
+                                    { value: "60", label: "Intermediate (60%)" },
+                                    { value: "40", label: "Beginner (40%)" }
+                                  ]}
+                                />
+                              ) : getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "custom" ? (
+                                <div className="flex gap-1">
+                                  <input
+                                    type="number"
+                                    placeholder="Val"
+                                    value={Math.round((skill.progress || 0) / 100 * getCustomMax(`${catIdx}-${skillIdx}`))}
+                                    onChange={(e) => {
+                                      const numVal = parseFloat(e.target.value) || 0;
+                                      const maxLimit = getCustomMax(`${catIdx}-${skillIdx}`);
+                                      const pct = Math.min(100, Math.max(0, Math.round((numVal / maxLimit) * 100)));
+                                      const currentData = db[activeTab].content;
+                                      const newCats = [...currentData.categories];
+                                      newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: pct };
+                                      updateCustomContent({ ...currentData, categories: newCats });
+                                    }}
+                                    className="w-1/2 cyber-input text-[10px] text-white font-bold py-1 px-1 text-center"
+                                    title="Current Value"
+                                  />
+                                  <span className="text-[10px] text-muted-foreground self-center">/</span>
+                                  <input
+                                    type="number"
+                                    placeholder="Max"
+                                    value={getCustomMax(`${catIdx}-${skillIdx}`)}
+                                    onChange={(e) => {
+                                      const newMax = parseFloat(e.target.value) || 100;
+                                      setCustomMaxMap({ ...customMaxMap, [`${catIdx}-${skillIdx}`]: newMax });
+                                      
+                                      const currentVal = Math.round((skill.progress || 0) / 100 * getCustomMax(`${catIdx}-${skillIdx}`));
+                                      const pct = Math.min(100, Math.max(0, Math.round((currentVal / newMax) * 100)));
+                                      const currentData = db[activeTab].content;
+                                      const newCats = [...currentData.categories];
+                                      newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: pct };
+                                      updateCustomContent({ ...currentData, categories: newCats });
+                                    }}
+                                    className="w-1/2 cyber-input text-[10px] text-[#00ff88] font-bold py-1 px-1 text-center"
+                                    title="Max limit"
+                                  />
+                                </div>
+                              ) : (
+                                <input
+                                  type="number"
+                                  value={
+                                    getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "out10"
+                                      ? parseFloat(((skill.progress || 0) / 10).toFixed(1))
+                                      : skill.progress || 0
+                                  }
+                                  min="0"
+                                  max={
+                                    getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`) === "out10"
+                                      ? 10
+                                      : 100
+                                  }
+                                  step="0.1"
+                                  onChange={(e) => {
+                                    const format = getSkillFormat(skill.progress || 0, `${catIdx}-${skillIdx}`);
+                                    const numVal = parseFloat(e.target.value) || 0;
+                                    let newProgress = numVal;
+                                    if (format === "out10") {
+                                      newProgress = Math.min(100, Math.max(0, Math.round(numVal * 10)));
+                                    } else {
+                                      newProgress = Math.min(100, Math.max(0, Math.round(numVal)));
+                                    }
+                                    const currentData = db[activeTab].content;
+                                    const newCats = [...currentData.categories];
+                                    newCats[catIdx].skills[skillIdx] = { ...newCats[catIdx].skills[skillIdx], progress: newProgress };
+                                    updateCustomContent({ ...currentData, categories: newCats });
+                                  }}
+                                  className="w-full cyber-input text-[10px] text-white font-bold py-1.5 px-3 text-center"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -376,20 +857,20 @@ export function CustomSectionPanel({
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 text-left">
                 <label className="block text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Input Type</label>
-                <select
+                <CustomSelect
                   value={newFieldType}
-                  onChange={(e) => setNewFieldType(e.target.value as any)}
-                  className="w-full cyber-input text-xs font-sans bg-[#050505] border-white/10 text-white cursor-pointer"
-                >
-                  <option value="string">Plain Text</option>
-                  <option value="longtext">Biography / Textarea</option>
-                  <option value="url">URL with live preview</option>
-                  <option value="percentage">Percentage Slider</option>
-                  <option value="number">Numeric Value</option>
-                  <option value="boolean">Toggle Switch</option>
-                </select>
+                  onChange={(val) => setNewFieldType(val as any)}
+                  options={[
+                    { value: "string", label: "Plain Text" },
+                    { value: "longtext", label: "Biography / Textarea" },
+                    { value: "url", label: "URL with live preview" },
+                    { value: "percentage", label: "Percentage Slider" },
+                    { value: "number", label: "Numeric Value" },
+                    { value: "boolean", label: "Toggle Switch" }
+                  ]}
+                />
               </div>
             </div>
 
@@ -420,8 +901,16 @@ export function CustomSectionPanel({
           onClose={() => setShowEditSchema(false)}
           setActiveTab={() => {}}
           editSectionKey={activeTab}
+          token={token}
         />
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

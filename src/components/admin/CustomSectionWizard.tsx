@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Wrench, X, Layers, LayoutGrid, Plus, Trash } from "lucide-react";
+import { Wrench, X, Layers, LayoutGrid, Plus, Trash, Tag, FolderTree } from "lucide-react";
 import { toast } from "sonner";
-import { DBState } from "./types";
+import { DBState, DEFAULT_SCHEMAS } from "./types";
 
 interface CustomSectionWizardProps {
   db: DBState;
@@ -9,6 +9,7 @@ interface CustomSectionWizardProps {
   onClose: () => void;
   setActiveTab: (tab: string) => void;
   editSectionKey?: string;
+  token?: string | null;
 }
 
 export function CustomSectionWizard({
@@ -16,15 +17,24 @@ export function CustomSectionWizard({
   setDb,
   onClose,
   setActiveTab,
-  editSectionKey
+  editSectionKey,
+  token
 }: CustomSectionWizardProps) {
-  const sectionToEdit = editSectionKey ? db[editSectionKey]?.content : null;
+  const sectionToEdit = editSectionKey ? {
+    title: db[editSectionKey]?.title || DEFAULT_SCHEMAS[editSectionKey]?.title || editSectionKey,
+    type: db[editSectionKey]?.type || DEFAULT_SCHEMAS[editSectionKey]?.type || "list",
+    schema: db[editSectionKey]?.schema || DEFAULT_SCHEMAS[editSectionKey]?.schema || []
+  } : null;
 
   const [wizardName, setWizardName] = useState(sectionToEdit ? sectionToEdit.title : "");
-  const [wizardType, setWizardType] = useState<"list" | "object">(sectionToEdit ? sectionToEdit.type : "list");
+  const [wizardType, setWizardType] = useState<"list" | "object" | "tags" | "categories">(
+    sectionToEdit ? sectionToEdit.type as any : "list"
+  );
   const [wizardFields, setWizardFields] = useState<Array<{ key: string; label: string; type: "string" | "longtext" | "url" | "percentage" | "number" | "boolean" }>>(
     sectionToEdit && sectionToEdit.schema ? sectionToEdit.schema : [{ key: "title", label: "Title", type: "string" }]
   );
+
+  const WORKER_BASE = "https://dodo-ai-agent.dodoai.workers.dev";
 
   const handleGenerateSection = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -47,45 +57,49 @@ export function CustomSectionWizard({
       }
     }
 
-    const existingContent = db[editSectionKey || sectionKey]?.content?.content !== undefined
-      ? db[editSectionKey || sectionKey].content.content
-      : (wizardType === "list" ? [] : {});
+    const existingContent = db[editSectionKey || sectionKey]?.content !== undefined
+      ? db[editSectionKey || sectionKey].content
+      : (wizardType === "list"
+          ? []
+          : wizardType === "tags"
+            ? []
+            : wizardType === "categories"
+              ? { categories: [] }
+              : {});
 
     const newDb = { ...db };
 
-    // 1. Write the dynamic section as a self-contained database entry
-    newDb[sectionKey] = {
-      content: {
-        title: wizardName.trim(),
-        type: wizardType,
-        schema: wizardFields,
-        content: existingContent
-      },
-      sha: db[editSectionKey || sectionKey]?.sha || ""
-    };
-
-    // 2. Clean up legacy entry from systemMetadata to keep systemMetadata lightweight
-    const updatedMetadata = { ...db.systemMetadata };
-    if (updatedMetadata.content.customSections) {
-      const custom = { ...updatedMetadata.content.customSections };
-      delete custom[sectionKey];
-      if (editSectionKey && editSectionKey !== sectionKey) {
-        delete custom[editSectionKey];
+    if (editSectionKey) {
+      if (editSectionKey !== sectionKey) {
+        delete newDb[editSectionKey];
+        // Clean up renamed file on GitHub
+        if (token) {
+          fetch(`${WORKER_BASE}/api/cms/delete`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ filename: editSectionKey })
+          }).catch(err => console.error("Failed to delete renamed section:", err));
+        }
       }
-      updatedMetadata.content.customSections = custom;
     }
-    newDb.systemMetadata = updatedMetadata;
 
-    // 3. Remove old tab key if renamed
-    if (editSectionKey && editSectionKey !== sectionKey) {
-      delete newDb[editSectionKey];
-    }
+    newDb[sectionKey] = {
+      content: existingContent,
+      sha: db[editSectionKey || sectionKey]?.sha || "",
+      title: wizardName.trim(),
+      type: wizardType,
+      schema: wizardType === "tags" || wizardType === "categories" ? [] : wizardFields,
+      schemaSha: db[editSectionKey || sectionKey]?.schemaSha || ""
+    };
 
     setDb(newDb);
 
     setActiveTab(sectionKey);
     onClose();
-    toast.success(editSectionKey ? `Dynamic section "${wizardName}" schema updated!` : `Dynamic section "${wizardName}" created!`);
+    toast.success(editSectionKey ? `Section "${wizardName}" schema updated!` : `Section "${wizardName}" created!`);
   };
 
   return (
@@ -149,84 +163,112 @@ export function CustomSectionWizard({
                 <span className="text-[10px] font-bold uppercase tracking-wider">Single Config Object</span>
                 <span className="text-[8px] leading-normal font-sans opacity-70">A single block of key-value configuration items (e.g. specific user variables).</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setWizardType("tags")}
+                className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
+                  wizardType === "tags"
+                    ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
+                    : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
+                }`}
+              >
+                <Tag className="size-4 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Tech Stack / Tag Cloud</span>
+                <span className="text-[8px] leading-normal font-sans opacity-70">A flat layout of draggable badge tags (ideal for tech stacks, tools, frameworks).</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setWizardType("categories")}
+                className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
+                  wizardType === "categories"
+                    ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
+                    : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
+                }`}
+              >
+                <FolderTree className="size-4 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Skills Matrix / Tiered Layout</span>
+                <span className="text-[8px] leading-normal font-sans opacity-70">A nested categories-and-items structure with custom metrics (ideal for skill matrices, expertise tiers).</span>
+              </button>
             </div>
           </div>
 
           {/* Field Builder */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Define Fields & Data Types</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setWizardFields([...wizardFields, { key: `field_${Date.now()}`, label: "New Field", type: "string" }]);
-                }}
-                className="flex items-center gap-1 text-[9px] font-bold text-[#00ff88] hover:text-[#00ff88]/80 uppercase tracking-widest cursor-pointer"
-              >
-                <Plus className="size-3" /> Add Field
-              </button>
-            </div>
+          {(wizardType === "list" || wizardType === "object") && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Define Fields & Data Types</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWizardFields([...wizardFields, { key: `field_${Date.now()}`, label: "New Field", type: "string" }]);
+                  }}
+                  className="flex items-center gap-1 text-[9px] font-bold text-[#00ff88] hover:text-[#00ff88]/80 uppercase tracking-widest cursor-pointer"
+                >
+                  <Plus className="size-3" /> Add Field
+                </button>
+              </div>
 
-            <div className="space-y-3">
-              {wizardFields.map((field, index) => (
-                <div key={index} className="flex flex-col sm:flex-row gap-3 items-start p-3 bg-white/[0.005] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
-                  {/* Label Input */}
-                  <div className="flex-1 w-full space-y-1">
-                    <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Display Label</span>
-                    <input
-                      type="text"
-                      value={field.label}
-                      onChange={(e) => {
-                        const updated = [...wizardFields];
-                        const newLabel = e.target.value;
-                        const newKey = newLabel.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "");
-                        updated[index] = { ...updated[index], label: newLabel, key: newKey };
-                        setWizardFields(updated);
-                      }}
-                      className="w-full cyber-input text-xs font-sans"
-                      placeholder="Field Label"
-                    />
-                  </div>
+              <div className="space-y-3">
+                {wizardFields.map((field, index) => (
+                  <div key={index} className="flex flex-col sm:flex-row gap-3 items-start p-3 bg-white/[0.005] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
+                    {/* Label Input */}
+                    <div className="flex-1 w-full space-y-1">
+                      <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Display Label</span>
+                      <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) => {
+                          const updated = [...wizardFields];
+                          const newLabel = e.target.value;
+                          const newKey = newLabel.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "");
+                          updated[index] = { ...updated[index], label: newLabel, key: newKey };
+                          setWizardFields(updated);
+                        }}
+                        className="w-full cyber-input text-xs font-sans"
+                        placeholder="Field Label"
+                      />
+                    </div>
 
-                  {/* Editor Type Input */}
-                  <div className="w-full sm:w-44 space-y-1">
-                    <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Input Type</span>
-                    <select
-                      value={field.type}
-                      onChange={(e) => {
-                        const updated = [...wizardFields];
-                        updated[index] = { ...updated[index], type: e.target.value as any };
-                        setWizardFields(updated);
+                    {/* Editor Type Input */}
+                    <div className="w-full sm:w-44 space-y-1">
+                      <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Input Type</span>
+                      <select
+                        value={field.type}
+                        onChange={(e) => {
+                          const updated = [...wizardFields];
+                          updated[index] = { ...updated[index], type: e.target.value as any };
+                          setWizardFields(updated);
+                        }}
+                        className="w-full cyber-input text-xs font-sans bg-[#050505] border-white/10 text-white cursor-pointer"
+                      >
+                        <option value="string">Plain Text</option>
+                        <option value="longtext">Biography / Textarea</option>
+                        <option value="url">URL with live preview</option>
+                        <option value="percentage">Percentage Slider</option>
+                        <option value="number">Numeric Value</option>
+                        <option value="boolean">Toggle Switch</option>
+                      </select>
+                    </div>
+
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (wizardFields.length <= 1) {
+                          toast.error("A section must contain at least one field.");
+                          return;
+                        }
+                        setWizardFields(wizardFields.filter((_, i) => i !== index));
                       }}
-                      className="w-full cyber-input text-xs font-sans bg-[#050505] border-white/10 text-white cursor-pointer"
+                      className="mt-5 p-2 rounded-xl bg-white/5 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 border border-white/10 hover:border-red-500/20 transition-all self-end shrink-0 cursor-pointer"
                     >
-                      <option value="string">Plain Text</option>
-                      <option value="longtext">Biography / Textarea</option>
-                      <option value="url">URL with live preview</option>
-                      <option value="percentage">Percentage Slider</option>
-                      <option value="number">Numeric Value</option>
-                      <option value="boolean">Toggle Switch</option>
-                    </select>
+                      <Trash className="size-3.5" />
+                    </button>
                   </div>
-
-                  {/* Remove button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (wizardFields.length <= 1) {
-                        toast.error("A section must contain at least one field.");
-                        return;
-                      }
-                      setWizardFields(wizardFields.filter((_, i) => i !== index));
-                    }}
-                    className="mt-5 p-2 rounded-xl bg-white/5 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 border border-white/10 hover:border-red-500/20 transition-all self-end shrink-0 cursor-pointer"
-                  >
-                    <Trash className="size-3.5" />
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
