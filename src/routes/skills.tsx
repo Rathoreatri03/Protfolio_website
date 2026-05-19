@@ -34,6 +34,120 @@ export function formatSkillValue(s: Skill) {
   return `${s.progress}%`;
 }
 
+export function getSkillSubLabel(s: Skill) {
+  const format = s.format || (s.progress === 95 || s.progress === 80 || s.progress === 60 || s.progress === 40 ? "tier" : "percent");
+  if (format === "tier") {
+    if (s.progress >= 90) return "Expert Level";
+    if (s.progress >= 75) return "Advanced Level";
+    if (s.progress >= 50) return "Intermediate Level";
+    return "Beginner Level";
+  }
+  if (format === "out10") {
+    return "Decimal Scale";
+  }
+  if (format === "custom") {
+    return `Range Limit: ${s.customMax || 100}`;
+  }
+  return "Optimal Status";
+}
+
+export function renderProgressSegments(s: Skill) {
+  const format = s.format || (s.progress === 95 || s.progress === 80 || s.progress === 60 || s.progress === 40 ? "tier" : "percent");
+
+  if (format === "tier") {
+    // 4 large blocks representing Beginner (1), Intermediate (2), Advanced (3), Expert (4)
+    let activeBlocks = 1;
+    if (s.progress >= 90) activeBlocks = 4;
+    else if (s.progress >= 75) activeBlocks = 3;
+    else if (s.progress >= 50) activeBlocks = 2;
+
+    return (
+      <div className="relative flex gap-2 h-2.5 sm:h-3 w-full">
+        {Array.from({ length: 4 }).map((_, idx) => {
+          const isActive = idx < activeBlocks;
+          return (
+            <div
+              key={idx}
+              className={`h-full flex-1 rounded-[1px] transition-all duration-500 ${
+                isActive
+                  ? "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.3)] group-hover/skill:bg-primary"
+                  : "bg-white/5"
+              }`}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (format === "out10") {
+    // 10 blocks representing the score out of 10
+    const score = s.progress / 10;
+    return (
+      <div className="relative flex gap-[2px] h-2 sm:h-2.5 w-full">
+        {Array.from({ length: 10 }).map((_, idx) => {
+          const decimal = score - idx;
+          const isActive = decimal >= 1;
+          const isPartial = decimal > 0 && decimal < 1;
+
+          return (
+            <div
+              key={idx}
+              className="h-full flex-1 bg-white/5 rounded-[0.5px] overflow-hidden relative"
+            >
+              {isActive && (
+                <div className="absolute inset-0 bg-primary/50 group-hover/skill:bg-primary transition-all duration-500" />
+              )}
+              {isPartial && (
+                <div 
+                  className="absolute inset-y-0 left-0 bg-primary/50 group-hover/skill:bg-primary transition-all duration-500" 
+                  style={{ width: `${decimal * 100}%` }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (format === "custom") {
+    const max = s.customMax || 100;
+    const segmentCount = max <= 15 ? max : 10;
+    
+    return (
+      <div className="relative flex gap-[2px] h-2 sm:h-2.5 w-full">
+        {Array.from({ length: segmentCount }).map((_, idx) => {
+          const ratio = (idx + 1) / segmentCount;
+          const isActive = ratio <= s.progress / 100;
+          return (
+            <div
+              key={idx}
+              className={`h-full flex-1 rounded-[0.5px] transition-all duration-500 ${
+                isActive
+                  ? "bg-primary/50 group-hover/skill:bg-primary"
+                  : "bg-white/5"
+              }`}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Default: percent (15 segments)
+  return (
+    <div className="relative flex gap-[1.5px] h-2 sm:h-2.5 w-full">
+      {Array.from({ length: 15 }).map((_, segmentIdx) => {
+        const isActive = segmentIdx / 15 < s.progress / 100;
+        return isActive
+          ? <div key={segmentIdx} className="h-full flex-1 bg-primary/50 group-hover/skill:bg-primary rounded-[0.5px] transition-all duration-500" />
+          : <div key={segmentIdx} className="h-full flex-1 bg-white/5 rounded-[0.5px]" />;
+      })}
+    </div>
+  );
+}
+
 function CategoryRadarModal({ category, onClose }: { category: SkillCategory; onClose: () => void }) {
   const [highlightedSkill, setHighlightedSkill] = useState<string | null>(null);
 
@@ -142,7 +256,7 @@ function CategoryRadarModal({ category, onClose }: { category: SkillCategory; on
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className={`text-lg sm:text-xl font-display font-bold transition-colors duration-300 ${highlightedSkill === skill.name ? "text-primary" : "text-white"}`}>{formatSkillValue(skill)}</span>
-                  <span className="text-[7px] font-mono text-primary/60 uppercase">Optimal</span>
+                  <span className="text-[7px] font-mono text-primary/60 uppercase">{getSkillSubLabel(skill)}</span>
                 </div>
               </div>
             ))}
@@ -205,14 +319,7 @@ function Skills() {
                           {formatSkillValue(s)}
                         </span>
                       </div>
-                      <div className="relative flex gap-[1.5px] h-2.5 sm:h-3">
-                        {Array.from({ length: 15 }).map((_, segmentIdx) => {
-                          const isActive = segmentIdx / 15 < s.progress / 100;
-                          return isActive
-                            ? <div key={segmentIdx} className="h-full flex-1 bg-primary/50 group-hover/skill:bg-primary rounded-[0.5px] transition-all duration-500" />
-                            : <div key={segmentIdx} className="h-full flex-1 bg-white/5 rounded-[0.5px]" />;
-                        })}
-                      </div>
+                      {renderProgressSegments(s)}
                     </div>
                   ))}
                 </div>
