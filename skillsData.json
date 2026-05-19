@@ -6,7 +6,7 @@
         {
           "name": "Python & PyTorch",
           "progress": 95,
-          "format": "out10"
+          "format": "percent"
         },
         {
           "name": "TensorFlow & Keras",
