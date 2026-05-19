@@ -16,7 +16,7 @@
         {
           "name": "OpenCV (Computer Vision)",
           "progress": 95,
-          "format": "percent"
+          "format": "out10"
         },
         {
           "name": "YOLO & Object Detection",
