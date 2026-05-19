@@ -889,7 +889,7 @@ export function CustomSectionPanel({
       {/* ── ADD FIELD DIALOG POPUP MODAL ── */}
       {showAddFieldModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <div className="glass-card w-full max-w-md rounded-3xl border border-[#00ff88]/30 bg-[#080808]/95 overflow-hidden shadow-[0_0_50px_rgba(0,255,136,0.15)] p-6 space-y-6">
+          <div className="glass-card w-full max-w-md rounded-3xl border border-[#00ff88]/30 bg-[#080808]/95 shadow-[0_0_50px_rgba(0,255,136,0.15)] p-6 space-y-6 overflow-visible">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div className="flex items-center gap-2">
                 <Plus className="size-4 text-[#00ff88]" />

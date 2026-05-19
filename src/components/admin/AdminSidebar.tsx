@@ -5,6 +5,25 @@ import {
 } from "lucide-react";
 import { DBState } from "./types";
 
+// ── SOURCE OF TRUTH for built-in sections with dedicated UI panels ──
+// Any key listed here is excluded from the "Custom Dynamic Sections" list.
+// System & Tooling files are identified dynamically via db[key].isSystemFile.
+export const STANDARD_NAV_TABS = [
+  { id: "systemMetadata",    title: "System Info",         label: "systemMetadata.json",    icon: LayoutGrid },
+  { id: "professionalLinks", title: "Professional Links",  label: "professionalLinks.json", icon: Globe },
+  { id: "logo",              title: "Brand Logo",          label: "logo.json",             icon: Globe },
+  { id: "BannerDetails",     title: "Banner Details",      label: "BannerDetails.json",     icon: User },
+  { id: "experience",        title: "Work Experience",     label: "experience.json",        icon: Briefcase },
+  { id: "projects",          title: "Core Projects",       label: "projects.json",          icon: Wrench },
+  { id: "researchInsights",  title: "Scientific Research", label: "researchInsights.json",  icon: BookOpen },
+  { id: "successStories",    title: "Achievements Log",    label: "successStories.json",    icon: Trophy },
+  { id: "skillsData",        title: "Skills Matrix",       label: "skillsData.json",        icon: Layers },
+  { id: "techstack",         title: "Tech Stack",          label: "techstack.json",         icon: Wrench },
+  { id: "dodoPromptConfig",  title: "Assistant Rules",     label: "dodoPromptConfig.json", icon: Terminal },
+] as const;
+
+const STANDARD_KEYS = STANDARD_NAV_TABS.map(t => t.id);
+
 interface AdminSidebarProps {
   db: DBState | null;
   activeTab: string;
@@ -101,19 +120,7 @@ export function AdminSidebar({
 
         {/* Navigation Links - Standard + Dynamic Custom Sections */}
         <nav className="flex-1 overflow-y-auto pr-1 flex flex-col gap-1.5 scrollbar-width-none">
-          {[
-            { id: "systemMetadata", title: "System Info", label: "systemMetadata.json", icon: LayoutGrid },
-            { id: "professionalLinks", title: "Professional Links", label: "professionalLinks.json", icon: Globe },
-            { id: "logo", title: "Brand Logo", label: "logo.json", icon: Globe },
-            { id: "BannerDetails", title: "Banner Details", label: "BannerDetails.json", icon: User },
-            { id: "experience", title: "Work Experience", label: "experience.json", icon: Briefcase },
-            { id: "projects", title: "Core Projects", label: "projects.json", icon: Wrench },
-            { id: "researchInsights", title: "Scientific Research", label: "researchInsights.json", icon: BookOpen },
-            { id: "successStories", title: "Achievements Log", label: "successStories.json", icon: Trophy },
-            { id: "skillsData", title: "Skills Matrix", label: "skillsData.json", icon: Layers },
-            { id: "techstack", title: "Tech Stack", label: "techstack.json", icon: Wrench },
-            { id: "dodoPromptConfig", title: "Assistant Rules", label: "dodoPromptConfig.json", icon: Terminal },
-          ]
+          {STANDARD_NAV_TABS
           .filter(tab => 
             (!db || db[tab.id] !== undefined) && (
               tab.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -156,11 +163,10 @@ export function AdminSidebar({
           })}
 
           {/* Render Custom Dynamic Sections */}
+          {/* Fully dynamic: any key in db that is NOT a standard section and NOT a system file
+              is automatically listed here — no hardcoding needed. */}
           {db && Object.keys(db)
-            .filter(key => 
-              !["systemMetadata", "professionalLinks", "logo", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig"].includes(key)
-            )
-            .filter(key => !db[key]?.isSystemFile)
+            .filter(key => !STANDARD_KEYS.includes(key as any) && !db[key]?.isSystemFile)
             .filter(key => {
               const title = db[key]?.title || key;
               return (
@@ -203,6 +209,8 @@ export function AdminSidebar({
             })}
 
           {/* Render System & Tooling Files */}
+          {/* Fully dynamic: driven entirely by the isSystemFile flag set in loadDatabase.
+              To add a new system file, just mark it isSystemFile:true there — nothing to change here. */}
           {db && !hideSystemFiles && (
             <>
               <div className="h-[1px] bg-white/5 my-3 shrink-0" />
@@ -211,26 +219,27 @@ export function AdminSidebar({
                   System & Tooling Files
                 </span>
               )}
-              {[
-                { id: "admin_config/json_structure", title: "Schema Registry", label: "admin_config/json_structure.json", icon: Layers },
-                { id: "dodo_prompt", title: "Compiled Prompt", label: "dodo_prompt.json", icon: Terminal },
-                { id: "compile_prompt_py", title: "Prompt Compiler", label: "compile_prompt.py", icon: Code2 }
-              ]
-              .filter(tab => 
-                db[tab.id] !== undefined && (
-                  tab.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                  tab.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  tab.label.toLowerCase().includes(searchQuery.toLowerCase())
+              {Object.keys(db)
+              .filter(key =>
+                db[key]?.isSystemFile && (
+                  (db[key]?.title || key).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  key.toLowerCase().includes(searchQuery.toLowerCase())
                 )
               )
-              .map(tab => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+              .map(key => {
+                const isActive = activeTab === key;
+                const title = db[key]?.title || key;
+                // Derive a sensible file label: admin_config/json_structure → json_structure.json etc.
+                const label = key.includes("/") ? key.split("/").pop() + ".json" : `${key}.json`;
+                // Pick icon based on key heuristics
+                const Icon = key.includes("prompt") || key.includes("dodo") ? Terminal
+                           : key.includes("compile") ? Code2
+                           : Layers;
                 return (
                   <button
-                    key={tab.id}
+                    key={key}
                     onClick={() => {
-                      setActiveTab(tab.id);
+                      setActiveTab(key);
                       setEditMode("json");
                     }}
                     className={`flex items-start gap-3 py-2 px-3 rounded-lg text-left transition-all duration-300 relative shrink-0 ${
@@ -240,16 +249,16 @@ export function AdminSidebar({
                         ? "bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20 active-tab-glow" 
                         : "text-muted-foreground hover:bg-white/5 hover:text-white border border-transparent"
                     }`}
-                    title={sidebarMinimized ? tab.title : undefined}
+                    title={sidebarMinimized ? title : undefined}
                   >
                     <Icon className={`size-3.5 shrink-0 ${isActive ? "text-[#00ff88]" : "text-muted-foreground"} mt-0.5`} />
                     {!sidebarMinimized && (
                       <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
                         <span className={`text-[10px] font-bold tracking-wide uppercase truncate ${isActive ? "text-white" : "text-muted-foreground"}`}>
-                          {tab.title}
+                          {title}
                         </span>
                         <span className="text-[8px] font-mono-fira text-muted-foreground/50 truncate mt-0.5">
-                          {tab.label}
+                          {label}
                         </span>
                       </div>
                     )}

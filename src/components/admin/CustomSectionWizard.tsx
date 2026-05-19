@@ -33,10 +33,14 @@ export function CustomSectionWizard({
   const [wizardFields, setWizardFields] = useState<Array<{ key: string; label: string; type: "string" | "longtext" | "url" | "percentage" | "number" | "boolean" }>>(
     sectionToEdit && sectionToEdit.schema ? sectionToEdit.schema : [{ key: "title", label: "Title", type: "string" }]
   );
+  const [wizardIsStandard, setWizardIsStandard] = useState(
+    editSectionKey ? (db[editSectionKey]?.isStandard ?? false) : false
+  );
+  const [isSaving, setIsSaving] = useState(false);
 
   const WORKER_BASE = "https://dodo-ai-agent.dodoai.workers.dev";
 
-  const handleGenerateSection = (e: React.MouseEvent) => {
+  const handleGenerateSection = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!wizardName.trim()) {
@@ -46,43 +50,34 @@ export function CustomSectionWizard({
     const sectionKey = editSectionKey || wizardName.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
     
     if (!editSectionKey) {
-      if (["systemMetadata", "professionalLinks", "logo", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig"].includes(sectionKey)) {
-        toast.error("This name conflicts with a standard portfolio table name.");
+      const registry = db["admin_config/json_structure"]?.content || {};
+      const reservedKeys = Object.keys(registry).filter(k => (registry[k] as any)?.isStandard || (registry[k] as any)?.isSystemFile);
+      if (reservedKeys.includes(sectionKey)) {
+        toast.error("This name conflicts with a reserved portfolio section.");
         return;
       }
-
       if (db[sectionKey]) {
-        toast.error("A custom section with this name already exists.");
+        toast.error("A section with this name already exists.");
         return;
       }
     }
 
+    const schema = wizardType === "tags" || wizardType === "categories" ? [] : wizardFields;
     const existingContent = db[editSectionKey || sectionKey]?.content !== undefined
       ? db[editSectionKey || sectionKey].content
-      : (wizardType === "list"
-          ? []
-          : wizardType === "tags"
-            ? []
-            : wizardType === "categories"
-              ? { categories: [] }
-              : {});
+      : (wizardType === "list" || wizardType === "tags" ? []
+          : wizardType === "categories" ? { categories: [] }
+          : {});
 
     const newDb = { ...db };
-
-    if (editSectionKey) {
-      if (editSectionKey !== sectionKey) {
-        delete newDb[editSectionKey];
-        // Clean up renamed file on GitHub
-        if (token) {
-          fetch(`${WORKER_BASE}/api/cms/delete`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ filename: editSectionKey })
-          }).catch(err => console.error("Failed to delete renamed section:", err));
-        }
+    if (editSectionKey && editSectionKey !== sectionKey) {
+      delete newDb[editSectionKey];
+      if (token) {
+        fetch(`${WORKER_BASE}/api/cms/delete`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: editSectionKey })
+        }).catch(err => console.error("Failed to delete renamed section:", err));
       }
     }
 
@@ -91,15 +86,56 @@ export function CustomSectionWizard({
       sha: db[editSectionKey || sectionKey]?.sha || "",
       title: wizardName.trim(),
       type: wizardType,
-      schema: wizardType === "tags" || wizardType === "categories" ? [] : wizardFields,
-      schemaSha: db[editSectionKey || sectionKey]?.schemaSha || ""
+      schema,
+      schemaSha: db[editSectionKey || sectionKey]?.schemaSha || "",
+      ...(wizardIsStandard && { isStandard: true })
     };
 
     setDb(newDb);
-
     setActiveTab(sectionKey);
     onClose();
     toast.success(editSectionKey ? `Section "${wizardName}" schema updated!` : `Section "${wizardName}" created!`);
+
+    // Save to GitHub immediately
+    if (token) {
+      setIsSaving(true);
+      try {
+        // 1. Save content file (empty initial content)
+        await fetch(`${WORKER_BASE}/api/cms/save`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: sectionKey, content: existingContent })
+        });
+
+        // 2. Rebuild registry preserving all existing flags
+        const existingRegistry = newDb["admin_config/json_structure"]?.content || {};
+        const jsonStructure: Record<string, any> = {};
+        for (const key of Object.keys(newDb)) {
+          if (key === "admin_config/json_structure" || key === "dodo_prompt") continue;
+          const existing = existingRegistry[key] || {};
+          jsonStructure[key] = {
+            title:  newDb[key].title || key,
+            type:   newDb[key].type  || "list",
+            schema: newDb[key].schema || [],
+            ...(existing.isStandard        !== undefined && { isStandard:        existing.isStandard }),
+            ...(existing.isSystemFile      !== undefined && { isSystemFile:      existing.isSystemFile }),
+            ...(existing.readOnly          !== undefined && { readOnly:          existing.readOnly }),
+            ...(existing.skipPromptCompile !== undefined && { skipPromptCompile: existing.skipPromptCompile }),
+            ...(newDb[key].isStandard !== undefined && { isStandard: newDb[key].isStandard }),
+          };
+        }
+        await fetch(`${WORKER_BASE}/api/cms/save`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: "admin_config/json_structure", content: jsonStructure })
+        });
+        toast.success(`"${wizardName}" saved to GitHub!`);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to save new section to GitHub.");
+      } finally {
+        setIsSaving(false);
+      }
+    }
   };
 
   return (
@@ -269,6 +305,40 @@ export function CustomSectionWizard({
               </div>
             </div>
           )}
+          {/* Advanced Options */}
+          <div className="border border-white/5 rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 bg-white/[0.01] flex items-center justify-between">
+              <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Advanced Options</span>
+            </div>
+            <div className="px-4 py-4 space-y-3">
+              {/* isStandard toggle */}
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={wizardIsStandard}
+                    onChange={(e) => setWizardIsStandard(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-8 h-4 rounded-full transition-all duration-300 ${
+                    wizardIsStandard ? "bg-[#00ff88]" : "bg-white/10"
+                  }`}>
+                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all duration-300 ${
+                      wizardIsStandard ? "left-[18px]" : "left-0.5"
+                    }`} />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-white group-hover:text-[#00ff88] transition-colors">
+                    Mark as Standard Section
+                  </div>
+                  <div className="text-[8px] text-muted-foreground/70 font-sans mt-0.5 leading-relaxed">
+                    Standard sections are core portfolio datasets. They persist even if deleted from GitHub and are excluded from the prompt compiler source list by default.
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
@@ -285,7 +355,7 @@ export function CustomSectionWizard({
             onClick={(e) => handleGenerateSection(e)}
             className="flex-1 py-3 bg-[#00ff88] hover:bg-[#00ff88]/90 text-[#050505] text-xs font-bold rounded-xl shadow-[0_4px_20px_rgba(0,255,136,0.2)] transition-all uppercase cursor-pointer"
           >
-            {editSectionKey ? "Update Schema" : "Generate Section"}
+            {editSectionKey ? "Update Schema" : isSaving ? "Saving to GitHub..." : "Generate Section"}
           </button>
         </div>
       </div>

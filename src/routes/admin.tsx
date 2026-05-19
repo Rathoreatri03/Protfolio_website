@@ -269,12 +269,8 @@ function AdminComponent() {
             throw new Error(errData.error || `Failed to delete ${sectionKey} from GitHub`);
           }
 
-          // 2. Remove from active DB state in-memory or reset if standard section
-          const isStandard = [
-            "systemMetadata", "professionalLinks", "logo", "BannerDetails", 
-            "experience", "projects", "researchInsights", "successStories", 
-            "skillsData", "techstack", "dodoPromptConfig"
-          ].includes(sectionKey);
+          // Use the isStandard flag stamped from the registry — no hardcoded list needed
+          const isStandard = !!db[sectionKey]?.isStandard;
 
           const updatedDb = { ...db };
           if (isStandard) {
@@ -458,33 +454,58 @@ function AdminComponent() {
         }
       }
 
-      // Ensure all standard keys exist. If they are missing (deleted or not on GitHub), populate with default empty structures.
-      const standardKeys = [
-        "systemMetadata", "professionalLinks", "logo", "BannerDetails", 
-        "experience", "projects", "researchInsights", "successStories", 
-        "skillsData", "techstack", "dodoPromptConfig"
-      ];
+      // ── SINGLE SOURCE OF TRUTH: read all flags from json_structure.json registry ──
+      // isSystemFile, readOnly, isStandard are all declared there, not hardcoded here.
       const registry = loadedDb["admin_config/json_structure"]?.content || {};
+
+      for (const [key, regInfo] of Object.entries(registry) as [string, any][]) {
+        if (!loadedDb[key]) continue;
+        const flags: Record<string, any> = {};
+        if (regInfo?.isSystemFile) { flags.isSystemFile = true; flags.readOnly = regInfo.readOnly === true; }
+        if (regInfo?.isStandard)   { flags.isStandard = true; }
+        if (Object.keys(flags).length) {
+          loadedDb[key] = { ...loadedDb[key], ...flags };
+        }
+      }
+
+      // Special case: the registry file itself (self-referential — cannot describe itself)
+      if (loadedDb["admin_config/json_structure"]) {
+        loadedDb["admin_config/json_structure"] = {
+          ...loadedDb["admin_config/json_structure"],
+          isSystemFile: true,
+          readOnly: false,
+          title: "Schema Registry"
+        };
+      }
+
+      // Ensure dodoPromptInclusion exists even if not yet pushed to GitHub
+      if (!loadedDb["dodoPromptInclusion"]) {
+        const regInfo = registry["dodoPromptInclusion"] || {};
+        loadedDb["dodoPromptInclusion"] = {
+          content: null, sha: "", schema: [],
+          type: "object",
+          title: regInfo.title || "Dodo Prompt Inclusion",
+          isSystemFile: true,
+          readOnly: true
+        };
+      }
+
+      // Ensure all standard sections exist with empty defaults if missing from GitHub.
+      // Standard sections are those flagged isStandard:true in the registry.
+      const standardKeys = Object.keys(registry).filter(k => (registry[k] as any)?.isStandard);
       for (const key of standardKeys) {
         if (!loadedDb[key]) {
-          const regInfo = registry[key] || {};
+          const regInfo = registry[key] as any;
+          const type = regInfo?.type || "object";
           loadedDb[key] = {
-            content: key === "experience" || key === "projects" || key === "researchInsights" || key === "successStories" || key === "techstack"
-              ? []
-              : key === "skillsData"
-                ? { categories: [] }
-                : key === "dodoPromptConfig"
-                  ? {
-                      system_instruction: "",
-                      personality_protocol: "",
-                      behavioral_guidelines: "",
-                      atris_information: ""
-                    }
-                  : {},
+            content: type === "list" || type === "tags" ? []
+                   : type === "categories" ? { categories: [] }
+                   : {},
             sha: "",
-            schema: regInfo.schema || [],
-            type: regInfo.type || "object",
-            title: regInfo.title || key
+            schema: regInfo?.schema || [],
+            type,
+            title: regInfo?.title || key,
+            isStandard: true
           };
         }
       }
@@ -521,16 +542,27 @@ function AdminComponent() {
         throw new Error(errData.error || `Failed to save ${fileKey}.json`);
       }
 
-      // 2. Rebuild and save the unified admin_config/json_structure config
+      // 2. Rebuild and save the unified admin_config/json_structure
+      // Read the existing registry to preserve any flags that are not held in db state.
+      const existingRegistry = db["admin_config/json_structure"]?.content || {};
       const jsonStructure: Record<string, any> = {};
       for (const key of Object.keys(db)) {
-        if (key !== "admin_config/json_structure" && key !== "dodo_prompt") {
-          jsonStructure[key] = {
-            title: db[key].title || key,
-            type: db[key].type || "list",
-            schema: db[key].schema || []
-          };
-        }
+        if (key === "admin_config/json_structure" || key === "dodo_prompt") continue;
+        const existing = existingRegistry[key] || {};
+        jsonStructure[key] = {
+          title:             db[key].title || key,
+          type:              db[key].type  || "list",
+          schema:            db[key].schema || [],
+          // Preserve all metadata flags — never strip them on save
+          ...(existing.isStandard      !== undefined && { isStandard:      existing.isStandard }),
+          ...(existing.isSystemFile    !== undefined && { isSystemFile:    existing.isSystemFile }),
+          ...(existing.readOnly        !== undefined && { readOnly:        existing.readOnly }),
+          ...(existing.skipPromptCompile !== undefined && { skipPromptCompile: existing.skipPromptCompile }),
+          // Also pick up any freshly set flags from db state (e.g. newly created sections)
+          ...(db[key].isStandard      !== undefined && { isStandard:      db[key].isStandard }),
+          ...(db[key].isSystemFile    !== undefined && { isSystemFile:    db[key].isSystemFile }),
+          ...(db[key].readOnly        !== undefined && { readOnly:        db[key].readOnly }),
+        };
       }
 
       const resSchema = await fetch(`${WORKER_BASE}/api/cms/save`, {
@@ -594,8 +626,11 @@ function AdminComponent() {
   const getSourceKeys = (): string[] => {
     if (!db) return [];
     const registry = db["admin_config/json_structure"]?.content || {};
+    // Include a key if it is NOT flagged skipPromptCompile and NOT a system file in the registry.
+    // This is driven entirely by json_structure.json — no hardcoded exclusions needed.
     return Object.keys(registry).filter(key => {
-      return key !== "dodoPromptConfig" && key !== "dodoPromptInclusion" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
+      const reg = registry[key] as any;
+      return !reg?.skipPromptCompile && !reg?.isSystemFile;
     });
   };
 

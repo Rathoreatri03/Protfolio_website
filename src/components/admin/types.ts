@@ -10,5 +10,6 @@ export interface DBState {
     schemaSha?: string;
     isSystemFile?: boolean;
     readOnly?: boolean;
+    isStandard?: boolean;
   };
 }
