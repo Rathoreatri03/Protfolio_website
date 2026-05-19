@@ -22,7 +22,8 @@ import {
   User,
   ExternalLink,
   ChevronRight,
-  GripVertical
+  GripVertical,
+  LogOut
 } from "lucide-react";
 import { toast } from "sonner";
 import { NeuralBackground } from "../components/NeuralBackground";
@@ -61,6 +62,9 @@ interface DBState {
 function AdminComponent() {
   const [token, setToken] = useState<string | null>(null);
   const [authStatus, setAuthStatus] = useState<"checking" | "unauthorized" | "authorized">("checking");
+  const [inputKey, setInputKey] = useState("");
+  const [isSubmittingKey, setIsSubmittingKey] = useState(false);
+  const [keyError, setKeyError] = useState<string | null>(null);
   
   const [db, setDb] = useState<DBState | null>(null);
   
@@ -257,6 +261,152 @@ function AdminComponent() {
     );
   };
 
+  // Recursively renders a beautiful dynamic form for nested JSON objects and primitive values
+  const renderDynamicObjectEditor = (
+    obj: any, 
+    onChange: (newObj: any) => void, 
+    path: string[] = []
+  ) => {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+
+    const handleFieldChange = (key: string, value: any) => {
+      const updated = { ...obj, [key]: value };
+      onChange(updated);
+    };
+
+    const formatLabel = (str: string) => {
+      return str
+        .replace(/_/g, " ")
+        .replace(/([A-Z]+)/g, " $1")
+        .replace(/([A-Z][a-z])/g, " $1")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+    };
+
+    return (
+      <div className="space-y-6">
+        {Object.entries(obj).map(([key, val]) => {
+          const fieldId = [...path, key].join("-");
+          const label = formatLabel(key);
+
+          // 1. Nested Object
+          if (val !== null && typeof val === "object" && !Array.isArray(val)) {
+            return (
+              <div key={key} className="glass-card p-5 rounded-2xl border border-white/5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                  <span className="text-[10px] font-bold tracking-wider text-[#00ff88] uppercase">{label}</span>
+                </div>
+                {renderDynamicObjectEditor(val, (newSubObj) => handleFieldChange(key, newSubObj), [...path, key])}
+              </div>
+            );
+          }
+
+          // 2. Array of Strings
+          if (Array.isArray(val)) {
+            const isStringArray = val.every(item => typeof item === "string");
+            if (isStringArray) {
+              return (
+                <div key={key} className="space-y-1.5 animate-in fade-in duration-300">
+                  <label className="block text-muted-foreground text-[10px] uppercase font-semibold tracking-wider">
+                    {label} (Comma Separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={val.join(", ")}
+                    onChange={(e) => {
+                      const arr = e.target.value.split(",").map(t => t.trim());
+                      handleFieldChange(key, arr);
+                    }}
+                    className="w-full cyber-input font-sans"
+                  />
+                </div>
+              );
+            }
+          }
+
+          // 3. String Values
+          if (typeof val === "string") {
+            const isUrl = val.startsWith("http://") || val.startsWith("https://") || val.includes("cloudinary.com") || val.includes("github.com");
+            const isLongText = val.length > 100 || key.toLowerCase().includes("description") || key.toLowerCase().includes("bio");
+
+            return (
+              <div key={key} className="space-y-1.5 animate-in fade-in duration-300">
+                <label className="block text-muted-foreground text-[10px] uppercase font-semibold tracking-wider">
+                  {label}
+                </label>
+                {isLongText ? (
+                  <textarea
+                    rows={5}
+                    value={val}
+                    onChange={(e) => handleFieldChange(key, e.target.value)}
+                    className="w-full cyber-input font-sans leading-relaxed resize-none"
+                  />
+                ) : isUrl ? (
+                  renderUrlInput(
+                    val,
+                    (newVal) => handleFieldChange(key, newVal),
+                    `Enter ${label.toLowerCase()} URL`
+                  )
+                ) : (
+                  <input
+                    type="text"
+                    value={val}
+                    onChange={(e) => handleFieldChange(key, e.target.value)}
+                    className="w-full cyber-input font-sans"
+                  />
+                )}
+              </div>
+            );
+          }
+
+          // 4. Number Values
+          if (typeof val === "number") {
+            return (
+              <div key={key} className="space-y-1.5 animate-in fade-in duration-300">
+                <label className="block text-muted-foreground text-[10px] uppercase font-semibold tracking-wider">
+                  {label}
+                </label>
+                <input
+                  type="number"
+                  value={val}
+                  onChange={(e) => handleFieldChange(key, parseFloat(e.target.value) || 0)}
+                  className="w-full cyber-input font-mono-fira"
+                />
+              </div>
+            );
+          }
+
+          // 5. Boolean Values
+          if (typeof val === "boolean") {
+            return (
+              <div key={key} className="flex items-center justify-between p-3 bg-white/[0.01] border border-white/5 rounded-xl animate-in fade-in duration-300">
+                <label className="text-white text-xs font-bold tracking-wide uppercase">
+                  {label}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => handleFieldChange(key, !val)}
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    val ? "bg-[#00ff88]" : "bg-white/10"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block size-4 transform rounded-full bg-black shadow ring-0 transition duration-200 ease-in-out ${
+                      val ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+            );
+          }
+
+          return null;
+        })}
+      </div>
+    );
+  };
+
   // Dynamically load premium fonts
   useEffect(() => {
     const link = document.createElement("link");
@@ -275,40 +425,80 @@ function AdminComponent() {
     const urlParams = new URLSearchParams(window.location.search);
     const queryToken = urlParams.get("token");
 
-    if (queryToken === "") {
-      localStorage.removeItem("dodo_cms_token");
-      setToken(null);
-      setAuthStatus("unauthorized");
-      return;
+    if (queryToken !== null) {
+      // Clear token from URL immediately to prevent exposure!
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      if (queryToken === "") {
+        setToken(null);
+        setAuthStatus("unauthorized");
+        return;
+      }
     }
 
-    const activeToken = queryToken || localStorage.getItem("dodo_cms_token");
-
-    if (activeToken) {
-      setToken(activeToken);
-      localStorage.setItem("dodo_cms_token", activeToken);
+    // Sessions do not persist across refreshes (in-memory only)
+    if (queryToken) {
+      setToken(queryToken);
 
       // Verify Token on the live Worker API
       fetch(`${WORKER_BASE}/api/cms/verify`, {
-        headers: { "Authorization": `Bearer ${activeToken}` }
+        headers: { "Authorization": `Bearer ${queryToken}` }
       })
       .then(res => {
         if (res.ok) {
           setAuthStatus("authorized");
-          loadDatabase(activeToken);
+          loadDatabase(queryToken);
         } else {
-          localStorage.removeItem("dodo_cms_token");
           setAuthStatus("unauthorized");
         }
       })
       .catch(() => {
-        localStorage.removeItem("dodo_cms_token");
         setAuthStatus("unauthorized");
       });
     } else {
       setAuthStatus("unauthorized");
     }
   }, []);
+
+  // Securely verify credentials entered via the popup modal
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputKey.trim()) return;
+
+    setIsSubmittingKey(true);
+    setKeyError(null);
+
+    try {
+      const res = await fetch(`${WORKER_BASE}/api/cms/verify`, {
+        headers: { "Authorization": `Bearer ${inputKey.trim()}` }
+      });
+
+      if (res.ok) {
+        setToken(inputKey.trim());
+        setAuthStatus("authorized");
+        await loadDatabase(inputKey.trim());
+        toast.success("Terminal Access Granted!");
+      } else {
+        setKeyError("INVALID KERNEL ACCESS KEY. DECRYPTION TIMEOUT.");
+        toast.error("Verification failed: Invalid key.");
+      }
+    } catch (err: any) {
+      setKeyError("ERROR: OPERATIONS KERNEL UNREACHABLE.");
+      toast.error("Network error during verification.");
+    } finally {
+      setIsSubmittingKey(false);
+    }
+  };
+
+  // Securely close session and destroy memory footprints
+  const handleLogout = () => {
+    setToken(null);
+    setAuthStatus("unauthorized");
+    setDb(null);
+    setInputKey("");
+    setKeyError(null);
+    toast.success("Operations Session Discharged Safely.");
+  };
 
   // 2. Fetch all Portfolio Datasets in one single secure call
   const loadDatabase = async (authToken: string) => {
@@ -576,19 +766,67 @@ function AdminComponent() {
   // Render unauthorized access screen
   if (authStatus === "unauthorized") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center bg-[#070303] px-6 text-white">
-        <div className="size-20 flex items-center justify-center rounded-full bg-red-500/5 border border-red-500/20 mb-6 shadow-[0_0_50px_rgba(239,68,68,0.15)]">
-          <ShieldAlert className="size-10 text-red-500 animate-bounce" />
-        </div>
-        <h1 className="font-display text-xl font-bold tracking-[0.4em] text-red-500 uppercase">ACCESS DENIED</h1>
-        <p className="max-w-md text-xs text-muted-foreground mt-4 leading-relaxed font-mono">
-          Security token is missing or has expired. You must provide a valid kernel authentication query to open this workspace.
-        </p>
-        <div className="mt-8 p-5 bg-white/[0.01] border border-white/5 rounded-xl max-w-sm w-full font-mono text-[10px] text-left text-muted-foreground shadow-2xl">
-          <span className="text-[#00ff88] font-bold">Diagnostics:</span><br />
-          URL parameter '?token=...' required.<br />
-          Verify environment variables inside Wrangler Cloud console.
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#050505] text-white relative px-4 select-none">
+        <NeuralBackground />
+        
+        <form 
+          onSubmit={handleLoginSubmit}
+          className="relative max-w-sm w-full glass-card rounded-3xl p-8 border border-white/5 shadow-[0_15px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-center space-y-6 animate-in fade-in zoom-in-95 duration-500"
+        >
+          {/* Neon Header Accent */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[2px] bg-gradient-to-r from-transparent via-[#00ff88] to-transparent shadow-[0_0_12px_#00ff88]" />
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="size-16 rounded-2xl bg-white/[0.01] border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(0,255,136,0.02)]">
+              <Lock className="size-7 text-[#00ff88] animate-pulse" />
+            </div>
+            <div>
+              <h1 className="font-display text-sm font-bold tracking-[0.3em] uppercase text-white">Security Gateway</h1>
+              <p className="text-[10px] text-muted-foreground font-mono mt-1 uppercase tracking-wider">Dodo Operations Kernel</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed font-sans px-2">
+              Authentication required to modify portfolio memory databases. Enter your operations security key to open workspace.
+            </p>
+
+            <div className="space-y-2">
+              <input 
+                type="password"
+                value={inputKey}
+                onChange={e => setInputKey(e.target.value)}
+                placeholder="Security Access Token"
+                className="w-full cyber-input text-center font-mono-fira text-sm tracking-widest placeholder:tracking-normal placeholder:font-sans focus:placeholder-opacity-50"
+                disabled={isSubmittingKey}
+              />
+
+              {keyError && (
+                <div className="p-3 bg-red-950/20 border border-red-500/20 text-red-400 rounded-xl text-[9.5px] font-mono tracking-wide uppercase leading-tight animate-in fade-in slide-in-from-top-1">
+                  ⚠️ {keyError}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmittingKey || !inputKey.trim()}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#00ff88] hover:bg-[#00ff88]/90 disabled:bg-[#00ff88]/40 disabled:text-[#050505]/40 text-[#050505] text-xs font-bold rounded-xl shadow-[0_4px_25px_rgba(0,255,136,0.15)] transition-all uppercase"
+          >
+            {isSubmittingKey ? (
+              <>
+                <RefreshCw className="size-3.5 animate-spin" />
+                <span>Decrypting Layers...</span>
+              </>
+            ) : (
+              <>
+                <Unlock className="size-3.5" />
+                <span>Establish Connection</span>
+              </>
+            )}
+          </button>
+        </form>
       </div>
     );
   }
@@ -740,8 +978,17 @@ function AdminComponent() {
         {/* System Credentials Status Footer */}
         <div className="pt-4 border-t border-white/5 font-mono-fira text-[9px] text-muted-foreground flex flex-col gap-2 shrink-0">
           {sidebarMinimized ? (
-            <div className="flex justify-center text-[#00ff88]" title="Core Session Secure">
-              <Unlock className="size-3.5 animate-pulse" />
+            <div className="flex flex-col items-center gap-3">
+              <div className="text-[#00ff88] flex justify-center" title="Core Session Secure">
+                <Unlock className="size-3.5 animate-pulse" />
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg bg-white/[0.02] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-all flex items-center justify-center"
+                title="Secure Log Out"
+              >
+                <LogOut className="size-3.5" />
+              </button>
             </div>
           ) : (
             <div className="animate-in fade-in slide-in-from-left-2 duration-300 flex flex-col gap-2">
@@ -751,12 +998,19 @@ function AdminComponent() {
               </div>
               <div className="flex items-center justify-between">
                 <span>KERNEL REF:</span>
-                <span>{db.systemMetadata.content.kernel}</span>
+                <span>{db?.systemMetadata?.content?.kernel || "N/A"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>DATABASE:</span>
                 <span>REAL-TIME API</span>
               </div>
+              <button
+                onClick={handleLogout}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 font-bold uppercase rounded-lg transition-all"
+                title="Secure Log Out"
+              >
+                <LogOut className="size-3" /> Close Session
+              </button>
             </div>
           )}
         </div>
@@ -783,51 +1037,19 @@ function AdminComponent() {
               </button>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 space-y-5 w-full">
-              <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+            <div className="glass-card rounded-2xl p-6 w-full">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-3 mb-5">
                 <User className="size-4 text-[#00ff88]" />
                 <h3 className="text-xs font-bold tracking-wider uppercase text-white">System Info</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">User Name</label>
-                  <input 
-                    type="text" 
-                    value={db.systemMetadata.content.userName} 
-                    onChange={e => setDb({...db, systemMetadata: {...db.systemMetadata, content: {...db.systemMetadata.content, userName: e.target.value}}})}
-                    className="w-full cyber-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">System ID</label>
-                  <input 
-                    type="text" 
-                    value={db.systemMetadata.content.systemID} 
-                    onChange={e => setDb({...db, systemMetadata: {...db.systemMetadata, content: {...db.systemMetadata.content, systemID: e.target.value}}})}
-                    className="w-full cyber-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Kernel Version</label>
-                  <input 
-                    type="text" 
-                    value={db.systemMetadata.content.kernel} 
-                    onChange={e => setDb({...db, systemMetadata: {...db.systemMetadata, content: {...db.systemMetadata.content, kernel: e.target.value}}})}
-                    className="w-full cyber-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Latency</label>
-                    <input 
-                      type="text" 
-                      value={db.systemMetadata.content.latency} 
-                      onChange={e => setDb({...db, systemMetadata: {...db.systemMetadata, content: {...db.systemMetadata.content, latency: e.target.value}}})}
-                      className="w-full cyber-input"
-                    />
-                  </div>
-                </div>
-              </div>
+              {renderDynamicObjectEditor(db.systemMetadata.content, (newVal) => {
+                setDb({
+                  ...db,
+                  systemMetadata: { ...db.systemMetadata, content: newVal }
+                });
+              })}
             </div>
+          </div>
         )}
 
         {/* ── TAB 2: professionalLinks.json ── */}
@@ -848,38 +1070,17 @@ function AdminComponent() {
               </button>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 space-y-5 w-full">
-              <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+            <div className="glass-card rounded-2xl p-6 w-full">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-3 mb-5">
                 <Globe className="size-4 text-[#00ff88]" />
                 <h3 className="text-xs font-bold tracking-wider uppercase text-white">Professional Links</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Email Contact</label>
-                  <input 
-                    type="text" 
-                    value={db.professionalLinks.content.email} 
-                    onChange={e => setDb({...db, professionalLinks: {...db.professionalLinks, content: {...db.professionalLinks.content, email: e.target.value}}})}
-                    className="w-full cyber-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">GitHub Profile URL</label>
-                  {renderUrlInput(
-                    db.professionalLinks.content.github,
-                    val => setDb({...db, professionalLinks: {...db.professionalLinks, content: {...db.professionalLinks.content, github: val}}}),
-                    "https://github.com/..."
-                  )}
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Resume PDF URL</label>
-                  {renderUrlInput(
-                    db.professionalLinks.content.resume_PDF,
-                    val => setDb({...db, professionalLinks: {...db.professionalLinks, content: {...db.professionalLinks.content, resume_PDF: val}}}),
-                    "https://..."
-                  )}
-                </div>
-              </div>
+              {renderDynamicObjectEditor(db.professionalLinks.content, (newVal) => {
+                setDb({
+                  ...db,
+                  professionalLinks: { ...db.professionalLinks, content: newVal }
+                });
+              })}
             </div>
           </div>
         )}
@@ -902,21 +1103,17 @@ function AdminComponent() {
               </button>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 space-y-5 w-full">
-              <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+            <div className="glass-card rounded-2xl p-6 w-full">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-3 mb-5">
                 <Globe className="size-4 text-[#00ff88]" />
                 <h3 className="text-xs font-bold tracking-wider uppercase text-white">Brand Logo Asset</h3>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Official Logo URL</label>
-                  {renderUrlInput(
-                    db.logo?.content?.logo_url || "",
-                    val => setDb({...db, logo: {...db.logo, content: { logo_url: val }}}),
-                    "Official Logo URL"
-                  )}
-                </div>
-              </div>
+              {renderDynamicObjectEditor(db.logo.content, (newVal) => {
+                setDb({
+                  ...db,
+                  logo: { ...db.logo, content: newVal }
+                });
+              })}
             </div>
           </div>
         )}
@@ -939,40 +1136,17 @@ function AdminComponent() {
               </button>
             </div>
 
-            <div className="glass-card rounded-2xl p-6 space-y-5 w-full">
-              <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+            <div className="glass-card rounded-2xl p-6 w-full">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-3 mb-5">
                 <User className="size-4 text-[#00ff88]" />
                 <h3 className="text-xs font-bold tracking-wider uppercase text-white">Bio & Core Titles</h3>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Professional Titles (Comma separated)</label>
-                  <input 
-                    type="text" 
-                    value={db.BannerDetails.content.titles ? db.BannerDetails.content.titles.join(", ") : ""} 
-                    onChange={e => setDb({
-                      ...db, 
-                      BannerDetails: {
-                        ...db.BannerDetails, 
-                        content: {
-                          ...db.BannerDetails.content, 
-                          titles: e.target.value.split(",").map(t => t.trim())
-                        }
-                      }
-                    })}
-                    className="w-full cyber-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">Official Biography</label>
-                  <textarea 
-                    rows={8}
-                    value={db.BannerDetails.content.description} 
-                    onChange={e => setDb({...db, BannerDetails: {...db.BannerDetails, content: {...db.BannerDetails.content, description: e.target.value}}})}
-                    className="w-full cyber-input resize-none font-sans leading-relaxed"
-                  />
-                </div>
-              </div>
+              {renderDynamicObjectEditor(db.BannerDetails.content, (newVal) => {
+                setDb({
+                  ...db,
+                  BannerDetails: { ...db.BannerDetails, content: newVal }
+                });
+              })}
             </div>
           </div>
         )}
