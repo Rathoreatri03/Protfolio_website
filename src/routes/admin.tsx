@@ -195,6 +195,14 @@ function AdminComponent() {
     };
     fetchFileContent();
   }, [activeTab, db === null, token]);
+  // Custom Schema Wizard States
+  const [showWizard, setShowWizard] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hideSystemFiles, setHideSystemFiles] = useState(true);
+
+  // Compile Modal States
+  const [showCompileModal, setShowCompileModal] = useState(false);
+  const [compileSearchQuery, setCompileSearchQuery] = useState("");
 
   // Load dodoPromptInclusion on demand when Compile Modal is opened
   useEffect(() => {
@@ -222,15 +230,6 @@ function AdminComponent() {
       fetchInclusion();
     }
   }, [showCompileModal, db === null, token]);
-
-  // Custom Schema Wizard States
-  const [showWizard, setShowWizard] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [hideSystemFiles, setHideSystemFiles] = useState(true);
-
-  // Compile Modal States
-  const [showCompileModal, setShowCompileModal] = useState(false);
-  const [compileSearchQuery, setCompileSearchQuery] = useState("");
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
