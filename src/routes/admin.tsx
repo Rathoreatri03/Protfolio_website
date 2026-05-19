@@ -269,59 +269,36 @@ function AdminComponent() {
             throw new Error(errData.error || `Failed to delete ${sectionKey} from GitHub`);
           }
 
-          // Use the isStandard flag stamped from the registry — no hardcoded list needed
-          const isStandard = !!db[sectionKey]?.isStandard;
-
+          // All sections are fully deletable — remove from db state and navigate away
           const updatedDb = { ...db };
-          if (isStandard) {
-            updatedDb[sectionKey] = {
-              content: sectionKey === "experience" || sectionKey === "projects" || sectionKey === "researchInsights" || sectionKey === "successStories" || sectionKey === "techstack"
-                ? []
-                : sectionKey === "skillsData"
-                  ? { categories: [] }
-                  : sectionKey === "dodoPromptConfig"
-                    ? {
-                        system_instruction: "",
-                        personality_protocol: "",
-                        behavioral_guidelines: "",
-                        atris_information: ""
-                      }
-                    : {},
-              sha: "",
-              schema: db[sectionKey]?.schema || [],
-              type: db[sectionKey]?.type || "object",
-              title: db[sectionKey]?.title || sectionKey
-            };
-          } else {
-            delete updatedDb[sectionKey];
-            if (activeTab === sectionKey) {
-              const remainingKeys = Object.keys(updatedDb);
-              setActiveTab(remainingKeys[0] || "");
-            }
+          delete updatedDb[sectionKey];
+          if (activeTab === sectionKey) {
+            setActiveTab(Object.keys(updatedDb)[0] || "");
           }
           setDb(updatedDb);
 
-          // 3. Rebuild and save updated admin_config/json_structure
+          // 3. Rebuild and save updated admin_config/json_structure — preserve all flags
+          const existingRegistry = db["admin_config/json_structure"]?.content || {};
           const jsonStructure: Record<string, any> = {};
           for (const key of Object.keys(updatedDb)) {
-            if (key !== "admin_config/json_structure" && key !== "dodo_prompt") {
-              jsonStructure[key] = {
-                title: updatedDb[key].title || key,
-                type: updatedDb[key].type || "list",
-                schema: updatedDb[key].schema || []
-              };
-            }
+            if (key === "admin_config/json_structure" || key === "dodo_prompt") continue;
+            const prev = (existingRegistry[key] || {}) as Record<string, any>;
+            const entry: Record<string, any> = {
+              title:  updatedDb[key].title || key,
+              type:   updatedDb[key].type  || "list",
+              schema: updatedDb[key].schema || [],
+            };
+            if (prev.isStandard      || updatedDb[key].isStandard)     entry.isStandard      = true;
+            if (prev.isSystemFile    || updatedDb[key].isSystemFile)   entry.isSystemFile    = true;
+            if (entry.isSystemFile && (prev.readOnly !== undefined || updatedDb[key].readOnly !== undefined))
+              entry.readOnly = updatedDb[key].readOnly ?? prev.readOnly;
+            if (prev.skipPromptCompile || updatedDb[key].readOnly)      entry.skipPromptCompile = true;
+            jsonStructure[key] = entry;
           }
           await fetch(`${WORKER_BASE}/api/cms/save`, {
             method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              filename: "admin_config/json_structure",
-              content: jsonStructure
-            })
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: "admin_config/json_structure", content: jsonStructure })
           });
 
           toast.success(`Successfully deleted "${sectionKey}" from GitHub!`);

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Wrench, X, Layers, LayoutGrid, Plus, Trash, Tag, FolderTree } from "lucide-react";
+import { Wrench, X, Layers, LayoutGrid, Plus, Trash, Tag, FolderTree, Lock, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { DBState } from "./types";
 
@@ -12,6 +12,39 @@ interface CustomSectionWizardProps {
   token?: string | null;
 }
 
+// Reusable toggle row
+function ToggleRow({
+  checked,
+  onChange,
+  label,
+  description,
+  color = "green"
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  description: string;
+  color?: "green" | "amber";
+}) {
+  const accent = color === "amber" ? "bg-amber-500" : "bg-[#00ff88]";
+  return (
+    <label className="flex items-start gap-3 cursor-pointer group">
+      <div className="relative mt-0.5 shrink-0">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only" />
+        <div className={`w-8 h-4 rounded-full transition-all duration-300 ${checked ? accent : "bg-white/10"}`}>
+          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all duration-300 ${checked ? "left-[18px]" : "left-0.5"}`} />
+        </div>
+      </div>
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-white group-hover:text-[#00ff88] transition-colors">{label}</div>
+        <div className="text-[8px] text-muted-foreground/70 font-sans mt-0.5 leading-relaxed">{description}</div>
+      </div>
+    </label>
+  );
+}
+
+type WizardMode = "content" | "system";
+
 export function CustomSectionWizard({
   db,
   setDb,
@@ -20,22 +53,32 @@ export function CustomSectionWizard({
   editSectionKey,
   token
 }: CustomSectionWizardProps) {
-  const sectionToEdit = editSectionKey ? {
-    title: db[editSectionKey]?.title || editSectionKey,
-    type: db[editSectionKey]?.type || "list",
-    schema: db[editSectionKey]?.schema || []
-  } : null;
+  const existing = editSectionKey ? db[editSectionKey] : null;
 
-  const [wizardName, setWizardName] = useState(sectionToEdit ? sectionToEdit.title : "");
+  // Derive initial mode from existing db flags
+  const getInitialMode = (): WizardMode => {
+    if (!existing) return "content";
+    if (existing.isSystemFile) return "system";
+    return "content";
+  };
+
+  const [wizardName, setWizardName] = useState(existing?.title || editSectionKey || "");
   const [wizardType, setWizardType] = useState<"list" | "object" | "tags" | "categories">(
-    sectionToEdit ? sectionToEdit.type as any : "list"
+    (existing?.type as any) || "list"
   );
-  const [wizardFields, setWizardFields] = useState<Array<{ key: string; label: string; type: "string" | "longtext" | "url" | "percentage" | "number" | "boolean" }>>(
-    sectionToEdit && sectionToEdit.schema ? sectionToEdit.schema : [{ key: "title", label: "Title", type: "string" }]
+  const [wizardFields, setWizardFields] = useState<Array<{ key: string; label: string; type: string }>>(
+    existing?.schema?.length ? existing.schema : [{ key: "title", label: "Title", type: "string" }]
   );
-  const [wizardIsStandard, setWizardIsStandard] = useState(
-    editSectionKey ? (db[editSectionKey]?.isStandard ?? false) : false
+
+  // Classification
+  const [wizardMode, setWizardMode] = useState<WizardMode>(getInitialMode());
+  // System file sub-options
+  const [wizardReadOnly, setWizardReadOnly] = useState(existing?.readOnly ?? true);
+  const [wizardSkipCompile, setWizardSkipCompile] = useState(
+    // read from registry for existing sections
+    (db["admin_config/json_structure"]?.content?.[editSectionKey!] as any)?.skipPromptCompile ?? true
   );
+
   const [isSaving, setIsSaving] = useState(false);
 
   const WORKER_BASE = "https://dodo-ai-agent.dodoai.workers.dev";
@@ -48,10 +91,12 @@ export function CustomSectionWizard({
       return;
     }
     const sectionKey = editSectionKey || wizardName.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-    
+
     if (!editSectionKey) {
       const registry = db["admin_config/json_structure"]?.content || {};
-      const reservedKeys = Object.keys(registry).filter(k => (registry[k] as any)?.isStandard || (registry[k] as any)?.isSystemFile);
+      const reservedKeys = Object.keys(registry).filter(k =>
+        (registry[k] as any)?.isStandard || (registry[k] as any)?.isSystemFile
+      );
       if (reservedKeys.includes(sectionKey)) {
         toast.error("This name conflicts with a reserved portfolio section.");
         return;
@@ -63,11 +108,27 @@ export function CustomSectionWizard({
     }
 
     const schema = wizardType === "tags" || wizardType === "categories" ? [] : wizardFields;
-    const existingContent = db[editSectionKey || sectionKey]?.content !== undefined
-      ? db[editSectionKey || sectionKey].content
+    const existingContent = existing?.content !== undefined
+      ? existing.content
       : (wizardType === "list" || wizardType === "tags" ? []
-          : wizardType === "categories" ? { categories: [] }
-          : {});
+        : wizardType === "categories" ? { categories: [] }
+        : {});
+
+    // Build db entry — only write flags that are true, never write false
+    const dbEntry: Record<string, any> = {
+      content: existingContent,
+      sha: existing?.sha || "",
+      title: wizardName.trim(),
+      type: wizardType,
+      schema,
+      schemaSha: existing?.schemaSha || "",
+    };
+    // Content sections: no flags needed (they go to AI by default)
+    // System files: isSystemFile + sub-options
+    if (wizardMode === "system") {
+      dbEntry.isSystemFile = true;
+      dbEntry.readOnly = wizardReadOnly;
+    }
 
     const newDb = { ...db };
     if (editSectionKey && editSectionKey !== sectionKey) {
@@ -80,50 +141,51 @@ export function CustomSectionWizard({
         }).catch(err => console.error("Failed to delete renamed section:", err));
       }
     }
-
-    newDb[sectionKey] = {
-      content: existingContent,
-      sha: db[editSectionKey || sectionKey]?.sha || "",
-      title: wizardName.trim(),
-      type: wizardType,
-      schema,
-      schemaSha: db[editSectionKey || sectionKey]?.schemaSha || "",
-      ...(wizardIsStandard && { isStandard: true })
-    };
+    newDb[sectionKey] = dbEntry;
 
     setDb(newDb);
     setActiveTab(sectionKey);
     onClose();
-    toast.success(editSectionKey ? `Section "${wizardName}" schema updated!` : `Section "${wizardName}" created!`);
+    toast.success(editSectionKey ? `Section "${wizardName}" updated!` : `Section "${wizardName}" created!`);
 
     // Save to GitHub immediately
     if (token) {
       setIsSaving(true);
       try {
-        // 1. Save content file (empty initial content)
+        // 1. Save content file
         await fetch(`${WORKER_BASE}/api/cms/save`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify({ filename: sectionKey, content: existingContent })
         });
 
-        // 2. Rebuild registry preserving all existing flags
+        // 2. Rebuild registry — only write flags that are explicitly true, never false
         const existingRegistry = newDb["admin_config/json_structure"]?.content || {};
         const jsonStructure: Record<string, any> = {};
         for (const key of Object.keys(newDb)) {
           if (key === "admin_config/json_structure" || key === "dodo_prompt") continue;
-          const existing = existingRegistry[key] || {};
-          jsonStructure[key] = {
+          const prev = (existingRegistry[key] || {}) as Record<string, any>;
+          const entry: Record<string, any> = {
             title:  newDb[key].title || key,
             type:   newDb[key].type  || "list",
             schema: newDb[key].schema || [],
-            ...(existing.isStandard        !== undefined && { isStandard:        existing.isStandard }),
-            ...(existing.isSystemFile      !== undefined && { isSystemFile:      existing.isSystemFile }),
-            ...(existing.readOnly          !== undefined && { readOnly:          existing.readOnly }),
-            ...(existing.skipPromptCompile !== undefined && { skipPromptCompile: existing.skipPromptCompile }),
-            ...(newDb[key].isStandard !== undefined && { isStandard: newDb[key].isStandard }),
           };
+          // Only write flags when true — merge from prev registry and current db state
+          const isStandard    = newDb[key].isStandard  ?? prev.isStandard;
+          const isSystemFile  = newDb[key].isSystemFile ?? prev.isSystemFile;
+          const readOnly      = newDb[key].readOnly     ?? prev.readOnly;
+          const skipCompile   = key === sectionKey
+            ? (wizardMode === "system" ? wizardSkipCompile : undefined)
+            : prev.skipPromptCompile;
+
+          if (isStandard)   entry.isStandard      = true;
+          if (isSystemFile) entry.isSystemFile    = true;
+          if (isSystemFile && readOnly !== undefined) entry.readOnly = readOnly;
+          if (skipCompile)  entry.skipPromptCompile = true;
+
+          jsonStructure[key] = entry;
         }
+
         await fetch(`${WORKER_BASE}/api/cms/save`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
@@ -131,12 +193,27 @@ export function CustomSectionWizard({
         });
         toast.success(`"${wizardName}" saved to GitHub!`);
       } catch (err: any) {
-        toast.error(err.message || "Failed to save new section to GitHub.");
+        toast.error(err.message || "Failed to save section to GitHub.");
       } finally {
         setIsSaving(false);
       }
     }
   };
+
+  const MODE_OPTIONS: { id: WizardMode; label: string; desc: string; icon: React.ReactNode }[] = [
+    {
+      id: "content",
+      label: "Content Section",
+      desc: "Portfolio content that gets included in the AI prompt. Fully deletable from GitHub.",
+      icon: <Layers className="size-3.5" />,
+    },
+    {
+      id: "system",
+      label: "System / Tooling File",
+      desc: "Infrastructure file not included in AI. Appears in System & Tooling group. Configure read-only and compile options below.",
+      icon: <Zap className="size-3.5" />,
+    },
+  ];
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
@@ -145,19 +222,18 @@ export function CustomSectionWizard({
         <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <Wrench className="size-4 text-[#00ff88]" />
-            <span className="text-xs font-bold tracking-widest uppercase text-white font-mono-fira">{editSectionKey ? "Edit Section Schema" : "Custom Section Builder"}</span>
+            <span className="text-xs font-bold tracking-widest uppercase text-white font-mono-fira">
+              {editSectionKey ? "Edit Section" : "New Section"}
+            </span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-all"
-          >
+          <button onClick={onClose} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-all">
             <X className="size-4" />
           </button>
         </div>
 
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          {/* Section Title Name */}
+          {/* Section Name */}
           <div className="space-y-1.5">
             <label className="block text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Section Name</label>
             <input
@@ -169,62 +245,31 @@ export function CustomSectionWizard({
             />
           </div>
 
-          {/* Structure Type Select */}
+          {/* Layout Structure */}
           <div className="space-y-1.5">
             <label className="block text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Layout Structure Type</label>
             <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setWizardType("list")}
-                className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
-                  wizardType === "list"
-                    ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
-                    : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
-                }`}
-              >
-                <Layers className="size-4 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">List of Items</span>
-                <span className="text-[8px] leading-normal font-sans opacity-70">A timeline or collection layout (e.g. lists of certificates, coursework, honors).</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setWizardType("object")}
-                className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
-                  wizardType === "object"
-                    ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
-                    : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
-                }`}
-              >
-                <LayoutGrid className="size-4 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Single Config Object</span>
-                <span className="text-[8px] leading-normal font-sans opacity-70">A single block of key-value configuration items (e.g. specific user variables).</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setWizardType("tags")}
-                className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
-                  wizardType === "tags"
-                    ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
-                    : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
-                }`}
-              >
-                <Tag className="size-4 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Tech Stack / Tag Cloud</span>
-                <span className="text-[8px] leading-normal font-sans opacity-70">A flat layout of draggable badge tags (ideal for tech stacks, tools, frameworks).</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setWizardType("categories")}
-                className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
-                  wizardType === "categories"
-                    ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
-                    : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
-                }`}
-              >
-                <FolderTree className="size-4 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Skills Matrix / Tiered Layout</span>
-                <span className="text-[8px] leading-normal font-sans opacity-70">A nested categories-and-items structure with custom metrics (ideal for skill matrices, expertise tiers).</span>
-              </button>
+              {[
+                { val: "list",       icon: <Layers className="size-4 shrink-0" />,      label: "List of Items",            desc: "A timeline or collection layout (e.g. certificates, coursework)." },
+                { val: "object",     icon: <LayoutGrid className="size-4 shrink-0" />,   label: "Single Config Object",     desc: "A single block of key-value configuration items." },
+                { val: "tags",       icon: <Tag className="size-4 shrink-0" />,          label: "Tech Stack / Tag Cloud",   desc: "A flat layout of draggable badge tags." },
+                { val: "categories", icon: <FolderTree className="size-4 shrink-0" />,   label: "Skills Matrix / Tiered",   desc: "A nested categories-and-items structure with metrics." },
+              ].map(({ val, icon, label, desc }) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setWizardType(val as any)}
+                  className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col gap-1.5 ${
+                    wizardType === val
+                      ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]"
+                      : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
+                  }`}
+                >
+                  {icon}
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+                  <span className="text-[8px] leading-normal font-sans opacity-70">{desc}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -235,19 +280,15 @@ export function CustomSectionWizard({
                 <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Define Fields & Data Types</span>
                 <button
                   type="button"
-                  onClick={() => {
-                    setWizardFields([...wizardFields, { key: `field_${Date.now()}`, label: "New Field", type: "string" }]);
-                  }}
+                  onClick={() => setWizardFields([...wizardFields, { key: `field_${Date.now()}`, label: "New Field", type: "string" }])}
                   className="flex items-center gap-1 text-[9px] font-bold text-[#00ff88] hover:text-[#00ff88]/80 uppercase tracking-widest cursor-pointer"
                 >
                   <Plus className="size-3" /> Add Field
                 </button>
               </div>
-
               <div className="space-y-3">
                 {wizardFields.map((field, index) => (
                   <div key={index} className="flex flex-col sm:flex-row gap-3 items-start p-3 bg-white/[0.005] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
-                    {/* Label Input */}
                     <div className="flex-1 w-full space-y-1">
                       <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Display Label</span>
                       <input
@@ -256,23 +297,20 @@ export function CustomSectionWizard({
                         onChange={(e) => {
                           const updated = [...wizardFields];
                           const newLabel = e.target.value;
-                          const newKey = newLabel.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "");
-                          updated[index] = { ...updated[index], label: newLabel, key: newKey };
+                          updated[index] = { ...updated[index], label: newLabel, key: newLabel.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "") };
                           setWizardFields(updated);
                         }}
                         className="w-full cyber-input text-xs font-sans"
                         placeholder="Field Label"
                       />
                     </div>
-
-                    {/* Editor Type Input */}
                     <div className="w-full sm:w-44 space-y-1">
                       <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Input Type</span>
                       <select
                         value={field.type}
                         onChange={(e) => {
                           const updated = [...wizardFields];
-                          updated[index] = { ...updated[index], type: e.target.value as any };
+                          updated[index] = { ...updated[index], type: e.target.value };
                           setWizardFields(updated);
                         }}
                         className="w-full cyber-input text-xs font-sans bg-[#050505] border-white/10 text-white cursor-pointer"
@@ -285,15 +323,10 @@ export function CustomSectionWizard({
                         <option value="boolean">Toggle Switch</option>
                       </select>
                     </div>
-
-                    {/* Remove button */}
                     <button
                       type="button"
                       onClick={() => {
-                        if (wizardFields.length <= 1) {
-                          toast.error("A section must contain at least one field.");
-                          return;
-                        }
+                        if (wizardFields.length <= 1) { toast.error("A section must contain at least one field."); return; }
                         setWizardFields(wizardFields.filter((_, i) => i !== index));
                       }}
                       className="mt-5 p-2 rounded-xl bg-white/5 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 border border-white/10 hover:border-red-500/20 transition-all self-end shrink-0 cursor-pointer"
@@ -305,39 +338,61 @@ export function CustomSectionWizard({
               </div>
             </div>
           )}
-          {/* Advanced Options */}
+
+          {/* ── Classification ── */}
           <div className="border border-white/5 rounded-2xl overflow-hidden">
-            <div className="px-4 py-3 bg-white/[0.01] flex items-center justify-between">
-              <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Advanced Options</span>
+            <div className="px-4 py-3 bg-white/[0.01] border-b border-white/5">
+              <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Section Classification</span>
             </div>
-            <div className="px-4 py-4 space-y-3">
-              {/* isStandard toggle */}
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <div className="relative mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={wizardIsStandard}
-                    onChange={(e) => setWizardIsStandard(e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-8 h-4 rounded-full transition-all duration-300 ${
-                    wizardIsStandard ? "bg-[#00ff88]" : "bg-white/10"
-                  }`}>
-                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all duration-300 ${
-                      wizardIsStandard ? "left-[18px]" : "left-0.5"
-                    }`} />
+            <div className="px-4 py-3 space-y-2">
+              {MODE_OPTIONS.map(({ id, label, desc, icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setWizardMode(id)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all duration-200 ${
+                    wizardMode === id
+                      ? "bg-[#00ff88]/5 border-[#00ff88]/20"
+                      : "bg-white/[0.005] border-white/5 hover:bg-white/[0.02]"
+                  }`}
+                >
+                  <div className={`mt-0.5 shrink-0 ${wizardMode === id ? "text-[#00ff88]" : "text-muted-foreground"}`}>
+                    {icon}
                   </div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-white group-hover:text-[#00ff88] transition-colors">
-                    Mark as Standard Section
+                  <div>
+                    <div className={`text-[10px] font-bold uppercase tracking-wider ${wizardMode === id ? "text-[#00ff88]" : "text-white"}`}>
+                      {label}
+                    </div>
+                    <div className="text-[8px] text-muted-foreground/70 font-sans mt-0.5 leading-relaxed">{desc}</div>
                   </div>
-                  <div className="text-[8px] text-muted-foreground/70 font-sans mt-0.5 leading-relaxed">
-                    Standard sections are core portfolio datasets. They persist even if deleted from GitHub and are excluded from the prompt compiler source list by default.
-                  </div>
-                </div>
-              </label>
+                  {/* Radio dot */}
+                  <div className={`ml-auto mt-1 shrink-0 size-3 rounded-full border-2 transition-all ${
+                    wizardMode === id ? "border-[#00ff88] bg-[#00ff88]" : "border-white/20 bg-transparent"
+                  }`} />
+                </button>
+              ))}
             </div>
+
+            {/* System File sub-options */}
+            {wizardMode === "system" && (
+              <div className="px-4 pb-4 pt-1 space-y-3 border-t border-white/5 bg-amber-500/[0.02]">
+                <div className="text-[9px] font-mono text-amber-400/60 uppercase tracking-widest pt-2">System File Options</div>
+                <ToggleRow
+                  checked={wizardReadOnly}
+                  onChange={setWizardReadOnly}
+                  color="amber"
+                  label="Read Only"
+                  description="Disable direct JSON editing in the editor. Use this for compiler output or files managed by another UI."
+                />
+                <ToggleRow
+                  checked={wizardSkipCompile}
+                  onChange={setWizardSkipCompile}
+                  color="amber"
+                  label="Skip Prompt Compile"
+                  description="Exclude this file from the prompt compiler source list. Enable for tooling/config files not meant for AI context."
+                />
+              </div>
+            )}
           </div>
         </div>
 
