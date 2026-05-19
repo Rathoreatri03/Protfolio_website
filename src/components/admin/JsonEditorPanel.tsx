@@ -20,12 +20,15 @@ export function JsonEditorPanel({
   publishing,
   onClose
 }: JsonEditorPanelProps) {
-  const isCustomSection = !["systemMetadata", "professionalLinks", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig", "logo"].includes(activeTab);
-  
+  const isSystemFile = db[activeTab as keyof DBState]?.isSystemFile || false;
+  const isReadOnly = db[activeTab as keyof DBState]?.readOnly || false;
+
   const getInitialContent = () => {
-    const content = isCustomSection 
-      ? db.systemMetadata?.content?.customSections?.[activeTab]?.content 
-      : db[activeTab as keyof DBState]?.content;
+    const content = db[activeTab as keyof DBState]?.content;
+
+    if (activeTab === "compile_prompt_py") {
+      return typeof content === "object" && content !== null && "code" in content ? (content as any).code : String(content || "");
+    }
     return JSON.stringify(content || {}, null, 2);
   };
 
@@ -40,6 +43,10 @@ export function JsonEditorPanel({
 
   const handleJsonTextChange = (text: string) => {
     setJsonText(text);
+    if (isReadOnly) {
+      setJsonError(null);
+      return;
+    }
     try {
       if (!text.trim()) {
         throw new Error("JSON document cannot be empty.");
@@ -47,31 +54,21 @@ export function JsonEditorPanel({
       const parsed = JSON.parse(text);
       setJsonError(null);
 
-      // Sync valid changes to the main React state
-      if (isCustomSection) {
-        const updatedMetadata = { ...db.systemMetadata };
-        const custom = { ...(updatedMetadata.content.customSections || {}) };
-        custom[activeTab] = { ...custom[activeTab], content: parsed };
-        updatedMetadata.content.customSections = custom;
-        setDb({
-          ...db,
-          systemMetadata: updatedMetadata
-        });
-      } else {
-        setDb({
-          ...db,
-          [activeTab]: {
-            ...db[activeTab as keyof DBState],
-            content: parsed
-          }
-        });
-      }
+      // Sync valid changes directly to the database state root
+      setDb({
+        ...db,
+        [activeTab]: {
+          ...db[activeTab as keyof DBState],
+          content: parsed
+        }
+      });
     } catch (err: any) {
       setJsonError(err.message);
     }
   };
 
   const handleFormatJson = () => {
+    if (isReadOnly) return;
     try {
       const parsed = JSON.parse(jsonText);
       const formatted = JSON.stringify(parsed, null, 2);
@@ -90,12 +87,12 @@ export function JsonEditorPanel({
   };
 
   const handlePublish = async () => {
+    if (isReadOnly) return;
     if (jsonError) {
       toast.error("Cannot save: Fix JSON syntax errors first.");
       return;
     }
-    const targetFile = isCustomSection ? "systemMetadata" : activeTab;
-    await saveFile(targetFile as CMSFile);
+    await saveFile(activeTab as CMSFile);
   };
 
   return (
@@ -104,42 +101,56 @@ export function JsonEditorPanel({
         <div>
           <div className="flex items-center gap-3">
             <Code2 className="size-5 text-[#00ff88]" />
-            <h2 className="text-xl font-bold tracking-tight text-white">{activeTab}.json</h2>
-            <span className="text-[9px] font-mono-fira px-2 py-0.5 rounded-full border border-red-500/20 text-red-400 uppercase bg-red-500/5">
-              Source Editor
+            <h2 className="text-xl font-bold tracking-tight text-white">
+              {activeTab === "compile_prompt_py" ? "compile_prompt.py" : activeTab.endsWith(".json") ? activeTab : `${activeTab}.json`}
+            </h2>
+            <span className={`text-[9px] font-mono-fira px-2 py-0.5 rounded-full border uppercase ${
+              isReadOnly 
+                ? "border-amber-500/20 text-amber-400 bg-amber-500/5" 
+                : "border-red-500/20 text-red-400 bg-red-500/5"
+            }`}>
+              {isReadOnly ? "Read-Only Protected" : "Source Editor"}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Directly edit raw database structures. Syntax validation is active to prevent database corruption.
+            {isReadOnly 
+              ? "Viewing protected system file. Changes cannot be made directly in this interface."
+              : "Directly edit raw database structures. Syntax validation is active to prevent database corruption."}
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 self-end sm:self-auto">
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1.5 px-4 py-2 border border-white/10 hover:border-white/20 bg-white/5 text-white text-xs font-bold rounded-lg transition-all uppercase cursor-pointer"
-          >
-            <Eye className="size-3.5" />
-            <span>Visual Editor</span>
-          </button>
-          <button
-            onClick={handleFormatJson}
-            className="px-4 py-2 border border-[#00ff88]/20 hover:border-[#00ff88]/40 bg-[#00ff88]/5 text-[#00ff88] text-xs font-bold rounded-lg transition-all uppercase cursor-pointer"
-          >
-            Format
-          </button>
-          <button
-            onClick={handlePublish}
-            disabled={publishing !== null || jsonError !== null}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#00ff88] hover:bg-[#00ff88]/90 disabled:bg-[#00ff88]/40 disabled:text-[#050505]/40 text-[#050505] text-xs font-bold rounded-lg shadow-[0_4px_20px_rgba(0,255,136,0.2)] transition-all uppercase cursor-pointer"
-          >
-            {publishing === (isCustomSection ? "systemMetadata" : activeTab) ? (
-              <RefreshCw className="size-3.5 animate-spin" />
-            ) : (
-              <Save className="size-3.5" />
-            )}
-            <span>Publish JSON</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1.5 px-4 py-2 border border-white/10 hover:border-white/20 bg-white/5 text-white text-xs font-bold rounded-lg transition-all uppercase cursor-pointer"
+            >
+              <Eye className="size-3.5" />
+              <span>Visual Editor</span>
+            </button>
+          )}
+          {!isReadOnly && (
+            <button
+              onClick={handleFormatJson}
+              className="px-4 py-2 border border-[#00ff88]/20 hover:border-[#00ff88]/40 bg-[#00ff88]/5 text-[#00ff88] text-xs font-bold rounded-lg transition-all uppercase cursor-pointer"
+            >
+              Format
+            </button>
+          )}
+          {!isReadOnly && (
+            <button
+              onClick={handlePublish}
+              disabled={publishing !== null || jsonError !== null}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#00ff88] hover:bg-[#00ff88]/90 disabled:bg-[#00ff88]/40 disabled:text-[#050505]/40 text-[#050505] text-xs font-bold rounded-lg shadow-[0_4px_20px_rgba(0,255,136,0.2)] transition-all uppercase cursor-pointer"
+            >
+              {publishing === activeTab ? (
+                <RefreshCw className="size-3.5 animate-spin" />
+              ) : (
+                <Save className="size-3.5" />
+              )}
+              <span>Publish JSON</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -158,12 +169,12 @@ export function JsonEditorPanel({
         {/* Editor Controls Bar */}
         <div className="bg-white/[0.01] border-b border-white/5 px-4 py-2 flex items-center justify-between">
           <span className="text-[10px] font-mono-fira text-muted-foreground/60 uppercase tracking-widest">
-            File Buffer (JSON UTF-8)
+            {activeTab === "compile_prompt_py" ? "File Buffer (Python UTF-8)" : "File Buffer (JSON UTF-8)"}
           </span>
           <button
             onClick={handleCopy}
             className="p-1 rounded bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-all cursor-pointer"
-            title="Copy JSON"
+            title="Copy Code"
           >
             <Clipboard className="size-3.5" />
           </button>
@@ -174,6 +185,7 @@ export function JsonEditorPanel({
           <textarea
             value={jsonText}
             onChange={(e) => handleJsonTextChange(e.target.value)}
+            readOnly={isReadOnly}
             className="w-full min-h-[500px] bg-transparent border-0 text-white focus:outline-none focus:ring-0 leading-relaxed font-mono-fira text-xs resize-y"
             placeholder="{}"
             spellCheck={false}

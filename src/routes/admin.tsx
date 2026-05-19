@@ -29,11 +29,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { NeuralBackground } from "../components/NeuralBackground";
-import { CMSFile, DBState, DEFAULT_SCHEMAS } from "../components/admin/types";
+import { CMSFile, DBState } from "../components/admin/types";
 import { CustomSectionPanel } from "../components/admin/CustomSectionPanel";
 import { CustomSectionWizard } from "../components/admin/CustomSectionWizard";
 import { JsonEditorPanel } from "../components/admin/JsonEditorPanel";
 import { ConfirmModal } from "../components/admin/ConfirmModal";
+import { SecurityGateway } from "../components/admin/SecurityGateway";
+import { AdminSidebar } from "../components/admin/AdminSidebar";
 
 
 
@@ -57,6 +59,7 @@ function AdminComponent() {
   // Custom Schema Wizard States
   const [showWizard, setShowWizard] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [hideSystemFiles, setHideSystemFiles] = useState(true);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -119,9 +122,9 @@ function AdminComponent() {
                       }
                     : {},
               sha: "",
-              schema: DEFAULT_SCHEMAS[sectionKey]?.schema || [],
-              type: DEFAULT_SCHEMAS[sectionKey]?.type || "object",
-              title: DEFAULT_SCHEMAS[sectionKey]?.title || sectionKey
+              schema: db[sectionKey]?.schema || [],
+              type: db[sectionKey]?.type || "object",
+              title: db[sectionKey]?.title || sectionKey
             };
           } else {
             delete updatedDb[sectionKey];
@@ -169,7 +172,9 @@ function AdminComponent() {
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
   // ── 100% PRODUCTION EDGE MODE: Always fetch dynamically from live Cloudflare & GitHub! ──
-  const WORKER_BASE = "https://dodo-ai-agent.dodoai.workers.dev";
+  const WORKER_BASE = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://127.0.0.1:8787"
+    : "https://dodo-ai-agent.dodoai.workers.dev";
 
   // Dynamically load premium fonts
   useEffect(() => {
@@ -289,8 +294,10 @@ function AdminComponent() {
         "experience", "projects", "researchInsights", "successStories", 
         "skillsData", "techstack", "dodoPromptConfig"
       ];
+      const registry = loadedDb["admin_config/json_structure"]?.content || {};
       for (const key of standardKeys) {
         if (!loadedDb[key]) {
+          const regInfo = registry[key] || {};
           loadedDb[key] = {
             content: key === "experience" || key === "projects" || key === "researchInsights" || key === "successStories" || key === "techstack"
               ? []
@@ -305,9 +312,9 @@ function AdminComponent() {
                     }
                   : {},
             sha: "",
-            schema: DEFAULT_SCHEMAS[key]?.schema || [],
-            type: DEFAULT_SCHEMAS[key]?.type || "object",
-            title: DEFAULT_SCHEMAS[key]?.title || key
+            schema: regInfo.schema || [],
+            type: regInfo.type || "object",
+            title: regInfo.title || key
           };
         }
       }
@@ -398,68 +405,13 @@ function AdminComponent() {
   // Render unauthorized access screen
   if (authStatus === "unauthorized") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#050505] text-white relative px-4 select-none">
-        <NeuralBackground />
-        
-        <form 
-          onSubmit={handleLoginSubmit}
-          className="relative max-w-sm w-full glass-card rounded-3xl p-8 border border-white/5 shadow-[0_15px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-center space-y-6 animate-in fade-in zoom-in-95 duration-500"
-        >
-          {/* Neon Header Accent */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[2px] bg-gradient-to-r from-transparent via-[#00ff88] to-transparent shadow-[0_0_12px_#00ff88]" />
-
-          <div className="flex flex-col items-center gap-3">
-            <div className="size-16 rounded-2xl bg-white/[0.01] border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(0,255,136,0.02)]">
-              <Lock className="size-7 text-[#00ff88] animate-pulse" />
-            </div>
-            <div>
-              <h1 className="font-display text-sm font-bold tracking-[0.3em] uppercase text-white">Security Gateway</h1>
-              <p className="text-[10px] text-muted-foreground font-mono mt-1 uppercase tracking-wider">Dodo Operations Kernel</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <p className="text-xs text-muted-foreground leading-relaxed font-sans px-2">
-              Authentication required to modify portfolio memory databases. Enter your operations security key to open workspace.
-            </p>
-
-            <div className="space-y-2">
-              <input 
-                type="password"
-                value={inputKey}
-                onChange={e => setInputKey(e.target.value)}
-                placeholder="Security Access Token"
-                className="w-full cyber-input text-center font-mono-fira text-sm tracking-widest placeholder:tracking-normal placeholder:font-sans focus:placeholder-opacity-50"
-                disabled={isSubmittingKey}
-              />
-
-              {keyError && (
-                <div className="p-3 bg-red-950/20 border border-red-500/20 text-red-400 rounded-xl text-[9.5px] font-mono tracking-wide uppercase leading-tight animate-in fade-in slide-in-from-top-1">
-                  ⚠️ {keyError}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmittingKey || !inputKey.trim()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-[#00ff88] hover:bg-[#00ff88]/90 disabled:bg-[#00ff88]/40 disabled:text-[#050505]/40 text-[#050505] text-xs font-bold rounded-xl shadow-[0_4px_25px_rgba(0,255,136,0.15)] transition-all uppercase"
-          >
-            {isSubmittingKey ? (
-              <>
-                <RefreshCw className="size-3.5 animate-spin" />
-                <span>Decrypting Layers...</span>
-              </>
-            ) : (
-              <>
-                <Unlock className="size-3.5" />
-                <span>Establish Connection</span>
-              </>
-            )}
-          </button>
-        </form>
-      </div>
+      <SecurityGateway
+        inputKey={inputKey}
+        setInputKey={setInputKey}
+        isSubmittingKey={isSubmittingKey}
+        keyError={keyError}
+        handleLoginSubmit={handleLoginSubmit}
+      />
     );
   }
 
@@ -539,214 +491,21 @@ function AdminComponent() {
         }
       `}</style>
       
-      {/* ── STATIC LEFT PANEL NAV (Minimize Enabled) ── */}
-      <aside className={`h-full shrink-0 bg-[#080808]/95 border-r border-white/5 p-5 flex flex-col justify-between glass-card md:rounded-none select-none transition-all duration-300 ease-in-out z-20 ${
-        sidebarMinimized ? "w-20" : "w-64"
-      }`}>
-        <div className="flex flex-col h-[88%]">
-          {/* Logo Header with Collapse Trigger */}
-          <div className="flex items-center justify-between mb-6 shrink-0">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="size-10 shrink-0 rounded-xl bg-white/[0.02] border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.02)]">
-                <Terminal className="size-5 text-[#00ff88]" />
-              </div>
-              {!sidebarMinimized && (
-                <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                  <h1 className="font-display text-sm tracking-[0.25em] text-white uppercase font-bold">Dodo CMS</h1>
-                  <p className="text-[9px] text-[#00ff88] font-mono-fira tracking-widest uppercase mt-0.5">Edge Operations</p>
-                </div>
-              )}
-            </div>
-
-            {/* Collapse toggle icon button */}
-            <button 
-              onClick={() => setSidebarMinimized(!sidebarMinimized)}
-              className="p-1.5 rounded-lg bg-white/[0.02] border border-white/10 hover:border-[#00ff88]/30 hover:bg-[#00ff88]/10 text-muted-foreground hover:text-[#00ff88] transition-all ml-1.5 shrink-0"
-              title={sidebarMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-              <ChevronRight className={`size-3.5 transition-transform duration-300 ${sidebarMinimized ? "" : "rotate-180 text-[#00ff88]"}`} />
-            </button>
-          </div>
-
-          {/* Search bar & Global Add button (if not minimized) */}
-          {!sidebarMinimized && (
-            <div className="flex items-center gap-2 mb-4 px-1 shrink-0">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Search files..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-2 py-1.5 bg-white/[0.015] border border-white/5 rounded-lg text-[10px] font-sans text-white focus:outline-none focus:border-[#00ff88]/50 focus:bg-white/[0.035] transition-all placeholder:text-muted-foreground/50"
-                />
-                <Search className="size-3 text-muted-foreground/60 absolute left-2.5 top-2.5" />
-              </div>
-              <button
-                onClick={() => setShowWizard(true)}
-                className="p-1.5 bg-[#00ff88]/10 hover:bg-[#00ff88]/20 border border-[#00ff88]/30 hover:border-[#00ff88] text-[#00ff88] rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0"
-                title="New Custom Section"
-              >
-                <Plus className="size-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* Navigation Links - Standard + Dynamic Custom Sections */}
-          <nav className="flex-1 overflow-y-auto pr-1 flex flex-col gap-1.5 scrollbar-width-none">
-            {[
-              { id: "systemMetadata", title: "System Info", label: "systemMetadata.json", icon: LayoutGrid },
-              { id: "professionalLinks", title: "Professional Links", label: "professionalLinks.json", icon: Globe },
-              { id: "logo", title: "Brand Logo", label: "logo.json", icon: Globe },
-              { id: "BannerDetails", title: "Banner Details", label: "BannerDetails.json", icon: User },
-              { id: "experience", title: "Work Experience", label: "experience.json", icon: Briefcase },
-              { id: "projects", title: "Core Projects", label: "projects.json", icon: Wrench },
-              { id: "researchInsights", title: "Scientific Research", label: "researchInsights.json", icon: BookOpen },
-              { id: "successStories", title: "Achievements Log", label: "successStories.json", icon: Trophy },
-              { id: "skillsData", title: "Skills Matrix", label: "skillsData.json", icon: Layers },
-              { id: "techstack", title: "Tech Stack", label: "techstack.json", icon: Wrench },
-              { id: "dodoPromptConfig", title: "Assistant Rules", label: "dodoPromptConfig.json", icon: Terminal },
-            ]
-            .filter(tab => 
-              (!db || db[tab.id] !== undefined) && (
-                tab.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                tab.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                tab.label.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-            )
-            .map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setEditMode("visual");
-                  }}
-                  className={`flex items-start gap-3 py-2 px-3 rounded-lg text-left transition-all duration-300 relative shrink-0 ${
-                    sidebarMinimized ? "justify-center px-0 py-3" : ""
-                  } ${
-                    isActive 
-                      ? "bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20 active-tab-glow" 
-                      : "text-muted-foreground hover:bg-white/5 hover:text-white border border-transparent"
-                  }`}
-                  title={sidebarMinimized ? tab.title : undefined}
-                >
-                  <Icon className={`size-3.5 shrink-0 ${isActive ? "text-[#00ff88]" : "text-muted-foreground"} mt-0.5`} />
-                  {!sidebarMinimized && (
-                    <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <span className={`text-[10px] font-bold tracking-wide uppercase truncate ${isActive ? "text-white" : "text-muted-foreground"}`}>
-                        {tab.title}
-                      </span>
-                      <span className="text-[8px] font-mono-fira text-muted-foreground/50 truncate mt-0.5">
-                        {tab.label}
-                      </span>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Render Custom Dynamic Sections */}
-            {db && Object.keys(db)
-              .filter(key => 
-                !["systemMetadata", "professionalLinks", "logo", "BannerDetails", "experience", "projects", "researchInsights", "successStories", "skillsData", "techstack", "dodoPromptConfig"].includes(key)
-              )
-              .filter(key => {
-                const title = db[key]?.title || key;
-                return (
-                  title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  key.toLowerCase().includes(searchQuery.toLowerCase())
-                );
-              })
-              .map(key => {
-                const isActive = activeTab === key;
-                const title = db[key]?.title || key;
-                const type = db[key]?.type || "list";
-                return (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setActiveTab(key);
-                      setEditMode("visual");
-                    }}
-                    className={`flex items-start gap-3 py-2 px-3 rounded-lg text-left transition-all duration-300 relative shrink-0 ${
-                      sidebarMinimized ? "justify-center px-0 py-3" : ""
-                    } ${
-                      isActive 
-                        ? "bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20 active-tab-glow" 
-                        : "text-muted-foreground hover:bg-white/5 hover:text-white border border-transparent"
-                    }`}
-                    title={sidebarMinimized ? title : undefined}
-                  >
-                    <Layers className={`size-3.5 shrink-0 ${isActive ? "text-[#00ff88]" : "text-muted-foreground"} mt-0.5`} />
-                    {!sidebarMinimized && (
-                      <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
-                        <span className={`text-[10px] font-bold tracking-wide uppercase truncate ${isActive ? "text-white" : "text-muted-foreground"}`}>
-                          {title}
-                        </span>
-                        <span className="text-[8px] font-mono-fira text-muted-foreground/50 truncate mt-0.5">
-                          {key}.json
-                        </span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-
-            {/* Create Custom Section Action Button (when minimized) */}
-            {db && sidebarMinimized && (
-              <button
-                onClick={() => setShowWizard(true)}
-                className="flex items-center justify-center py-3 rounded-lg border border-dashed border-white/10 hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 text-muted-foreground hover:text-[#00ff88] shrink-0 cursor-pointer"
-                title="Create Dynamic Custom Section"
-              >
-                <Plus className="size-3.5 shrink-0" />
-              </button>
-            )}
-          </nav>
-        </div>
-
-        {/* System Credentials Status Footer */}
-        <div className="pt-4 border-t border-white/5 font-mono-fira text-[9px] text-muted-foreground flex flex-col gap-2 shrink-0">
-          {sidebarMinimized ? (
-            <div className="flex flex-col items-center gap-3">
-              <div className="text-[#00ff88] flex justify-center" title="Core Session Secure">
-                <Unlock className="size-3.5 animate-pulse" />
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-lg bg-white/[0.02] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-all flex items-center justify-center"
-                title="Secure Log Out"
-              >
-                <LogOut className="size-3.5" />
-              </button>
-            </div>
-          ) : (
-            <div className="animate-in fade-in slide-in-from-left-2 duration-300 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span>CORE STATUS:</span>
-                <span className="text-[#00ff88] flex items-center gap-1 font-bold"><Unlock className="size-3" /> SECURE</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>KERNEL REF:</span>
-                <span>{db?.systemMetadata?.content?.kernel || "N/A"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>DATABASE:</span>
-                <span>REAL-TIME API</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 font-bold uppercase rounded-lg transition-all"
-                title="Secure Log Out"
-              >
-                <LogOut className="size-3" /> Close Session
-              </button>
-            </div>
-          )}
-        </div>
-      </aside>
+      {/* ── STATIC LEFT PANEL NAV ── */}
+      <AdminSidebar
+        db={db}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        setEditMode={setEditMode}
+        setShowWizard={setShowWizard}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        sidebarMinimized={sidebarMinimized}
+        setSidebarMinimized={setSidebarMinimized}
+        hideSystemFiles={hideSystemFiles}
+        setHideSystemFiles={setHideSystemFiles}
+        handleLogout={handleLogout}
+      />
  
       {/* ── INDEPENDENTLY SCROLLABLE RIGHT PANEL ── */}
       <main className="flex-1 h-full overflow-y-auto p-6 md:p-12 w-full max-w-[1600px] mx-auto">
@@ -762,7 +521,16 @@ function AdminComponent() {
           </div>
         )}
 
-        {editMode === "json" && db ? (
+        {db && db[activeTab]?.isSystemFile ? (
+          <JsonEditorPanel
+            activeTab={activeTab}
+            db={db}
+            setDb={setDb}
+            saveFile={saveFile}
+            publishing={publishing}
+            onClose={() => {}}
+          />
+        ) : editMode === "json" && db ? (
           <JsonEditorPanel
             activeTab={activeTab}
             db={db}

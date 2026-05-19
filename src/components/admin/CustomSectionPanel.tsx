@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { RefreshCw, Save, Layers, Settings, Plus, Trash, X, Tag, FolderTree } from "lucide-react";
-import { DBState, CMSFile, DEFAULT_SCHEMAS } from "./types";
+import { DBState, CMSFile } from "./types";
 import { CustomListEditor } from "./CustomListEditor";
 import { CustomSectionWizard } from "./CustomSectionWizard";
 import { renderUrlInput } from "./helpers";
@@ -152,9 +152,9 @@ export function CustomSectionPanel({
   const [newFieldType, setNewFieldType] = useState<"string" | "longtext" | "url" | "percentage" | "number" | "boolean">("string");
 
   const section = db[activeTab] ? {
-    title: db[activeTab].title || DEFAULT_SCHEMAS[activeTab]?.title || activeTab,
-    type: db[activeTab].type || DEFAULT_SCHEMAS[activeTab]?.type || "list",
-    schema: db[activeTab].schema || DEFAULT_SCHEMAS[activeTab]?.schema || []
+    title: db[activeTab].title || activeTab,
+    type: db[activeTab].type || "list",
+    schema: db[activeTab].schema || []
   } : null;
 
   if (!section) return null;

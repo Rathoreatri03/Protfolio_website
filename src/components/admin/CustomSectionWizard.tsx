@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Wrench, X, Layers, LayoutGrid, Plus, Trash, Tag, FolderTree } from "lucide-react";
 import { toast } from "sonner";
-import { DBState, DEFAULT_SCHEMAS } from "./types";
+import { DBState } from "./types";
 
 interface CustomSectionWizardProps {
   db: DBState;
@@ -21,9 +21,9 @@ export function CustomSectionWizard({
   token
 }: CustomSectionWizardProps) {
   const sectionToEdit = editSectionKey ? {
-    title: db[editSectionKey]?.title || DEFAULT_SCHEMAS[editSectionKey]?.title || editSectionKey,
-    type: db[editSectionKey]?.type || DEFAULT_SCHEMAS[editSectionKey]?.type || "list",
-    schema: db[editSectionKey]?.schema || DEFAULT_SCHEMAS[editSectionKey]?.schema || []
+    title: db[editSectionKey]?.title || editSectionKey,
+    type: db[editSectionKey]?.type || "list",
+    schema: db[editSectionKey]?.schema || []
   } : null;
 
   const [wizardName, setWizardName] = useState(sectionToEdit ? sectionToEdit.title : "");
