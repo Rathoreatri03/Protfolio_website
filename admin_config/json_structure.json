@@ -387,6 +387,22 @@
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
-    "schema": []
+    "schema": [],
+    "isSystemFile": true,
+    "readOnly": true
+  },
+  "test": {
+    "title": "test",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      }
+    ],
+    "isSystemFile": true,
+    "readOnly": true,
+    "skipPromptCompile": true
   }
 }
