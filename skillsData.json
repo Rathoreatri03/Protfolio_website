@@ -3,39 +3,111 @@
     {
       "title": "NEURAL_CORE",
       "skills": [
-        { "name": "Python & PyTorch", "progress": 95, "format": "percent" },
-        { "name": "TensorFlow & Keras", "progress": 90, "format": "percent" },
-        { "name": "OpenCV (Computer Vision)", "progress": 95, "format": "percent" },
-        { "name": "YOLO & Object Detection", "progress": 95, "format": "percent" },
-        { "name": "Transformers (NLP/LLMs)", "progress": 90, "format": "percent" }
+        {
+          "name": "Python & PyTorch",
+          "progress": 95,
+          "format": "tier"
+        },
+        {
+          "name": "TensorFlow & Keras",
+          "progress": 80,
+          "format": "tier"
+        },
+        {
+          "name": "OpenCV (Computer Vision)",
+          "progress": 95,
+          "format": "out10"
+        },
+        {
+          "name": "YOLO & Object Detection",
+          "progress": 95,
+          "format": "percent"
+        },
+        {
+          "name": "Transformers (NLP/LLMs)",
+          "progress": 90,
+          "format": "percent"
+        }
       ]
     },
     {
       "title": "GEOSPATIAL_&_3D",
       "skills": [
-        { "name": "Geospatial Analysis", "progress": 90, "format": "percent" },
-        { "name": "Mesh Rendering (CesiumJS)", "progress": 85, "format": "percent" },
-        { "name": "3D Modeling (Blender)", "progress": 85, "format": "percent" },
-        { "name": "CUDA Programming", "progress": 80, "format": "percent" }
+        {
+          "name": "Geospatial Analysis",
+          "progress": 90,
+          "format": "percent"
+        },
+        {
+          "name": "Mesh Rendering (CesiumJS)",
+          "progress": 85,
+          "format": "percent"
+        },
+        {
+          "name": "3D Modeling (Blender)",
+          "progress": 85,
+          "format": "percent"
+        },
+        {
+          "name": "CUDA Programming",
+          "progress": 80,
+          "format": "percent"
+        }
       ]
     },
     {
       "title": "AI_ARCHITECT",
       "skills": [
-        { "name": "LlamaIndex (RAG)", "progress": 90, "format": "percent" },
-        { "name": "Vector Databases", "progress": 90, "format": "percent" },
-        { "name": "LangChain & Agents", "progress": 95, "format": "percent" },
-        { "name": "Hugging Face Ecosystem", "progress": 85, "format": "percent" },
-        { "name": "Docker & Deployment", "progress": 90, "format": "percent" }
+        {
+          "name": "LlamaIndex (RAG)",
+          "progress": 90,
+          "format": "percent"
+        },
+        {
+          "name": "Vector Databases",
+          "progress": 90,
+          "format": "percent"
+        },
+        {
+          "name": "LangChain & Agents",
+          "progress": 95,
+          "format": "percent"
+        },
+        {
+          "name": "Hugging Face Ecosystem",
+          "progress": 85,
+          "format": "percent"
+        },
+        {
+          "name": "Docker & Deployment",
+          "progress": 90,
+          "format": "percent"
+        }
       ]
     },
     {
       "title": "Software Enginner Core",
       "skills": [
-        { "name": "Git & Version Control", "progress": 95, "format": "percent" },
-        { "name": "Linux (Ubuntu/Debian)", "progress": 90, "format": "percent" },
-        { "name": "FastAPI & REST APIs", "progress": 85, "format": "percent" },
-        { "name": "Data Structures & Algos", "progress": 75, "format": "percent" }
+        {
+          "name": "Git & Version Control",
+          "progress": 95,
+          "format": "percent"
+        },
+        {
+          "name": "Linux (Ubuntu/Debian)",
+          "progress": 90,
+          "format": "percent"
+        },
+        {
+          "name": "FastAPI & REST APIs",
+          "progress": 85,
+          "format": "percent"
+        },
+        {
+          "name": "Data Structures & Algos",
+          "progress": 75,
+          "format": "percent"
+        }
       ]
     }
   ]
