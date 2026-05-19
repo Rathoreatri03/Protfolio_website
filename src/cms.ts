@@ -74,29 +74,7 @@ cmsApp.get("/api/cms/load", async (c) => {
       throw new Error(`Failed to list repo contents: ${dirRes.statusText}`);
     }
 
-    const items = await dirRes.json() as Array<{ name: string; type: string }>;
-    
-    // Content files are JSON files, excluding package.json, etc.
-    const jsonFiles = items
-      .filter(item => 
-        item.type === "file" && 
-        item.name.endsWith(".json") && 
-        item.name !== "dodo_prompt.json" && 
-        item.name !== "package.json" && 
-        item.name !== "tsconfig.json"
-      )
-      .map(item => item.name);
-
-    // Fetch JSON content files in batches of 4 to prevent connection limit errors
-    const fetchJsonFile = (filename: string) => 
-      fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
-        headers: {
-          "Authorization": `token ${ghToken}`,
-          "User-Agent": "DodoCmsEngine"
-        }
-      });
-
-    const jsonResponses = await fetchInBatches(jsonFiles, 4, fetchJsonFile);
+    const items = await dirRes.json() as Array<{ name: string; type: string; sha?: string }>;
 
     // Fetch system/helper configuration files in parallel
     const systemFiles = [
@@ -149,60 +127,28 @@ cmsApp.get("/api/cms/load", async (c) => {
 
     const db: Record<string, { content: any; sha: string; schema?: any[]; type?: string; title?: string; schemaSha?: string; isSystemFile?: boolean; readOnly?: boolean }> = {};
 
-    for (let i = 0; i < jsonFiles.length; i++) {
-      const res = jsonResponses[i];
-      const filename = jsonFiles[i];
-      const key = filename.replace(".json", "");
+    // Populate metadata for all json files in the root folder, leaving contents as null for lazy loading
+    for (const item of items) {
+      if (
+        item.type === "file" && 
+        item.name.endsWith(".json") && 
+        item.name !== "dodo_prompt.json" && 
+        item.name !== "package.json" && 
+        item.name !== "tsconfig.json"
+      ) {
+        const key = item.name.replace(".json", "");
+        db[key] = {
+          content: null,
+          sha: item.sha || ""
+        };
 
-      if (!res.ok) {
-        // Fallback for optional prompt configuration
-        if (key === "dodoPromptConfig") {
-          db[key] = {
-            content: {
-              system_instruction: "",
-              personality_protocol: "",
-              dynamic_responses: "",
-              behavioral_guidelines: "",
-              atris_information: "",
-              included_datasets: {
-                systemMetadata: true,
-                professionalLinks: true,
-                logo: true,
-                BannerDetails: true,
-                experience: true,
-                projects: true,
-                researchInsights: true,
-                successStories: true,
-                skillsData: true,
-                techstack: true
-              }
-            },
-            sha: ""
-          };
-          continue;
+        // Attach schema metadata if it exists
+        if (schemas[key]) {
+          db[key].title = schemas[key].title;
+          db[key].type = schemas[key].type;
+          db[key].schema = schemas[key].schema;
+          db[key].schemaSha = schemas[key].sha;
         }
-        throw new Error(`Failed to load ${filename} from GitHub: ${res.statusText}`);
-      }
-
-      const fileData = await res.json() as { content: string; sha: string };
-      const decoded = decodeURIComponent(
-        atob(fileData.content.replace(/\s/g, ""))
-          .split("")
-          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-
-      db[key] = {
-        content: JSON.parse(decoded),
-        sha: fileData.sha
-      };
-
-      // Attach schema if schema file exists
-      if (schemas[key]) {
-        db[key].title = schemas[key].title;
-        db[key].type = schemas[key].type;
-        db[key].schema = schemas[key].schema;
-        db[key].schemaSha = schemas[key].sha;
       }
     }
 
@@ -264,6 +210,88 @@ cmsApp.get("/api/cms/load", async (c) => {
     return c.json({ db });
   } catch (err: any) {
     return c.json({ error: `CMS load failed: ${err.message}` }, 500);
+  }
+});
+
+// 4. Lazy-load specific file content on demand
+cmsApp.get("/api/cms/file", async (c) => {
+  if (!verifyAuth(c)) return c.json({ error: "Unauthorized" }, 401);
+
+  const ghToken = c.env.GITHUB_PAT;
+  if (!ghToken) return c.json({ error: "GitHub Access Token (GITHUB_PAT) is missing in environment bindings." }, 500);
+
+  const filename = c.req.query("filename");
+  if (!filename) return c.json({ error: "Filename query parameter is required" }, 400);
+
+  const repo = "Rathoreatri03/Portfolio_website";
+  const branch = "Json_data";
+
+  let realPath = `${filename}.json`;
+  if (filename === "compile_prompt_py") {
+    realPath = "compile_prompt.py";
+  } else if (filename === "dodo_prompt") {
+    realPath = "dodo_prompt.json";
+  } else if (filename === "admin_config/json_structure") {
+    realPath = "admin_config/json_structure.json";
+  }
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${realPath}?ref=${branch}`, {
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine"
+      }
+    });
+
+    if (!res.ok) {
+      if (filename === "dodoPromptConfig" && res.status === 404) {
+        return c.json({
+          content: {
+            system_instruction: "",
+            personality_protocol: "",
+            dynamic_responses: "",
+            behavioral_guidelines: "",
+            atris_information: "",
+            included_datasets: {
+              systemMetadata: true,
+              professionalLinks: true,
+              logo: true,
+              BannerDetails: true,
+              experience: true,
+              projects: true,
+              researchInsights: true,
+              successStories: true,
+              skillsData: true,
+              techstack: true
+            }
+          },
+          sha: ""
+        });
+      }
+      return c.json({ error: `Failed to load file content: ${res.statusText}` }, res.status);
+    }
+
+    const fileData = await res.json() as { content: string; sha: string };
+    const decoded = decodeURIComponent(
+      atob(fileData.content.replace(/\s/g, ""))
+        .split("")
+        .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+
+    if (filename === "compile_prompt_py") {
+      return c.json({
+        content: { code: decoded },
+        sha: fileData.sha
+      });
+    }
+
+    return c.json({
+      content: JSON.parse(decoded),
+      sha: fileData.sha
+    });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
   }
 });
 
