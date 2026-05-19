@@ -18,7 +18,7 @@ export function CustomSectionWizard({
   setActiveTab,
   editSectionKey
 }: CustomSectionWizardProps) {
-  const sectionToEdit = editSectionKey ? db.systemMetadata?.content?.customSections?.[editSectionKey] : null;
+  const sectionToEdit = editSectionKey ? db[editSectionKey]?.content : null;
 
   const [wizardName, setWizardName] = useState(sectionToEdit ? sectionToEdit.title : "");
   const [wizardType, setWizardType] = useState<"list" | "object">(sectionToEdit ? sectionToEdit.type : "list");
@@ -41,48 +41,47 @@ export function CustomSectionWizard({
         return;
       }
 
-      if (db?.systemMetadata?.content?.customSections?.[sectionKey]) {
+      if (db[sectionKey]) {
         toast.error("A custom section with this name already exists.");
         return;
       }
     }
 
-    const updatedMetadata = { ...db.systemMetadata };
-    const custom = { ...(updatedMetadata.content.customSections || {}) };
+    const existingContent = db[editSectionKey || sectionKey]?.content?.content !== undefined
+      ? db[editSectionKey || sectionKey].content.content
+      : (wizardType === "list" ? [] : {});
 
-    if (editSectionKey) {
-      const existingSection = custom[editSectionKey];
-      let existingContent = existingSection?.content;
+    const newDb = { ...db };
 
-      // Migrate content safely if layout type changes
-      if (wizardType === "list" && !Array.isArray(existingContent)) {
-        existingContent = [];
-      } else if (wizardType === "object" && (Array.isArray(existingContent) || typeof existingContent !== "object")) {
-        existingContent = {};
-      }
-
-      custom[editSectionKey] = {
-        ...existingSection,
+    // 1. Write the dynamic section as a self-contained database entry
+    newDb[sectionKey] = {
+      content: {
         title: wizardName.trim(),
         type: wizardType,
         schema: wizardFields,
         content: existingContent
-      };
-    } else {
-      custom[sectionKey] = {
-        title: wizardName.trim(),
-        type: wizardType,
-        schema: wizardFields,
-        content: wizardType === "list" ? [] : {}
-      };
+      },
+      sha: db[editSectionKey || sectionKey]?.sha || ""
+    };
+
+    // 2. Clean up legacy entry from systemMetadata to keep systemMetadata lightweight
+    const updatedMetadata = { ...db.systemMetadata };
+    if (updatedMetadata.content.customSections) {
+      const custom = { ...updatedMetadata.content.customSections };
+      delete custom[sectionKey];
+      if (editSectionKey && editSectionKey !== sectionKey) {
+        delete custom[editSectionKey];
+      }
+      updatedMetadata.content.customSections = custom;
+    }
+    newDb.systemMetadata = updatedMetadata;
+
+    // 3. Remove old tab key if renamed
+    if (editSectionKey && editSectionKey !== sectionKey) {
+      delete newDb[editSectionKey];
     }
 
-    updatedMetadata.content.customSections = custom;
-
-    setDb({
-      ...db,
-      systemMetadata: updatedMetadata
-    });
+    setDb(newDb);
 
     setActiveTab(sectionKey);
     onClose();

@@ -31,7 +31,7 @@ export function CustomSectionPanel({
   const [newFieldKey, setNewFieldKey] = useState("");
   const [newFieldType, setNewFieldType] = useState<"string" | "longtext" | "url" | "percentage" | "number" | "boolean">("string");
 
-  const section = db.systemMetadata?.content?.customSections?.[activeTab];
+  const section = db[activeTab]?.content;
   if (!section) return null;
 
   const handleCustomSectionSave = () => {
@@ -39,13 +39,15 @@ export function CustomSectionPanel({
   };
 
   const updateCustomContent = (newContent: any) => {
-    const updatedMetadata = { ...db.systemMetadata };
-    const custom = { ...(updatedMetadata.content.customSections || {}) };
-    custom[activeTab] = { ...custom[activeTab], content: newContent };
-    updatedMetadata.content.customSections = custom;
     setDb({
       ...db,
-      systemMetadata: updatedMetadata
+      [activeTab]: {
+        ...db[activeTab],
+        content: {
+          ...section,
+          content: newContent
+        }
+      }
     });
   };
 
@@ -65,9 +67,6 @@ export function CustomSectionPanel({
       return;
     }
 
-    const updatedMetadata = { ...db.systemMetadata };
-    const custom = { ...(updatedMetadata.content.customSections || {}) };
-    
     const newField = {
       key: newFieldKey,
       label: newFieldLabel.trim(),
@@ -76,24 +75,22 @@ export function CustomSectionPanel({
 
     const newSchema = [...schema, newField];
     
-    // For lists, we don't strictly need to update content since list items dynamically acquire it when edited.
-    // For object configs, we can initialize it to a default.
     let updatedContent = section.content;
     if (section.type === "object") {
       const defaultVal = newFieldType === "percentage" || newFieldType === "number" ? 0 : newFieldType === "boolean" ? false : "";
       updatedContent = { ...(section.content || {}), [newFieldKey]: defaultVal };
     }
 
-    custom[activeTab] = {
-      ...custom[activeTab],
-      schema: newSchema,
-      content: updatedContent
-    };
-
-    updatedMetadata.content.customSections = custom;
     setDb({
       ...db,
-      systemMetadata: updatedMetadata
+      [activeTab]: {
+        ...db[activeTab],
+        content: {
+          ...section,
+          schema: newSchema,
+          content: updatedContent
+        }
+      }
     });
 
     setNewFieldLabel("");
@@ -106,9 +103,6 @@ export function CustomSectionPanel({
   const handleDeleteField = (fieldKey: string, fieldLabel: string) => {
     if (!window.confirm(`Are you sure you want to permanently delete field "${fieldLabel}"? This will erase its value for all entries.`)) return;
 
-    const updatedMetadata = { ...db.systemMetadata };
-    const custom = { ...(updatedMetadata.content.customSections || {}) };
-    
     const newSchema = (section.schema || []).filter((f: any) => f.key !== fieldKey);
     let newContent = section.content;
 
@@ -123,16 +117,16 @@ export function CustomSectionPanel({
       });
     }
 
-    custom[activeTab] = {
-      ...custom[activeTab],
-      schema: newSchema,
-      content: newContent
-    };
-
-    updatedMetadata.content.customSections = custom;
     setDb({
       ...db,
-      systemMetadata: updatedMetadata
+      [activeTab]: {
+        ...db[activeTab],
+        content: {
+          ...section,
+          schema: newSchema,
+          content: newContent
+        }
+      }
     });
 
     toast.success(`Removed field "${fieldLabel}" from schema.`);
