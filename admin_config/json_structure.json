@@ -13,8 +13,7 @@
         "label": "Profile SVG/Image URL",
         "type": "url"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "certifications": {
     "title": "Certifications",
@@ -61,17 +60,12 @@
         "label": "User Information Protocol",
         "type": "longtext"
       }
-    ],
-    "isStandard": true,
-    "skipPromptCompile": true
+    ]
   },
   "dodoPromptInclusion": {
     "title": "Dodo Prompt Inclusion",
     "type": "object",
-    "schema": [],
-    "isSystemFile": true,
-    "readOnly": true,
-    "skipPromptCompile": true
+    "schema": []
   },
   "experience": {
     "title": "Work Experience",
@@ -107,8 +101,7 @@
         "label": "Verification Document URL",
         "type": "url"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "logo": {
     "title": "Brand Logo",
@@ -119,8 +112,7 @@
         "label": "Logo URL or Icon",
         "type": "url"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "professionalLinks": {
     "title": "Professional Links",
@@ -151,8 +143,7 @@
         "label": "Formspree ID",
         "type": "string"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "projects": {
     "title": "Core Projects",
@@ -178,8 +169,7 @@
         "label": "Repository / Live URL",
         "type": "url"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "researchInsights": {
     "title": "Scientific Research",
@@ -215,14 +205,12 @@
         "label": "Classification (patent / literature)",
         "type": "string"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "skillsData": {
     "title": "Skills Matrix",
     "type": "categories",
-    "schema": [],
-    "isStandard": true
+    "schema": []
   },
   "successStories": {
     "title": "Achievements Log",
@@ -248,8 +236,7 @@
         "label": "Verification URL",
         "type": "url"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "systemMetadata": {
     "title": "System Info",
@@ -390,26 +377,16 @@
         "label": "Footer Copyright",
         "type": "string"
       }
-    ],
-    "isStandard": true
+    ]
   },
   "techstack": {
     "title": "Tech Stack",
     "type": "tags",
-    "schema": [],
-    "isStandard": true
+    "schema": []
   },
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
-    "schema": [],
-    "isSystemFile": true,
-    "readOnly": false,
-    "skipPromptCompile": true
-  },
-  "test": {
-    "title": "test",
-    "type": "tags",
     "schema": []
   }
 }
