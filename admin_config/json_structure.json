@@ -170,11 +170,31 @@
     "title": "Scientific Research",
     "type": "list",
     "schema": [
-      { "key": "title", "label": "Publication Title", "type": "string" },
-      { "key": "description", "label": "Abstract / Summary", "type": "longtext" },
-      { "key": "imgUrl", "label": "Thumbnail Image URL", "type": "url" },
-      { "key": "link", "label": "Publication / DOI URL", "type": "url" },
-      { "key": "year", "label": "Year of Publishing", "type": "string" }
+      {
+        "key": "title",
+        "label": "Publication Title",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Abstract / Summary",
+        "type": "longtext"
+      },
+      {
+        "key": "imgUrl",
+        "label": "Thumbnail Image URL",
+        "type": "url"
+      },
+      {
+        "key": "link",
+        "label": "Publication / DOI URL",
+        "type": "url"
+      },
+      {
+        "key": "year",
+        "label": "Year of Publishing",
+        "type": "string"
+      }
     ]
   },
   "skillsData": {
