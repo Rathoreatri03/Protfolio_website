@@ -15,6 +15,27 @@
       }
     ]
   },
+  "certifications": {
+    "title": "Certifications",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      },
+      {
+        "key": "url",
+        "label": "URL",
+        "type": "url"
+      },
+      {
+        "key": "descritpion",
+        "label": "Descritpion",
+        "type": "longtext"
+      }
+    ]
+  },
   "dodoPromptConfig": {
     "title": "Assistant Rules",
     "type": "object",
@@ -352,26 +373,5 @@
     "title": "Prompt Compiler Script",
     "type": "object",
     "schema": []
-  },
-  "certifications": {
-    "title": "Certifications",
-    "type": "list",
-    "schema": [
-      {
-        "key": "title",
-        "label": "Title",
-        "type": "string"
-      },
-      {
-        "key": "url",
-        "label": "URL",
-        "type": "url"
-      },
-      {
-        "key": "descritpion",
-        "label": "Descritpion",
-        "type": "longtext"
-      }
-    ]
   }
 }
