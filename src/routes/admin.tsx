@@ -56,6 +56,7 @@ function AdminComponent() {
   const [activeTab, setActiveTab] = useState<string>("systemMetadata");
   const [editMode, setEditMode] = useState<"visual" | "json">("visual");
   const [isReloading, setIsReloading] = useState(false);
+  const [loadingFile, setLoadingFile] = useState<string | null>(null);
 
   const reloadDatabase = async () => {
     if (!token) {
@@ -63,16 +64,75 @@ function AdminComponent() {
       return;
     }
     setIsReloading(true);
-    toast.loading("Reloading dynamic files from GitHub...", { id: "refresh-db" });
+    toast.loading(`Reloading ${activeTab} from GitHub...`, { id: "refresh-db" });
     try {
-      await loadDatabase(token);
-      toast.success("All data files updated to latest remote version!", { id: "refresh-db" });
+      const res = await fetch(`${WORKER_BASE}/api/cms/file?filename=${activeTab}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to reload ${activeTab} contents.`);
+      }
+      const data = await res.json() as { content: any; sha: string };
+      setDb(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          [activeTab]: {
+            ...prev[activeTab],
+            content: data.content,
+            sha: data.sha
+          }
+        };
+      });
+      toast.success(`${activeTab} updated to latest remote version!`, { id: "refresh-db" });
     } catch (err: any) {
-      toast.error(err.message || "Failed to reload databases.", { id: "refresh-db" });
+      toast.error(err.message || "Failed to reload database.", { id: "refresh-db" });
     } finally {
       setIsReloading(false);
     }
   };
+
+  // Lazily fetch individual file contents on-demand
+  useEffect(() => {
+    if (!db || !token || !activeTab) return;
+    
+    // Skip loading if the active tab is already fully loaded
+    if (db[activeTab] && db[activeTab].content !== null) return;
+    
+    const fetchFileContent = async () => {
+      setLoadingFile(activeTab);
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/cms/file?filename=${activeTab}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to load ${activeTab} contents.`);
+        }
+        const data = await res.json() as { content: any; sha: string };
+        setDb(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            [activeTab]: {
+              ...prev[activeTab],
+              content: data.content,
+              sha: data.sha
+            }
+          };
+        });
+      } catch (err: any) {
+        toast.error(err.message || `Failed to retrieve contents for ${activeTab}`);
+      } finally {
+        setLoadingFile(null);
+      }
+    };
+    
+    fetchFileContent();
+  }, [activeTab, db ? !!db[activeTab]?.content : false, token]);
 
   // Custom Schema Wizard States
   const [showWizard, setShowWizard] = useState(false);
@@ -539,7 +599,13 @@ function AdminComponent() {
           </div>
         )}
 
-        {db && db[activeTab]?.isSystemFile ? (
+        {loadingFile === activeTab ? (
+          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+            <RefreshCw className="size-8 text-[#00ff88] animate-spin mb-4" />
+            <h3 className="font-display text-xs font-semibold tracking-widest text-[#00ff88]/80 uppercase">Loading section data...</h3>
+            <p className="text-[9px] text-muted-foreground font-mono mt-2 tracking-widest uppercase">Fetching from GitHub CDN...</p>
+          </div>
+        ) : db && db[activeTab]?.isSystemFile ? (
           <JsonEditorPanel
             activeTab={activeTab}
             db={db}
