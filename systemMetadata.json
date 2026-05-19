@@ -39,28 +39,5 @@
   },
   "footer": {
     "copyright_text": "ALL_SYSTEMS_DODO"
-  },
-  "customSections": {
-    "certification": {
-      "title": "Certification",
-      "type": "list",
-      "schema": [
-        {
-          "key": "title",
-          "label": "Title",
-          "type": "string"
-        },
-        {
-          "key": "url",
-          "label": "URL",
-          "type": "url"
-        },
-        {
-          "key": "description",
-          "label": "Description",
-          "type": "longtext"
-        }
-      ]
-    }
   }
 }
