@@ -2,7 +2,6 @@
   "BannerDetails": {
     "title": "Banner Details",
     "type": "object",
-    "isStandard": true,
     "schema": [
       {
         "key": "description",
@@ -14,7 +13,8 @@
         "label": "Profile SVG/Image URL",
         "type": "url"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "certifications": {
     "title": "Certifications",
@@ -40,8 +40,6 @@
   "dodoPromptConfig": {
     "title": "Assistant Rules",
     "type": "object",
-    "isStandard": true,
-    "skipPromptCompile": true,
     "schema": [
       {
         "key": "system_instruction",
@@ -63,12 +61,21 @@
         "label": "User Information Protocol",
         "type": "longtext"
       }
-    ]
+    ],
+    "isStandard": true,
+    "skipPromptCompile": true
+  },
+  "dodoPromptInclusion": {
+    "title": "Dodo Prompt Inclusion",
+    "type": "object",
+    "schema": [],
+    "isSystemFile": true,
+    "readOnly": true,
+    "skipPromptCompile": true
   },
   "experience": {
     "title": "Work Experience",
     "type": "list",
-    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -100,24 +107,24 @@
         "label": "Verification Document URL",
         "type": "url"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "logo": {
     "title": "Brand Logo",
     "type": "object",
-    "isStandard": true,
     "schema": [
       {
         "key": "logo_url",
         "label": "Logo URL or Icon",
         "type": "url"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "professionalLinks": {
     "title": "Professional Links",
     "type": "object",
-    "isStandard": true,
     "schema": [
       {
         "key": "resume_PDF",
@@ -144,12 +151,12 @@
         "label": "Formspree ID",
         "type": "string"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "projects": {
     "title": "Core Projects",
     "type": "list",
-    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -171,12 +178,12 @@
         "label": "Repository / Live URL",
         "type": "url"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "researchInsights": {
     "title": "Scientific Research",
     "type": "list",
-    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -208,18 +215,18 @@
         "label": "Classification (patent / literature)",
         "type": "string"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "skillsData": {
     "title": "Skills Matrix",
     "type": "categories",
-    "isStandard": true,
-    "schema": []
+    "schema": [],
+    "isStandard": true
   },
   "successStories": {
     "title": "Achievements Log",
     "type": "list",
-    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -241,12 +248,12 @@
         "label": "Verification URL",
         "type": "url"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "systemMetadata": {
     "title": "System Info",
     "type": "object",
-    "isStandard": true,
     "schema": [
       {
         "key": "systemID",
@@ -383,36 +390,32 @@
         "label": "Footer Copyright",
         "type": "string"
       }
-    ]
+    ],
+    "isStandard": true
   },
   "techstack": {
     "title": "Tech Stack",
     "type": "tags",
-    "isStandard": true,
-    "schema": []
+    "schema": [],
+    "isStandard": true
   },
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
+    "schema": [],
     "isSystemFile": true,
     "readOnly": false,
-    "skipPromptCompile": true,
-    "schema": []
+    "skipPromptCompile": true
   },
-  "dodoPromptInclusion": {
-    "title": "Dodo Prompt Inclusion",
-    "type": "object",
-    "isSystemFile": true,
-    "readOnly": true,
-    "skipPromptCompile": true,
-    "schema": []
-  },
-  "dodo_prompt": {
-    "title": "Compiled Prompt",
-    "type": "object",
-    "isSystemFile": true,
-    "readOnly": true,
-    "skipPromptCompile": true,
-    "schema": []
+  "test": {
+    "title": "test",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      }
+    ]
   }
 }
