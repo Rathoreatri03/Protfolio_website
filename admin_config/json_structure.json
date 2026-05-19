@@ -403,5 +403,17 @@
     "schema": [],
     "isSystemFile": true,
     "readOnly": true
+  },
+  "ts": {
+    "title": "ts",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      }
+    ],
+    "isStandard": true
   }
 }
