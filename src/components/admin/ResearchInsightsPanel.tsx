@@ -43,15 +43,29 @@ export function ResearchInsightsPanel({
               className="w-full cyber-input font-bold"
             />
           </div>
-          <div>
-            <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">
-              Publication / Article Link URL
-            </label>
-            {renderUrlInput(
-              item.link || "",
-              val => onChange({ ...item, link: val }),
-              "https://taylorandfrancis.com/..."
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">
+                Publication / Article Link URL
+              </label>
+              {renderUrlInput(
+                item.link || "",
+                val => onChange({ ...item, link: val }),
+                "https://taylorandfrancis.com/..."
+              )}
+            </div>
+            <div>
+              <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">
+                Year of Publishing
+              </label>
+              <input 
+                type="text" 
+                value={item.year || ""} 
+                onChange={e => onChange({ ...item, year: e.target.value })}
+                placeholder="e.g. 2023"
+                className="w-full cyber-input"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-muted-foreground mb-1 text-[10px] uppercase font-semibold">

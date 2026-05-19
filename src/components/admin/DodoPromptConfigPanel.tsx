@@ -28,6 +28,7 @@ export function DodoPromptConfigPanel({
 }: DodoPromptConfigPanelProps) {
   const [compilingPrompt, setCompilingPrompt] = useState(false);
   const [showSourceDropdown, setShowSourceDropdown] = useState(false);
+  const [sourceSearchQuery, setSourceSearchQuery] = useState("");
 
   // Helper getters for robust config defaults
   const getPromptField = (field: "system_instruction" | "personality_protocol" | "dynamic_responses" | "behavioral_guidelines" | "atris_information") => {
@@ -47,18 +48,15 @@ export function DodoPromptConfigPanel({
 
   const getIncludedToggles = (): Record<string, boolean> => {
     if (!db) return {};
-    return db.dodoPromptConfig?.content?.included_datasets || {
-      systemMetadata: true,
-      professionalLinks: true,
-      logo: true,
-      BannerDetails: true,
-      experience: true,
-      projects: true,
-      researchInsights: true,
-      successStories: true,
-      skillsData: true,
-      techstack: true
-    };
+    return db.dodoPromptInclusion?.content?.included_datasets || {};
+  };
+
+  const getSourceKeys = (): string[] => {
+    if (!db) return [];
+    const registry = db["admin_config/json_structure"]?.content || {};
+    return Object.keys(registry).filter(key => {
+      return key !== "dodoPromptConfig" && key !== "dodoPromptInclusion" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
+    });
   };
 
   const toggleDatasetSelection = (key: string) => {
@@ -70,10 +68,10 @@ export function DodoPromptConfigPanel({
     };
     setDb({
       ...db,
-      dodoPromptConfig: {
-        ...db.dodoPromptConfig,
+      dodoPromptInclusion: {
+        ...db.dodoPromptInclusion,
         content: {
-          ...(db.dodoPromptConfig?.content || {}),
+          ...(db.dodoPromptInclusion?.content || {}),
           included_datasets: updatedToggles
         }
       }
@@ -95,7 +93,7 @@ export function DodoPromptConfigPanel({
     });
   };
 
-  const compileAtrisInformation = () => {
+  const compileAtrisInformation = async () => {
     if (!db) return;
     setCompilingPrompt(true);
 
@@ -103,6 +101,10 @@ export function DodoPromptConfigPanel({
     const compiledText = compileAtrisInformationText(db, included);
     updatePromptField("atris_information", compiledText);
     
+    try {
+      await saveFile("dodoPromptInclusion");
+    } catch (e) {}
+
     setTimeout(() => {
       setCompilingPrompt(false);
       toast.success("Compiled chosen datasets! Review 'Atri's Assembled Information' below.");
@@ -190,7 +192,7 @@ export function DodoPromptConfigPanel({
                   onClick={() => setShowSourceDropdown(!showSourceDropdown)}
                   className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] border border-white/10 hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 text-[11px] font-bold tracking-wider uppercase rounded-xl transition-all select-none cursor-pointer"
                 >
-                  📂 Sources: {Object.values(getIncludedToggles()).filter(v => v !== false).length} / 10
+                   📂 Sources: {getSourceKeys().filter(key => getIncludedToggles()[key] !== false).length} / {getSourceKeys().length}
                   <ChevronRight className={`size-3.5 transition-transform duration-300 ${showSourceDropdown ? "rotate-90 text-[#00ff88]" : ""}`} />
                 </button>
 
@@ -198,19 +200,31 @@ export function DodoPromptConfigPanel({
                 {showSourceDropdown && (
                   <div className="absolute right-0 top-full mt-2 w-72 bg-[#080808]/95 border border-[#00ff88]/20 rounded-2xl p-4 shadow-[0_10px_50px_rgba(0,0,0,0.85),0_0_30px_rgba(0,255,136,0.05)] backdrop-blur-2xl z-30 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="text-[9px] text-muted-foreground uppercase tracking-widest border-b border-white/5 pb-1.5 font-bold font-mono-fira">Select Active Datasets</div>
+                    
+                    <input
+                      type="text"
+                      placeholder="Search datasets..."
+                      value={sourceSearchQuery}
+                      onChange={e => setSourceSearchQuery(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white/[0.02] border border-white/10 rounded-xl text-[10px] uppercase font-bold tracking-wider focus:outline-none focus:border-[#00ff88]/30 transition-all font-sans placeholder:text-muted-foreground/30 text-white"
+                    />
+
                     <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                      {[
-                        { key: "systemMetadata", label: "System Metadata" },
-                        { key: "professionalLinks", label: "Professional Links" },
-                        { key: "logo", label: "Brand Logo" },
-                        { key: "BannerDetails", label: "Executive Bio & Summary" },
-                        { key: "experience", label: "Work Experience" },
-                        { key: "projects", label: "Core Projects" },
-                        { key: "researchInsights", label: "Scientific Research" },
-                        { key: "successStories", label: "Achievements Log" },
-                        { key: "skillsData", label: "Skills Matrix" },
-                        { key: "techstack", label: "Tech Stack" },
-                      ].map(item => {
+                      {(() => {
+                        const registry = db["admin_config/json_structure"]?.content || {};
+                        return Object.keys(registry)
+                          .filter(key => {
+                            return key !== "dodoPromptConfig" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
+                          })
+                          .map(key => ({
+                            key,
+                            label: registry[key]?.title || key
+                          }))
+                          .filter(item => 
+                            item.label.toLowerCase().includes(sourceSearchQuery.toLowerCase()) ||
+                            item.key.toLowerCase().includes(sourceSearchQuery.toLowerCase())
+                          );
+                      })().map(item => {
                         const isChecked = getIncludedToggles()[item.key] !== false;
                         return (
                           <div

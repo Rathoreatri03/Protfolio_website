@@ -13,7 +13,7 @@ export type SkillCategory = { title: string; skills: Skill[] };
 export type Project = { title: string; description: string; imgUrl: string; link: string };
 export type Experience = Project & { duration?: string; ref?: string };
 export type SuccessStory = Project;
-export type ResearchInsight = Project;
+export type ResearchInsight = Project & { year?: string };
 export type Links = { 
   resume_PDF: string; 
   visume_video: string;

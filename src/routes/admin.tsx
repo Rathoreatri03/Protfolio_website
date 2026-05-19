@@ -44,6 +44,69 @@ export const Route = createFileRoute("/admin")({
 });
 
 
+const ADMIN_STYLES = `
+  select.cyber-input option {
+    background-color: #080808 !important;
+    color: #ffffff !important;
+  }
+  select.cyber-input {
+    color-scheme: dark;
+  }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background-color: #050505;
+    overflow: hidden;
+  }
+  .font-mono-fira {
+    font-family: 'Fira Code', monospace;
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.012);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-card:hover {
+    border-color: rgba(0, 255, 136, 0.12);
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: 0 12px 40px 0 rgba(0, 255, 136, 0.03);
+  }
+  .cyber-input {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #ffffff;
+    font-size: 13px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cyber-input:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 16px rgba(0, 255, 136, 0.15);
+    background: rgba(255, 255, 255, 0.035);
+  }
+  .neon-text-glow {
+    text-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+  }
+  .active-tab-glow {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+  }
+
+  /* ── EXQUISITE UX: HIDE ALL UGLY SCROLLBARS NATIVELY ── */
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0px !important;
+    background: transparent !important;
+  }
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+`;
+
+
 function AdminComponent() {
   const [token, setToken] = useState<string | null>(null);
   const [authStatus, setAuthStatus] = useState<"checking" | "unauthorized" | "authorized">("checking");
@@ -130,14 +193,44 @@ function AdminComponent() {
         setLoadingFile(null);
       }
     };
-    
     fetchFileContent();
   }, [activeTab, db === null, token]);
+
+  // Load dodoPromptInclusion on demand when Compile Modal is opened
+  useEffect(() => {
+    if (showCompileModal && db && db.dodoPromptInclusion && db.dodoPromptInclusion.content === null && token) {
+      const fetchInclusion = async () => {
+        try {
+          const res = await fetch(`${WORKER_BASE}/api/cms/file?filename=dodoPromptInclusion&token=${token}`);
+          if (!res.ok) throw new Error("Failed to load prompt inclusion list");
+          const data = await res.json();
+          setDb(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              dodoPromptInclusion: {
+                ...prev.dodoPromptInclusion,
+                content: data.content,
+                sha: data.sha
+              }
+            };
+          });
+        } catch (err: any) {
+          toast.error(err.message || "Failed to load prompt inclusion list");
+        }
+      };
+      fetchInclusion();
+    }
+  }, [showCompileModal, db === null, token]);
 
   // Custom Schema Wizard States
   const [showWizard, setShowWizard] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [hideSystemFiles, setHideSystemFiles] = useState(true);
+
+  // Compile Modal States
+  const [showCompileModal, setShowCompileModal] = useState(false);
+  const [compileSearchQuery, setCompileSearchQuery] = useState("");
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -466,11 +559,113 @@ function AdminComponent() {
     }
   };
 
+  const [isCompiling, setIsCompiling] = useState(false);
+
+  const handleManualCompile = async () => {
+    if (!token) {
+      toast.error("Authentication required to compile prompt.");
+      return;
+    }
+    setIsCompiling(true);
+    toast.loading("Recompiling master prompt on Cloudflare Edge...", { id: "manual-compile" });
+    try {
+      const res = await fetch(`${WORKER_BASE}/api/cms/compile`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: "Edge compilation failed." }));
+        throw new Error(errData.error || "Edge compilation failed.");
+      }
+      toast.success("Master Prompt compiled & Fallbacks synchronized successfully!", { id: "manual-compile" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to trigger Edge compiler.", { id: "manual-compile" });
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  const getIncludedToggles = (): Record<string, boolean> => {
+    if (!db) return {};
+    return db.dodoPromptInclusion?.content?.included_datasets || {};
+  };
+
+  const getSourceKeys = (): string[] => {
+    if (!db) return [];
+    const registry = db["admin_config/json_structure"]?.content || {};
+    return Object.keys(registry).filter(key => {
+      return key !== "dodoPromptConfig" && key !== "dodoPromptInclusion" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
+    });
+  };
+
+  const toggleDatasetSelection = async (key: string) => {
+    if (!db || !token) return;
+    const currentToggles = getIncludedToggles();
+    const updatedToggles = {
+      ...currentToggles,
+      [key]: currentToggles[key] === false ? true : false
+    };
+    
+    // Update local DB state
+    const updatedDb = {
+      ...db,
+      dodoPromptInclusion: {
+        ...db.dodoPromptInclusion,
+        content: {
+          ...(db.dodoPromptInclusion?.content || {}),
+          included_datasets: updatedToggles
+        }
+      }
+    };
+    setDb(updatedDb);
+
+    // Save dodoPromptInclusion to GitHub automatically
+    setPublishing("dodoPromptInclusion");
+    try {
+      const res = await fetch(`${WORKER_BASE}/api/cms/save`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          filename: "dodoPromptInclusion",
+          content: updatedDb.dodoPromptInclusion.content
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save prompt configuration toggles to GitHub");
+      }
+      
+      const resData = await res.json();
+      // Update local SHA
+      setDb(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          dodoPromptInclusion: {
+            ...prev.dodoPromptInclusion,
+            sha: resData.sha || prev.dodoPromptInclusion.sha
+          }
+        };
+      });
+      toast.success(`Prompt source "${key}" updated successfully!`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save toggle change");
+    } finally {
+      setPublishing(null);
+    }
+  };
+
 
   // Render checking lockscreen
   if (authStatus === "checking") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center bg-[#050505] text-white">
+        <style dangerouslySetInnerHTML={{ __html: ADMIN_STYLES }} />
         <div className="relative size-20 flex items-center justify-center rounded-full bg-primary/5 border border-primary/20 animate-pulse mb-6 shadow-[0_0_50px_rgba(0,255,136,0.1)]">
           <RefreshCw className="size-8 text-[#00ff88] animate-spin" />
         </div>
@@ -483,19 +678,23 @@ function AdminComponent() {
   // Render unauthorized access screen
   if (authStatus === "unauthorized") {
     return (
-      <SecurityGateway
-        inputKey={inputKey}
-        setInputKey={setInputKey}
-        isSubmittingKey={isSubmittingKey}
-        keyError={keyError}
-        handleLoginSubmit={handleLoginSubmit}
-      />
+      <>
+        <style dangerouslySetInnerHTML={{ __html: ADMIN_STYLES }} />
+        <SecurityGateway
+          inputKey={inputKey}
+          setInputKey={setInputKey}
+          isSubmittingKey={isSubmittingKey}
+          keyError={keyError}
+          handleLoginSubmit={handleLoginSubmit}
+        />
+      </>
     );
   }
 
   if (!db) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center bg-[#050505] text-white">
+        <style dangerouslySetInnerHTML={{ __html: ADMIN_STYLES }} />
         <RefreshCw className="size-10 text-[#00ff88] animate-spin mb-4" />
         <h2 className="font-display text-xs font-semibold tracking-widest text-[#00ff88]/80 uppercase">Downloading dynamic databases from GitHub...</h2>
         <p className="text-[10px] text-muted-foreground font-mono mt-2 tracking-widest uppercase">Syncing CDN layers in real-time...</p>
@@ -506,68 +705,7 @@ function AdminComponent() {
   return (
     <div className="h-screen w-screen overflow-hidden flex bg-[#050505] font-sans antialiased text-white selection:bg-[#00ff88]/20 relative">
       <NeuralBackground />
-      <style>{`
-        select.cyber-input option {
-          background-color: #080808 !important;
-          color: #ffffff !important;
-        }
-        select.cyber-input {
-          color-scheme: dark;
-        }
-        body {
-          font-family: 'Outfit', sans-serif;
-
-          background-color: #050505;
-          overflow: hidden;
-        }
-        .font-mono-fira {
-          font-family: 'Fira Code', monospace;
-        }
-        .glass-card {
-          background: rgba(255, 255, 255, 0.012);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.04);
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .glass-card:hover {
-          border-color: rgba(0, 255, 136, 0.12);
-          background: rgba(255, 255, 255, 0.02);
-          box-shadow: 0 12px 40px 0 rgba(0, 255, 136, 0.03);
-        }
-        .cyber-input {
-          background: rgba(255, 255, 255, 0.015);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 8px;
-          padding: 10px 14px;
-          color: #ffffff;
-          font-size: 13px;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .cyber-input:focus {
-          outline: none;
-          border-color: #00ff88;
-          box-shadow: 0 0 16px rgba(0, 255, 136, 0.15);
-          background: rgba(255, 255, 255, 0.035);
-        }
-        .neon-text-glow {
-          text-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
-        }
-        .active-tab-glow {
-          box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
-        }
-
-        /* ── EXQUISITE UX: HIDE ALL UGLY SCROLLBARS NATIVELY ── */
-        ::-webkit-scrollbar {
-          display: none !important;
-          width: 0px !important;
-          background: transparent !important;
-        }
-        * {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: ADMIN_STYLES }} />
       
       {/* ── STATIC LEFT PANEL NAV ── */}
       <AdminSidebar
@@ -587,15 +725,24 @@ function AdminComponent() {
  
       {/* ── INDEPENDENTLY SCROLLABLE RIGHT PANEL ── */}
       <main className="flex-1 h-full overflow-y-auto p-6 md:p-12 w-full max-w-[1600px] mx-auto">
-        {db && editMode === "visual" && (
-          <div className="flex justify-end mb-6">
+        {db && (
+          <div className="flex justify-end gap-3 mb-6">
             <button
-              onClick={() => setEditMode("json")}
+              onClick={() => setShowCompileModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00ff88]/20 bg-[#00ff88]/5 hover:bg-[#00ff88]/10 hover:border-[#00ff88]/30 text-[#00ff88] text-[10px] font-bold uppercase transition-all tracking-wider cursor-pointer"
             >
-              <Code2 className="size-3.5" />
-              <span>View JSON Source</span>
+              <Terminal className="size-3.5" />
+              <span>Compile Master Prompt</span>
             </button>
+            {editMode === "visual" && (
+              <button
+                onClick={() => setEditMode("json")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 text-white/80 text-[10px] font-bold uppercase transition-all tracking-wider cursor-pointer"
+              >
+                <Code2 className="size-3.5" />
+                <span>View JSON Source</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -663,6 +810,116 @@ function AdminComponent() {
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
         />
+
+        {showCompileModal && db && (
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="w-full max-w-xl bg-[#080808]/95 border border-[#00ff88]/20 rounded-3xl p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_40px_rgba(0,255,136,0.05)] relative space-y-6">
+              
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-[#00ff88]/5 border border-[#00ff88]/10 text-[#00ff88]">
+                    <Terminal className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold tracking-wider uppercase text-white font-mono-fira">Prompt Edge Compiler</h3>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-0.5">Select databases to merge into system prompt</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowCompileModal(false)}
+                  className="p-1.5 rounded-lg border border-white/5 hover:border-white/20 text-muted-foreground hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
+                  <input
+                    type="text"
+                    placeholder="Search database sources..."
+                    value={compileSearchQuery}
+                    onChange={(e) => setCompileSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/[0.02] border border-white/10 rounded-xl text-xs uppercase font-bold tracking-wider placeholder:text-muted-foreground/30 text-white focus:outline-none focus:border-[#00ff88]/30 transition-all font-sans"
+                  />
+                </div>
+
+                {/* Sources List */}
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                  {(() => {
+                    const registry = db["admin_config/json_structure"]?.content || {};
+                    return Object.keys(registry)
+                      .filter(key => {
+                        return key !== "dodoPromptConfig" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
+                      })
+                      .map(key => ({
+                        key,
+                        label: registry[key]?.title || key,
+                        description: `${key}.json database source`
+                      }))
+                      .filter(item => 
+                        item.label.toLowerCase().includes(compileSearchQuery.toLowerCase()) ||
+                        item.key.toLowerCase().includes(compileSearchQuery.toLowerCase())
+                      );
+                  })().map(item => {
+                    const isChecked = getIncludedToggles()[item.key] !== false;
+                    const isSaving = publishing === "dodoPromptConfig";
+                    return (
+                      <div
+                        key={item.key}
+                        onClick={() => !isSaving && toggleDatasetSelection(item.key)}
+                        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-200 ${
+                          isChecked 
+                            ? "bg-[#00ff88]/5 border-[#00ff88]/20 text-[#00ff88]" 
+                            : "bg-white/[0.005] border-white/5 text-muted-foreground hover:bg-white/[0.02]"
+                        } ${isSaving ? "opacity-60 cursor-not-allowed" : "cursor-pointer select-none"}`}
+                      >
+                        <div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider">{item.label}</div>
+                          <div className="text-[8px] uppercase tracking-widest text-muted-foreground/75 font-mono mt-0.5">{item.description}</div>
+                        </div>
+                        <div className={`size-4.5 rounded-lg flex items-center justify-center border transition-all ${
+                          isChecked ? "bg-[#00ff88] border-[#00ff88] text-black" : "border-white/20"
+                        }`}>
+                          {isChecked && <Check className="size-3 stroke-[3]" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setShowCompileModal(false)}
+                  className="flex-1 px-4 py-3 bg-white/[0.02] border border-white/10 hover:bg-white/[0.05] hover:border-white/20 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  disabled={isCompiling}
+                  onClick={async () => {
+                    await handleManualCompile();
+                    setShowCompileModal(false);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#00ff88] to-emerald-500 hover:from-[#00ff88]/90 hover:to-emerald-500/90 text-[#050505] text-[10px] font-bold uppercase tracking-wider rounded-xl shadow-[0_4px_20px_rgba(0,255,136,0.15)] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isCompiling ? (
+                    <RefreshCw className="size-3.5 animate-spin" />
+                  ) : (
+                    <Terminal className="size-3.5" />
+                  )}
+                  <span>Run Compiler & Sync</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

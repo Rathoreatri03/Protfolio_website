@@ -188,110 +188,76 @@ export const compileAtrisInformationText = (db: any, included: Record<string, bo
   if (!db) return "";
   const prompt_lines: string[] = [];
 
-  // 1. System Metadata
-  if (included.systemMetadata && db.systemMetadata?.content) {
-    const m = db.systemMetadata.content;
-    prompt_lines.push("#### 🌐 System Parameters & Metadata:");
-    prompt_lines.push(`- **Engineer / Programmer:** ${m.userName || "Atri Rathore"}`);
-    prompt_lines.push(`- **System ID:** ${m.systemID || "Atri_Rathore"}`);
-    prompt_lines.push(`- **Terminal User:** ${m.terminalUser || "rathoreatri03@lab"}`);
-    prompt_lines.push(`- **Kernel Version:** ${m.kernel || "X-Matrix_64"}`);
-    prompt_lines.push(`- **Uptime Rate:** ${m.uptime || "99.99%"}`);
-    prompt_lines.push(`- **Operational Latency:** ${m.latency || "12ms"}`);
-    prompt_lines.push("");
-  }
+  const registry = db["admin_config/json_structure"]?.content || {};
 
-  // 2. Links
-  if (included.professionalLinks && db.professionalLinks?.content) {
-    const l = db.professionalLinks.content;
-    prompt_lines.push("#### 🔗 Official Contact Information & Links:");
-    prompt_lines.push("Always provide these EXACT URLs when asked for Atri's contact info, GitHub, LinkedIn, Resume, or Visume. Output them as clean markdown links:");
-    if (l.email) prompt_lines.push(`- **Email Address:** ${l.email} (mailto:${l.email})`);
-    if (l.github) prompt_lines.push(`- **GitHub Profile:** [${l.github}](${l.github})`);
-    prompt_lines.push("- **LinkedIn Profile:** [https://www.linkedin.com/in/rathoreatri03/](https://www.linkedin.com/in/rathoreatri03/)");
-    if (l.resume_PDF) prompt_lines.push(`- **Official Resume (PDF):** [View Atri's Resume](${l.resume_PDF})`);
-    if (l.visume_video) prompt_lines.push(`- **Video Resume (Visume):** [Watch Atri's Video Resume](${l.visume_video})`);
-    prompt_lines.push("");
-  }
+  for (const [key, regInfo] of Object.entries(registry) as [string, any][]) {
+    if (regInfo.skipPromptCompile) continue;
+    if (key === "admin_config/json_structure" || key === "dodoPromptInclusion" || key === "dodo_prompt") continue;
+    if (included[key] === false) continue; // Default to true if not explicitly set to false
+    const title = regInfo.title || key;
+    const sectionType = regInfo.type || "list";
+    const sectionData = db[key]?.content;
 
-  // 2b. Brand Logo
-  if (included.logo && db.logo?.content?.logo_url) {
-    prompt_lines.push("#### 🏷️ Official Brand Logo:");
-    prompt_lines.push(`- **Logo URL:** ${db.logo.content.logo_url}`);
-    prompt_lines.push("");
-  }
+    if (!sectionData) continue;
 
-  // 3. Banner
-  if (included.BannerDetails && db.BannerDetails?.content) {
-    const b = db.BannerDetails.content;
-    if (b.titles && b.titles.length) {
-      prompt_lines.push("#### 👤 Executive Professional Summary:");
-      prompt_lines.push(`Atri serves under these titles: ${b.titles.join(", ")}.`);
-      prompt_lines.push(`**Bio & Overview:** ${b.description || ""}`);
+    // 1. Categories Type (Skills)
+    if (sectionType === "categories" && typeof sectionData === "object" && sectionData !== null) {
+      prompt_lines.push(`#### 📊 ${title}:`);
+      const categories = sectionData.categories || [];
+      for (const cat of categories) {
+        prompt_lines.push(`- **${cat.title || cat.name || ""}**:`);
+        const skillsList = (cat.skills || []).map((s: any) => {
+          if (s.progress) return `${s.name} (${s.progress}% proficiency)`;
+          return s.name;
+        });
+        prompt_lines.push(`  - ${skillsList.join(", ")}`);
+      }
       prompt_lines.push("");
     }
-  }
-
-  // 4. Experience
-  if (included.experience && db.experience?.content && db.experience.content.length) {
-    prompt_lines.push("#### 💼 Professional Experience & Milestones:");
-    for (const exp of db.experience.content) {
-      prompt_lines.push(`- **${exp.title}** (${exp.duration || "N/A"})`);
-      prompt_lines.push(`  - *Details:* ${exp.description || ""}`);
-      if (exp.ref) prompt_lines.push(`  - *System Reference:* \`${exp.ref}\``);
-      if (exp.link && exp.link.trim()) prompt_lines.push(`  - *Associated Document:* [View Document](${exp.link})`);
+    // 2. Tags Type (Techstack)
+    else if (sectionType === "tags" && Array.isArray(sectionData)) {
+      prompt_lines.push(`#### 🏷️ ${title}: ${sectionData.join(", ")}`);
+      prompt_lines.push("");
     }
-    prompt_lines.push("");
-  }
-
-  // 5. Projects
-  if (included.projects && db.projects?.content && db.projects.content.length) {
-    prompt_lines.push("#### 🛠️ Core Engineering Projects:");
-    for (const proj of db.projects.content) {
-      prompt_lines.push(`- **${proj.title}**`);
-      prompt_lines.push(`  - *Description:* ${proj.description || ""}`);
-      if (proj.link && proj.link.trim()) prompt_lines.push(`  - *Repository Link:* [${proj.link}](${proj.link})`);
+    // 3. List Type (Experience, Projects, etc.)
+    else if (sectionType === "list" && Array.isArray(sectionData)) {
+      prompt_lines.push(`#### 📋 ${title}:`);
+      for (const item of sectionData) {
+        if (typeof item !== "object" || item === null) continue;
+        const itemTitle = item.title || item.name || Object.values(item).find(v => typeof v === "string" && v !== item.imgUrl && v !== item.link) || "";
+        prompt_lines.push(`- **${itemTitle}**`);
+        for (const [k, v] of Object.entries(item)) {
+          if (k === "title" || k === "name" || !v || !String(v).trim()) continue;
+          if (k === "imgUrl" || k === "image") continue;
+          
+          const isUrl = String(v).startsWith("http://") || String(v).startsWith("https://");
+          const label = k.charAt(0).toUpperCase() + k.slice(1);
+          if (isUrl) {
+            prompt_lines.push(`  - *${label}:* [View Document](${v})`);
+          } else {
+            prompt_lines.push(`  - *${label}:* ${v}`);
+          }
+        }
+      }
+      prompt_lines.push("");
     }
-    prompt_lines.push("");
-  }
+    // 4. Object Type (BannerDetails, links, logo, etc.)
+    else if (sectionType === "object" && typeof sectionData === "object" && sectionData !== null) {
+      prompt_lines.push(`#### ℹ️ ${title}:`);
+      for (const [k, v] of Object.entries(sectionData)) {
+        if (!v || !String(v).trim()) continue;
+        if (k === "imgUrl" || k === "image") continue;
 
-  // 6. Research
-  if (included.researchInsights && db.researchInsights?.content && db.researchInsights.content.length) {
-    prompt_lines.push("#### 📚 Scientific Research & Intellectual Property:");
-    for (const item of db.researchInsights.content) {
-      prompt_lines.push(`- **${item.title}**`);
-      prompt_lines.push(`  - *Summary:* ${item.description || ""}`);
-      if (item.link && item.link.trim()) prompt_lines.push(`  - *Publication Link:* [Taylor & Francis / Publisher link](${item.link})`);
+        const isUrl = String(v).startsWith("http://") || String(v).startsWith("https://");
+        const label = k.charAt(0).toUpperCase() + k.slice(1);
+        if (isUrl) {
+          prompt_lines.push(`- **${label}:** [Link](${v})`);
+        } else {
+          prompt_lines.push(`- **${label}:** ${v}`);
+        }
+      }
+      prompt_lines.push("");
     }
-    prompt_lines.push("");
-  }
-
-  // 7. Victories
-  if (included.successStories && db.successStories?.content && db.successStories.content.length) {
-    prompt_lines.push("#### 🏆 Hackathon Victories & Competitive Achievements:");
-    for (const story of db.successStories.content) {
-      prompt_lines.push(`- **${story.title}**`);
-      prompt_lines.push(`  - *Achievement:* ${story.description || ""}`);
-      if (story.link && story.link.trim()) prompt_lines.push(`  - *Reference URL:* [${story.link}](${story.link})`);
-    }
-    prompt_lines.push("");
-  }
-
-  // 8. Skills
-  if (included.skillsData && db.skillsData?.content && db.skillsData.content.categories && db.skillsData.content.categories.length) {
-    prompt_lines.push("#### 📊 Core Knowledge Matrix (Skills & Proficiencies):");
-    for (const cat of db.skillsData.content.categories) {
-      prompt_lines.push(`- **${cat.title}:**`);
-      const list = (cat.skills || []).map((s: any) => `${s.name} (${s.progress}% proficiency)`).join(", ");
-      prompt_lines.push(`  - ${list}`);
-    }
-    prompt_lines.push("");
-  }
-
-  // 9. Techstack
-  if (included.techstack && db.techstack?.content && db.techstack.content.length) {
-    prompt_lines.push(`#### ⚙️ Rapid Deployment Tech Stack: ${db.techstack.content.join(", ")}`);
-    prompt_lines.push("");
   }
 
   return prompt_lines.join("\n");

@@ -49,7 +49,7 @@ export function SecurityGateway({
               value={inputKey}
               onChange={e => setInputKey(e.target.value)}
               placeholder="Security Access Token"
-              className="w-full cyber-input text-center font-mono-fira text-sm tracking-widest placeholder:tracking-normal placeholder:font-sans focus:placeholder-opacity-50"
+              className="w-full cyber-input text-center font-mono-fira text-sm tracking-widest placeholder:tracking-normal placeholder:font-sans focus:placeholder-opacity-50 focus:outline-none"
               disabled={isSubmittingKey}
             />
 
@@ -64,7 +64,7 @@ export function SecurityGateway({
         <button
           type="submit"
           disabled={isSubmittingKey || !inputKey.trim()}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-[#00ff88] hover:bg-[#00ff88]/90 disabled:bg-[#00ff88]/40 disabled:text-[#050505]/40 text-[#050505] text-xs font-bold rounded-xl shadow-[0_4px_25px_rgba(0,255,136,0.15)] transition-all uppercase"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-[#00ff88] hover:bg-[#00ff88]/90 disabled:bg-[#00ff88]/40 disabled:text-[#050505]/40 text-[#050505] text-xs font-bold rounded-xl shadow-[0_4px_25px_rgba(0,255,136,0.15)] transition-all uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff88]/50"
         >
           {isSubmittingKey ? (
             <>
