@@ -380,5 +380,11 @@
     "type": "object",
     "skipPromptCompile": true,
     "schema": []
+  },
+  "dodoPromptInclusion": {
+    "title": "Dodo Prompt Inclusion",
+    "type": "object",
+    "skipPromptCompile": true,
+    "schema": []
   }
 }
