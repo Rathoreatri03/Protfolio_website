@@ -35,28 +35,5 @@
   "footer": {
     "copyright_text": "ALL_SYSTEMS_DODO"
   },
-  "customSections": {
-    "certification": {
-      "title": "certification",
-      "type": "list",
-      "schema": [
-        {
-          "key": "create",
-          "label": "Create",
-          "type": "string"
-        },
-        {
-          "key": "link",
-          "label": "link",
-          "type": "url"
-        }
-      ],
-      "content": [
-        {
-          "create": "item 1 ",
-          "link": "sfasdasdasd"
-        }
-      ]
-    }
-  }
+  "customSections": {}
 }
