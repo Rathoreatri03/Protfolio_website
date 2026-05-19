@@ -384,42 +384,9 @@
     "type": "tags",
     "schema": []
   },
-  "test1": {
-    "title": "test1",
-    "type": "list",
-    "schema": [
-      {
-        "key": "title",
-        "label": "Title",
-        "type": "string"
-      }
-    ]
-  },
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
     "schema": []
-  },
-  "ts": {
-    "title": "ts",
-    "type": "list",
-    "schema": [
-      {
-        "key": "title",
-        "label": "Title",
-        "type": "string"
-      }
-    ]
-  },
-  "tse": {
-    "title": "tse",
-    "type": "list",
-    "schema": [
-      {
-        "key": "title",
-        "label": "Title",
-        "type": "string"
-      }
-    ]
   }
 }
