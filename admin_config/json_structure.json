@@ -1,103 +1,174 @@
 {
-  "systemMetadata": {
-    "title": "System Info",
-    "type": "object",
-    "schema": [
-      { "key": "systemID", "label": "System ID", "type": "string" },
-      { "key": "userName", "label": "User Name", "type": "string" },
-      { "key": "terminalUser", "label": "Terminal User", "type": "string" },
-      { "key": "kernel", "label": "Kernel Ref", "type": "string" },
-      { "key": "status", "label": "System Status", "type": "string" },
-      { "key": "version", "label": "System Version", "type": "string" },
-      { "key": "efficiency", "label": "System Efficiency", "type": "string" },
-      { "key": "uptime", "label": "System Uptime", "type": "string" },
-      { "key": "latency", "label": "System Latency", "type": "string" },
-      { "key": "deployment_tag", "label": "Deployment Tag", "type": "string" },
-      { "key": "intelligence_tag", "label": "Intelligence Tag", "type": "string" },
-      { "key": "achievement_tag", "label": "Achievement Tag", "type": "string" },
-      { "key": "operational_log_tag", "label": "Operational Log Tag", "type": "string" },
-      { "key": "pages.work.title1", "label": "Work Page Title 1", "type": "string" },
-      { "key": "pages.work.title2", "label": "Work Page Title 2", "type": "string" },
-      { "key": "pages.skills.title1", "label": "Skills Page Title 1", "type": "string" },
-      { "key": "pages.skills.title2", "label": "Skills Page Title 2", "type": "string" },
-      { "key": "pages.achievements.title1", "label": "Achievements Page Title 1", "type": "string" },
-      { "key": "pages.achievements.title2", "label": "Achievements Page Title 2", "type": "string" },
-      { "key": "pages.achievements.subtitle", "label": "Achievements Page Subtitle", "type": "longtext" },
-      { "key": "pages.log.title1", "label": "Log Page Title 1", "type": "string" },
-      { "key": "pages.log.title2", "label": "Log Page Title 2", "type": "string" },
-      { "key": "pages.log.subtitle", "label": "Log Page Subtitle", "type": "longtext" },
-      { "key": "pages.research.title1", "label": "Research Page Title 1", "type": "string" },
-      { "key": "pages.research.title2", "label": "Research Page Title 2", "type": "string" },
-      { "key": "pages.research.subtitle", "label": "Research Page Subtitle", "type": "longtext" },
-      { "key": "footer.copyright_text", "label": "Footer Copyright", "type": "string" }
-    ]
-  },
-  "professionalLinks": {
-    "title": "Professional Links",
-    "type": "object",
-    "schema": [
-      { "key": "resume_PDF", "label": "Resume PDF URL", "type": "url" },
-      { "key": "visume_video", "label": "Visume Video URL", "type": "url" },
-      { "key": "github", "label": "GitHub Profile", "type": "url" },
-      { "key": "email", "label": "Contact Email", "type": "string" },
-      { "key": "formspree_ID", "label": "Formspree ID", "type": "string" }
-    ]
-  },
-  "logo": {
-    "title": "Brand Logo",
-    "type": "object",
-    "schema": [
-      { "key": "logo_url", "label": "Logo URL or Icon", "type": "url" }
-    ]
-  },
   "BannerDetails": {
     "title": "Banner Details",
     "type": "object",
     "schema": [
-      { "key": "description", "label": "About Description", "type": "longtext" },
-      { "key": "imgUrl", "label": "Profile SVG/Image URL", "type": "url" }
+      {
+        "key": "description",
+        "label": "About Description",
+        "type": "longtext"
+      },
+      {
+        "key": "imgUrl",
+        "label": "Profile SVG/Image URL",
+        "type": "url"
+      }
+    ]
+  },
+  "dodoPromptConfig": {
+    "title": "Assistant Rules",
+    "type": "object",
+    "schema": [
+      {
+        "key": "system_instruction",
+        "label": "System Instruction",
+        "type": "longtext"
+      },
+      {
+        "key": "personality_protocol",
+        "label": "Personality Protocol",
+        "type": "longtext"
+      },
+      {
+        "key": "behavioral_guidelines",
+        "label": "Behavioral Guidelines",
+        "type": "longtext"
+      },
+      {
+        "key": "atris_information",
+        "label": "User Information Protocol",
+        "type": "longtext"
+      }
     ]
   },
   "experience": {
     "title": "Work Experience",
     "type": "list",
     "schema": [
-      { "key": "title", "label": "Role Title / Description", "type": "string" },
-      { "key": "description", "label": "Brief Summary", "type": "longtext" },
-      { "key": "duration", "label": "Duration Range", "type": "string" },
-      { "key": "ref", "label": "Archive Reference ID", "type": "string" },
-      { "key": "imgUrl", "label": "Organization Logo URL", "type": "url" },
-      { "key": "link", "label": "Verification Document URL", "type": "url" }
+      {
+        "key": "title",
+        "label": "Role Title / Description",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Brief Summary",
+        "type": "longtext"
+      },
+      {
+        "key": "duration",
+        "label": "Duration Range",
+        "type": "string"
+      },
+      {
+        "key": "ref",
+        "label": "Archive Reference ID",
+        "type": "string"
+      },
+      {
+        "key": "imgUrl",
+        "label": "Organization Logo URL",
+        "type": "url"
+      },
+      {
+        "key": "link",
+        "label": "Verification Document URL",
+        "type": "url"
+      }
+    ]
+  },
+  "logo": {
+    "title": "Brand Logo",
+    "type": "object",
+    "schema": [
+      {
+        "key": "logo_url",
+        "label": "Logo URL or Icon",
+        "type": "url"
+      }
+    ]
+  },
+  "professionalLinks": {
+    "title": "Professional Links",
+    "type": "object",
+    "schema": [
+      {
+        "key": "resume_PDF",
+        "label": "Resume PDF URL",
+        "type": "url"
+      },
+      {
+        "key": "visume_video",
+        "label": "Visume Video URL",
+        "type": "url"
+      },
+      {
+        "key": "github",
+        "label": "GitHub Profile",
+        "type": "url"
+      },
+      {
+        "key": "email",
+        "label": "Contact Email",
+        "type": "string"
+      },
+      {
+        "key": "formspree_ID",
+        "label": "Formspree ID",
+        "type": "string"
+      }
     ]
   },
   "projects": {
     "title": "Core Projects",
     "type": "list",
     "schema": [
-      { "key": "title", "label": "Project Title", "type": "string" },
-      { "key": "description", "label": "Technical Description", "type": "longtext" },
-      { "key": "imgUrl", "label": "Banner Image URL", "type": "url" },
-      { "key": "link", "label": "Repository / Live URL", "type": "url" }
+      {
+        "key": "title",
+        "label": "Project Title",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Technical Description",
+        "type": "longtext"
+      },
+      {
+        "key": "imgUrl",
+        "label": "Banner Image URL",
+        "type": "url"
+      },
+      {
+        "key": "link",
+        "label": "Repository / Live URL",
+        "type": "url"
+      }
     ]
   },
   "researchInsights": {
     "title": "Scientific Research",
     "type": "list",
     "schema": [
-      { "key": "title", "label": "Publication Title", "type": "string" },
-      { "key": "description", "label": "Abstract / Summary", "type": "longtext" },
-      { "key": "imgUrl", "label": "Thumbnail Image URL", "type": "url" },
-      { "key": "link", "label": "Publication / DOI URL", "type": "url" }
-    ]
-  },
-  "successStories": {
-    "title": "Achievements Log",
-    "type": "list",
-    "schema": [
-      { "key": "title", "label": "Achievement Title", "type": "string" },
-      { "key": "description", "label": "Description", "type": "longtext" },
-      { "key": "imgUrl", "label": "Certificate Image URL", "type": "url" },
-      { "key": "link", "label": "Verification URL", "type": "url" }
+      {
+        "key": "title",
+        "label": "Publication Title",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Abstract / Summary",
+        "type": "longtext"
+      },
+      {
+        "key": "imgUrl",
+        "label": "Thumbnail Image URL",
+        "type": "url"
+      },
+      {
+        "key": "link",
+        "label": "Publication / DOI URL",
+        "type": "url"
+      }
     ]
   },
   "skillsData": {
@@ -105,19 +176,202 @@
     "type": "categories",
     "schema": []
   },
+  "successStories": {
+    "title": "Achievements Log",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Achievement Title",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "type": "longtext"
+      },
+      {
+        "key": "imgUrl",
+        "label": "Certificate Image URL",
+        "type": "url"
+      },
+      {
+        "key": "link",
+        "label": "Verification URL",
+        "type": "url"
+      }
+    ]
+  },
+  "systemMetadata": {
+    "title": "System Info",
+    "type": "object",
+    "schema": [
+      {
+        "key": "systemID",
+        "label": "System ID",
+        "type": "string"
+      },
+      {
+        "key": "userName",
+        "label": "User Name",
+        "type": "string"
+      },
+      {
+        "key": "terminalUser",
+        "label": "Terminal User",
+        "type": "string"
+      },
+      {
+        "key": "kernel",
+        "label": "Kernel Ref",
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "label": "System Status",
+        "type": "string"
+      },
+      {
+        "key": "version",
+        "label": "System Version",
+        "type": "string"
+      },
+      {
+        "key": "efficiency",
+        "label": "System Efficiency",
+        "type": "string"
+      },
+      {
+        "key": "uptime",
+        "label": "System Uptime",
+        "type": "string"
+      },
+      {
+        "key": "latency",
+        "label": "System Latency",
+        "type": "string"
+      },
+      {
+        "key": "deployment_tag",
+        "label": "Deployment Tag",
+        "type": "string"
+      },
+      {
+        "key": "intelligence_tag",
+        "label": "Intelligence Tag",
+        "type": "string"
+      },
+      {
+        "key": "achievement_tag",
+        "label": "Achievement Tag",
+        "type": "string"
+      },
+      {
+        "key": "operational_log_tag",
+        "label": "Operational Log Tag",
+        "type": "string"
+      },
+      {
+        "key": "pages.work.title1",
+        "label": "Work Page Title 1",
+        "type": "string"
+      },
+      {
+        "key": "pages.work.title2",
+        "label": "Work Page Title 2",
+        "type": "string"
+      },
+      {
+        "key": "pages.skills.title1",
+        "label": "Skills Page Title 1",
+        "type": "string"
+      },
+      {
+        "key": "pages.skills.title2",
+        "label": "Skills Page Title 2",
+        "type": "string"
+      },
+      {
+        "key": "pages.achievements.title1",
+        "label": "Achievements Page Title 1",
+        "type": "string"
+      },
+      {
+        "key": "pages.achievements.title2",
+        "label": "Achievements Page Title 2",
+        "type": "string"
+      },
+      {
+        "key": "pages.achievements.subtitle",
+        "label": "Achievements Page Subtitle",
+        "type": "longtext"
+      },
+      {
+        "key": "pages.log.title1",
+        "label": "Log Page Title 1",
+        "type": "string"
+      },
+      {
+        "key": "pages.log.title2",
+        "label": "Log Page Title 2",
+        "type": "string"
+      },
+      {
+        "key": "pages.log.subtitle",
+        "label": "Log Page Subtitle",
+        "type": "longtext"
+      },
+      {
+        "key": "pages.research.title1",
+        "label": "Research Page Title 1",
+        "type": "string"
+      },
+      {
+        "key": "pages.research.title2",
+        "label": "Research Page Title 2",
+        "type": "string"
+      },
+      {
+        "key": "pages.research.subtitle",
+        "label": "Research Page Subtitle",
+        "type": "longtext"
+      },
+      {
+        "key": "footer.copyright_text",
+        "label": "Footer Copyright",
+        "type": "string"
+      }
+    ]
+  },
   "techstack": {
     "title": "Tech Stack",
     "type": "tags",
     "schema": []
   },
-  "dodoPromptConfig": {
-    "title": "Assistant Rules",
+  "compile_prompt_py": {
+    "title": "Prompt Compiler Script",
     "type": "object",
+    "schema": []
+  },
+  "certifications": {
+    "title": "Certifications",
+    "type": "list",
     "schema": [
-      { "key": "system_instruction", "label": "System Instruction", "type": "longtext" },
-      { "key": "personality_protocol", "label": "Personality Protocol", "type": "longtext" },
-      { "key": "behavioral_guidelines", "label": "Behavioral Guidelines", "type": "longtext" },
-      { "key": "atris_information", "label": "User Information Protocol", "type": "longtext" }
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      },
+      {
+        "key": "url",
+        "label": "URL",
+        "type": "url"
+      },
+      {
+        "key": "descritpion",
+        "label": "Descritpion",
+        "type": "longtext"
+      }
     ]
   }
 }
