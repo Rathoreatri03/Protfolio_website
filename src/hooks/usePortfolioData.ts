@@ -13,6 +13,7 @@ export type SkillCategory = { title: string; skills: Skill[] };
 export type Project = { title: string; description: string; imgUrl: string; link: string };
 export type Experience = Project & { duration?: string; ref?: string };
 export type SuccessStory = Project;
+export type ResearchInsight = Project;
 export type Links = { 
   resume_PDF: string; 
   visume_video: string;
@@ -39,6 +40,7 @@ export type SystemMetadata = {
     skills: { title1: string; title2: string };
     achievements: { title1: string; title2: string; subtitle: string };
     log: { title1: string; title2: string; subtitle: string };
+    research?: { title1: string; title2: string; subtitle: string };
   };
   footer?: { copyright_text: string };
 };
@@ -54,6 +56,7 @@ const FALLBACK = {
   projects: [] as Project[],
   experience: [] as Experience[],
   successStories: [] as SuccessStory[],
+  researchInsights: [] as ResearchInsight[],
   links: {
     resume_PDF: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf", 
     visume_video: "https://res.cloudinary.com/dxh9tugzx/video/upload/v1734293129/Visume_io0vmq.mp4", 
@@ -79,7 +82,8 @@ const FALLBACK = {
       work: { title1: "Experiments in", title2: "Motion" },
       skills: { title1: "The", title2: "Matrix" },
       achievements: { title1: "Victory", title2: "Archives", subtitle: "A CHRONOLOGICAL LOG OF HACKATHON WINS AND INNOVATION CHALLENGES" },
-      log: { title1: "Neural", title2: "Milestones", subtitle: "CHRONOLOGICAL ARCHIVE OF ACHIEVEMENTS AND SYSTEM UPGRADES" }
+      log: { title1: "Neural", title2: "Milestones", subtitle: "CHRONOLOGICAL ARCHIVE OF ACHIEVEMENTS AND SYSTEM UPGRADES" },
+      research: { title1: "Scientific", title2: "Insights", subtitle: "PATENTS, PUBLICATIONS, AND DISRUPTIVE DESIGN EXPLORATIONS" }
     },
     footer: { copyright_text: "ALL_SYSTEMS_DODO" }
   } as SystemMetadata,
@@ -93,6 +97,7 @@ export function usePortfolioData() {
   const [projects, setProjects] = useState<Project[]>(FALLBACK.projects);
   const [experience, setExperience] = useState<Experience[]>(FALLBACK.experience);
   const [successStories, setSuccessStories] = useState<SuccessStory[]>(FALLBACK.successStories);
+  const [researchInsights, setResearchInsights] = useState<ResearchInsight[]>(FALLBACK.researchInsights);
   const [links, setLinks] = useState<Links>(FALLBACK.links);
   const [metadata, setMetadata] = useState<SystemMetadata>(FALLBACK.metadata);
   const [techStack, setTechStack] = useState<string[]>(FALLBACK.techStack);
@@ -110,7 +115,7 @@ export function usePortfolioData() {
     };
     (async () => {
       const v = Date.now();
-      const [b, sk, pr, ex, ss, li, md, ts, lg] = await Promise.all([
+      const [b, sk, pr, ex, ss, li, md, ts, lg, ri] = await Promise.all([
         j<Banner>(`${GH}/BannerDetails.json?v=${v}`),
         j<{ categories: SkillCategory[] }>(`${GH}/skillsData.json?v=${v}`),
         j<Project[]>(`${GH}/projects.json?v=${v}`),
@@ -120,6 +125,7 @@ export function usePortfolioData() {
         j<SystemMetadata>(`${GH}/systemMetadata.json?v=${v}`),
         j<string[]>(`${GH}/techstack.json?v=${v}`),
         j<Logo>(`${GH}/logo.json?v=${v}`),
+        j<ResearchInsight[]>(`${GH}/researchInsights.json?v=${v}`),
       ]);
       if (cancel) return;
       
@@ -139,10 +145,11 @@ export function usePortfolioData() {
       if (md) setMetadata(md);
       if (ts) setTechStack(ts);
       if (lg) setLogo(lg);
+      if (ri) setResearchInsights(ri);
       setLoaded(true);
     })();
     return () => { cancel = true; };
   }, []);
 
-  return { banner, skills, projects, experience, successStories, links, metadata, techStack, logo, loaded };
+  return { banner, skills, projects, experience, successStories, researchInsights, links, metadata, techStack, logo, loaded };
 }

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkRouteImport } from './routes/work'
 import { Route as SkillsRouteImport } from './routes/skills'
+import { Route as ResearchRouteImport } from './routes/research'
 import { Route as LogRouteImport } from './routes/log'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -25,6 +26,11 @@ const WorkRoute = WorkRouteImport.update({
 const SkillsRoute = SkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResearchRoute = ResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogRoute = LogRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/log': typeof LogRoute
+  '/research': typeof ResearchRoute
   '/skills': typeof SkillsRoute
   '/work': typeof WorkRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/log': typeof LogRoute
+  '/research': typeof ResearchRoute
   '/skills': typeof SkillsRoute
   '/work': typeof WorkRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/log': typeof LogRoute
+  '/research': typeof ResearchRoute
   '/skills': typeof SkillsRoute
   '/work': typeof WorkRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/contact'
     | '/log'
+    | '/research'
     | '/skills'
     | '/work'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/contact'
     | '/log'
+    | '/research'
     | '/skills'
     | '/work'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/contact'
     | '/log'
+    | '/research'
     | '/skills'
     | '/work'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ContactRoute: typeof ContactRoute
   LogRoute: typeof LogRoute
+  ResearchRoute: typeof ResearchRoute
   SkillsRoute: typeof SkillsRoute
   WorkRoute: typeof WorkRoute
 }
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/skills'
       fullPath: '/skills'
       preLoaderRoute: typeof SkillsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/research': {
+      id: '/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof ResearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/log': {
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ContactRoute: ContactRoute,
   LogRoute: LogRoute,
+  ResearchRoute: ResearchRoute,
   SkillsRoute: SkillsRoute,
   WorkRoute: WorkRoute,
 }

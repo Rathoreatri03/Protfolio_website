@@ -6,12 +6,13 @@ import { DodoAI } from "@/components/dodo/DodoAI";
 import { Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
 
-const ROUTES = ["/", "/work", "/skills", "/achievements", "/log", "/contact"];
+const ROUTES = ["/", "/work", "/skills", "/research", "/achievements", "/log", "/contact"];
 
 const NAV_LINKS = [
   { to: "/", label: "HOME" },
   { to: "/work", label: "WORK" },
   { to: "/skills", label: "STACK" },
+  { to: "/research", label: "RESEARCH" },
   { to: "/achievements", label: "ACHIEVEMENTS" },
   { to: "/log", label: "LOG" },
   { to: "/contact", label: "CONTACT" },
