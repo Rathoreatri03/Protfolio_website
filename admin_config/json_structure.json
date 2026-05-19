@@ -2,6 +2,7 @@
   "BannerDetails": {
     "title": "Banner Details",
     "type": "object",
+    "isStandard": true,
     "schema": [
       {
         "key": "description",
@@ -39,6 +40,8 @@
   "dodoPromptConfig": {
     "title": "Assistant Rules",
     "type": "object",
+    "isStandard": true,
+    "skipPromptCompile": true,
     "schema": [
       {
         "key": "system_instruction",
@@ -62,14 +65,10 @@
       }
     ]
   },
-  "dodoPromptInclusion": {
-    "title": "Dodo Prompt Inclusion",
-    "type": "object",
-    "schema": []
-  },
   "experience": {
     "title": "Work Experience",
     "type": "list",
+    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -106,6 +105,7 @@
   "logo": {
     "title": "Brand Logo",
     "type": "object",
+    "isStandard": true,
     "schema": [
       {
         "key": "logo_url",
@@ -117,6 +117,7 @@
   "professionalLinks": {
     "title": "Professional Links",
     "type": "object",
+    "isStandard": true,
     "schema": [
       {
         "key": "resume_PDF",
@@ -148,6 +149,7 @@
   "projects": {
     "title": "Core Projects",
     "type": "list",
+    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -174,6 +176,7 @@
   "researchInsights": {
     "title": "Scientific Research",
     "type": "list",
+    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -210,11 +213,13 @@
   "skillsData": {
     "title": "Skills Matrix",
     "type": "categories",
+    "isStandard": true,
     "schema": []
   },
   "successStories": {
     "title": "Achievements Log",
     "type": "list",
+    "isStandard": true,
     "schema": [
       {
         "key": "title",
@@ -241,6 +246,7 @@
   "systemMetadata": {
     "title": "System Info",
     "type": "object",
+    "isStandard": true,
     "schema": [
       {
         "key": "systemID",
@@ -382,11 +388,31 @@
   "techstack": {
     "title": "Tech Stack",
     "type": "tags",
+    "isStandard": true,
     "schema": []
   },
   "compile_prompt_py": {
     "title": "Prompt Compiler Script",
     "type": "object",
+    "isSystemFile": true,
+    "readOnly": false,
+    "skipPromptCompile": true,
+    "schema": []
+  },
+  "dodoPromptInclusion": {
+    "title": "Dodo Prompt Inclusion",
+    "type": "object",
+    "isSystemFile": true,
+    "readOnly": true,
+    "skipPromptCompile": true,
+    "schema": []
+  },
+  "dodo_prompt": {
+    "title": "Compiled Prompt",
+    "type": "object",
+    "isSystemFile": true,
+    "readOnly": true,
+    "skipPromptCompile": true,
     "schema": []
   }
 }
