@@ -10,23 +10,23 @@
         },
         {
           "name": "TensorFlow & Keras",
-          "progress": 80,
+          "progress": 60,
           "format": "tier"
         },
         {
           "name": "OpenCV (Computer Vision)",
           "progress": 95,
-          "format": "out10"
+          "format": "tier"
         },
         {
           "name": "YOLO & Object Detection",
           "progress": 95,
-          "format": "percent"
+          "format": "tier"
         },
         {
           "name": "Transformers (NLP/LLMs)",
-          "progress": 90,
-          "format": "percent"
+          "progress": 80,
+          "format": "tier"
         }
       ]
     },
