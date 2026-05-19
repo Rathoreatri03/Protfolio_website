@@ -132,6 +132,29 @@ function AdminComponent() {
           }
           setDb(updatedDb);
 
+          // 3. Rebuild and save updated admin_config/json_structure
+          const jsonStructure: Record<string, any> = {};
+          for (const key of Object.keys(updatedDb)) {
+            if (key !== "admin_config/json_structure" && key !== "dodo_prompt") {
+              jsonStructure[key] = {
+                title: updatedDb[key].title || key,
+                type: updatedDb[key].type || "list",
+                schema: updatedDb[key].schema || []
+              };
+            }
+          }
+          await fetch(`${WORKER_BASE}/api/cms/save`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              filename: "admin_config/json_structure",
+              content: jsonStructure
+            })
+          });
+
           toast.success(`Successfully deleted "${sectionKey}" from GitHub!`);
         } catch (err: any) {
           toast.error(err.message);
@@ -321,35 +344,33 @@ function AdminComponent() {
         throw new Error(errData.error || `Failed to save ${fileKey}.json`);
       }
 
-      // 2. Save the companion schema file if schema metadata exists or it is a custom layout section
-      const schemaFields = db[fileKey].schema;
-      const isCustomSection = ![
-        "systemMetadata", "professionalLinks", "logo", "BannerDetails", 
-        "experience", "projects", "researchInsights", "successStories", 
-        "skillsData", "techstack", "dodoPromptConfig"
-      ].includes(fileKey);
-
-      if (isCustomSection || (schemaFields && schemaFields.length > 0)) {
-        const resSchema = await fetch(`${WORKER_BASE}/api/cms/save`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            filename: `${fileKey}.schema`,
-            content: {
-              title: db[fileKey].title || fileKey,
-              type: db[fileKey].type || "list",
-              schema: schemaFields || []
-            }
-          })
-        });
-
-        if (!resSchema.ok) {
-          const errData = await resSchema.json();
-          throw new Error(errData.error || `Failed to save companion schema for ${fileKey}.schema.json`);
+      // 2. Rebuild and save the unified admin_config/json_structure config
+      const jsonStructure: Record<string, any> = {};
+      for (const key of Object.keys(db)) {
+        if (key !== "admin_config/json_structure" && key !== "dodo_prompt") {
+          jsonStructure[key] = {
+            title: db[key].title || key,
+            type: db[key].type || "list",
+            schema: db[key].schema || []
+          };
         }
+      }
+
+      const resSchema = await fetch(`${WORKER_BASE}/api/cms/save`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          filename: "admin_config/json_structure",
+          content: jsonStructure
+        })
+      });
+
+      if (!resSchema.ok) {
+        const errData = await resSchema.json();
+        throw new Error(errData.error || "Failed to update admin_config/json_structure.json");
       }
 
       toast.success(`Successfully saved and recompiled ${fileKey}!`);
