@@ -36,49 +36,25 @@
     "copyright_text": "ALL_SYSTEMS_DODO"
   },
   "customSections": {
-    "test": {
-      "title": "test",
+    "certification": {
+      "title": "certification",
       "type": "list",
       "schema": [
         {
-          "key": "title",
-          "label": "Title",
+          "key": "create",
+          "label": "Create",
           "type": "string"
         },
         {
-          "key": "new",
-          "label": "new",
-          "type": "longtext"
-        },
-        {
-          "key": "test",
-          "label": "test",
-          "type": "string"
-        },
-        {
-          "key": "wow",
-          "label": "wow",
-          "type": "string"
+          "key": "link",
+          "label": "link",
+          "type": "url"
         }
       ],
       "content": [
         {
-          "title": "",
-          "new": "",
-          "test": "",
-          "wow": ""
-        },
-        {
-          "title": "",
-          "new": "",
-          "test": "",
-          "wow": ""
-        },
-        {
-          "title": "",
-          "new": "",
-          "test": "",
-          "wow": ""
+          "create": "item 1 ",
+          "link": "sfasdasdasd"
         }
       ]
     }
