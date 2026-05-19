@@ -132,7 +132,7 @@ function AdminComponent() {
     };
     
     fetchFileContent();
-  }, [activeTab, db ? !!db[activeTab]?.content : false, token]);
+  }, [activeTab, db === null, token]);
 
   // Custom Schema Wizard States
   const [showWizard, setShowWizard] = useState(false);
