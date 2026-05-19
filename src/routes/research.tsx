@@ -105,7 +105,10 @@ function Research() {
   }
 
   const activeInsight = researchInsights[activeIndex];
-  const isPatentActive = activeInsight?.description.toLowerCase().includes("patent");
+  // Prefer explicit 'type' field if present, fall back to keyword sniff for legacy data
+  const getIsPatent = (ins: any) =>
+    ins?.type ? ins.type.toLowerCase().includes("patent") : ins?.description?.toLowerCase().includes("patent");
+  const isPatentActive = getIsPatent(activeInsight);
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col min-h-[calc(100vh-140px)] animate-fade-up py-4 px-4 sm:px-6 relative select-none">
@@ -180,7 +183,9 @@ function Research() {
           const diff = getWrappedDiff(i, activeIndex, length);
           const absDiff = Math.abs(diff);
           const isVisible = absDiff <= (isMobile ? 1 : 2);
-          const isPatent = insight.description.toLowerCase().includes("patent");
+          const isPatent = insight.type
+            ? insight.type.toLowerCase().includes("patent")
+            : insight.description.toLowerCase().includes("patent");
 
           let translateX = 0;
           let translateZ = 0;
@@ -435,33 +440,13 @@ function Research() {
                   <span className="text-white font-semibold">{activeInsight.year?.trim() || "—"}</span>
                 </div>
                 <div>
-                  <span className="text-[#00ff88]/40 block uppercase tracking-wider mb-0.5">Resource URL</span>
-                  {activeInsight.link?.trim() ? (
-                    <a 
-                      href={activeInsight.link.trim()} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-[#00ff88] hover:underline block truncate max-w-[120px] sm:max-w-[180px]"
-                      title={activeInsight.link.trim()}
-                    >
-                      {activeInsight.link.trim()}
-                    </a>
-                  ) : (
-                    <span className="text-white/30 font-semibold">—</span>
-                  )}
+                  <span className="text-[#00ff88]/40 block uppercase tracking-wider mb-0.5">Resource</span>
+                  <span className={`font-semibold ${activeInsight.link?.trim() ? "text-[#00ff88]" : "text-white/30"}`}>
+                    {activeInsight.link?.trim() ? "AVAILABLE ↗" : "RESTRICTED"}
+                  </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:block gap-2">
-                <div>
-                  <span className="text-[#00ff88]/40 block uppercase tracking-wider mb-0.5">Registry Status</span>
-                  <span className="text-[#00ff88] font-bold">OPTIMAL // RUNNING</span>
-                </div>
-                <div>
-                  <span className="text-[#00ff88]/40 block uppercase tracking-wider mb-0.5">Memory Offset</span>
-                  <span className="text-white">0x{(activeIndex + 1).toString(16).toUpperCase().padStart(4, "0")}</span>
-                </div>
-              </div>
             </div>
 
             <div className="pt-4 border-t border-white/5 flex items-center gap-2 text-[8px] text-muted-foreground/40">
