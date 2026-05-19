@@ -62,24 +62,18 @@ cmsApp.get("/api/cms/load", async (c) => {
 
     const items = await dirRes.json() as Array<{ name: string; type: string }>;
     
-    // Schema files end with .schema.json
-    const schemaFiles = items
-      .filter(item => item.type === "file" && item.name.endsWith(".schema.json"))
-      .map(item => item.name);
-
-    // Content files are JSON files that do not end with .schema.json, excluding package.json, etc.
+    // Content files are JSON files, excluding package.json, etc.
     const jsonFiles = items
       .filter(item => 
         item.type === "file" && 
         item.name.endsWith(".json") && 
-        !item.name.endsWith(".schema.json") &&
         item.name !== "dodo_prompt.json" && 
         item.name !== "package.json" && 
         item.name !== "tsconfig.json"
       )
       .map(item => item.name);
 
-    // Fetch all content files and schema files in parallel
+    // Fetch all content files and the unified schema configuration file in parallel
     const fetchesJson = jsonFiles.map(filename => 
       fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
         headers: {
@@ -89,46 +83,43 @@ cmsApp.get("/api/cms/load", async (c) => {
       })
     );
 
-    const fetchesSchema = schemaFiles.map(filename => 
-      fetch(`https://api.github.com/repos/${repo}/contents/${filename}?ref=${branch}`, {
-        headers: {
-          "Authorization": `token ${ghToken}`,
-          "User-Agent": "DodoCmsEngine"
-        }
-      })
-    );
+    const structFetch = fetch(`https://api.github.com/repos/${repo}/contents/admin_config/json_structure.json?ref=${branch}`, {
+      headers: {
+        "Authorization": `token ${ghToken}`,
+        "User-Agent": "DodoCmsEngine"
+      }
+    });
 
-    const allResponses = await Promise.all([...fetchesJson, ...fetchesSchema]);
+    const allResponses = await Promise.all([...fetchesJson, structFetch]);
     
     const jsonResponses = allResponses.slice(0, jsonFiles.length);
-    const schemaResponses = allResponses.slice(jsonFiles.length);
+    const structResponse = allResponses[jsonFiles.length];
 
-    // Parse all schema files first
-    const schemas: Record<string, { title: string; type: "list" | "object"; schema: any[]; sha: string }> = {};
+    // Parse unified schema config
+    const schemas: Record<string, { title: string; type: "list" | "object" | "tags" | "categories"; schema: any[]; sha: string }> = {};
+    let structureSha = "";
 
-    for (let i = 0; i < schemaFiles.length; i++) {
-      const res = schemaResponses[i];
-      if (!res.ok) continue;
-
-      const fileData = await res.json() as { content: string; sha: string };
-      const decoded = decodeURIComponent(
-        atob(fileData.content.replace(/\s/g, ""))
-          .split("")
-          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      
-      const schemaKey = schemaFiles[i].replace(".schema.json", "");
+    if (structResponse.ok) {
       try {
-        const parsed = JSON.parse(decoded);
-        schemas[schemaKey] = {
-          title: parsed.title,
-          type: parsed.type,
-          schema: parsed.schema,
-          sha: fileData.sha
-        };
+        const structData = await structResponse.json() as { content: string; sha: string };
+        structureSha = structData.sha;
+        const decoded = decodeURIComponent(
+          atob(structData.content.replace(/\s/g, ""))
+            .split("")
+            .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        const structureContent = JSON.parse(decoded);
+        for (const key of Object.keys(structureContent)) {
+          schemas[key] = {
+            title: structureContent[key].title,
+            type: structureContent[key].type,
+            schema: structureContent[key].schema,
+            sha: structureSha
+          };
+        }
       } catch (e) {
-        console.error(`Failed to parse schema file ${schemaFiles[i]}`);
+        console.error("Failed to parse admin_config/json_structure.json:", e);
       }
     }
 
