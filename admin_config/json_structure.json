@@ -415,5 +415,16 @@
       }
     ],
     "isStandard": true
+  },
+  "tse": {
+    "title": "tse",
+    "type": "list",
+    "schema": [
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string"
+      }
+    ]
   }
 }
