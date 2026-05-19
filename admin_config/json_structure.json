@@ -406,16 +406,5 @@
     "isSystemFile": true,
     "readOnly": false,
     "skipPromptCompile": true
-  },
-  "test": {
-    "title": "test",
-    "type": "list",
-    "schema": [
-      {
-        "key": "title",
-        "label": "Title",
-        "type": "string"
-      }
-    ]
   }
 }
