@@ -595,6 +595,20 @@ function AdminComponent() {
     }
   };
 
+  const handleFullReload = async () => {
+    if (!token) return;
+    setIsReloading(true);
+    toast.loading("Syncing database registry from GitHub...", { id: "full-reload" });
+    try {
+      await loadDatabase(token);
+      toast.success("Database registry synced successfully!", { id: "full-reload" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to sync database registry.", { id: "full-reload" });
+    } finally {
+      setIsReloading(false);
+    }
+  };
+
   const getIncludedToggles = (): Record<string, boolean> => {
     if (!db) return {};
     return db.dodoPromptInclusion?.content?.included_datasets || {};
@@ -836,12 +850,22 @@ function AdminComponent() {
                     <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-0.5">Select databases to merge into system prompt</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setShowCompileModal(false)}
-                  className="p-1.5 rounded-lg border border-white/5 hover:border-white/20 text-muted-foreground hover:text-white transition-all cursor-pointer"
-                >
-                  <X className="size-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleFullReload}
+                    disabled={isReloading}
+                    title="Sync Database Registry"
+                    className="p-1.5 rounded-lg border border-white/5 hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 text-muted-foreground hover:text-[#00ff88] transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`size-4 ${isReloading ? "animate-spin text-[#00ff88]" : ""}`} />
+                  </button>
+                  <button 
+                    onClick={() => setShowCompileModal(false)}
+                    className="p-1.5 rounded-lg border border-white/5 hover:border-white/20 text-muted-foreground hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -861,10 +885,7 @@ function AdminComponent() {
                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                   {(() => {
                     const registry = db["admin_config/json_structure"]?.content || {};
-                    return Object.keys(registry)
-                      .filter(key => {
-                        return key !== "dodoPromptConfig" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
-                      })
+                    return getSourceKeys()
                       .map(key => ({
                         key,
                         label: registry[key]?.title || key,

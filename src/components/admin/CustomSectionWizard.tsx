@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Wrench, X, Layers, LayoutGrid, Plus, Trash, Tag, FolderTree, Lock, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { DBState } from "./types";
+import { CustomSelect } from "./helpers";
 
 interface CustomSectionWizardProps {
   db: DBState;
@@ -306,22 +307,22 @@ export function CustomSectionWizard({
                     </div>
                     <div className="w-full sm:w-44 space-y-1">
                       <span className="text-[8px] font-mono text-muted-foreground tracking-widest uppercase">Input Type</span>
-                      <select
+                      <CustomSelect
                         value={field.type}
-                        onChange={(e) => {
+                        onChange={(val) => {
                           const updated = [...wizardFields];
-                          updated[index] = { ...updated[index], type: e.target.value };
+                          updated[index] = { ...updated[index], type: val };
                           setWizardFields(updated);
                         }}
-                        className="w-full cyber-input text-xs font-sans bg-[#050505] border-white/10 text-white cursor-pointer"
-                      >
-                        <option value="string">Plain Text</option>
-                        <option value="longtext">Biography / Textarea</option>
-                        <option value="url">URL with live preview</option>
-                        <option value="percentage">Percentage Slider</option>
-                        <option value="number">Numeric Value</option>
-                        <option value="boolean">Toggle Switch</option>
-                      </select>
+                        options={[
+                          { value: "string", label: "Plain Text" },
+                          { value: "longtext", label: "Biography / Textarea" },
+                          { value: "url", label: "URL with live preview" },
+                          { value: "percentage", label: "Percentage Slider" },
+                          { value: "number", label: "Numeric Value" },
+                          { value: "boolean", label: "Toggle Switch" }
+                        ]}
+                      />
                     </div>
                     <button
                       type="button"

@@ -55,7 +55,8 @@ export function DodoPromptConfigPanel({
     if (!db) return [];
     const registry = db["admin_config/json_structure"]?.content || {};
     return Object.keys(registry).filter(key => {
-      return key !== "dodoPromptConfig" && key !== "dodoPromptInclusion" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
+      const reg = registry[key] as any;
+      return !reg?.skipPromptCompile && !reg?.isSystemFile;
     });
   };
 
@@ -212,10 +213,7 @@ export function DodoPromptConfigPanel({
                     <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                       {(() => {
                         const registry = db["admin_config/json_structure"]?.content || {};
-                        return Object.keys(registry)
-                          .filter(key => {
-                            return key !== "dodoPromptConfig" && key !== "admin_config/json_structure" && key !== "dodo_prompt" && key !== "compile_prompt_py";
-                          })
+                        return getSourceKeys()
                           .map(key => ({
                             key,
                             label: registry[key]?.title || key

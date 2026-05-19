@@ -3,7 +3,7 @@ import { RefreshCw, Save, Layers, Settings, Plus, Trash, X, Tag, FolderTree } fr
 import { DBState, CMSFile } from "./types";
 import { CustomListEditor } from "./CustomListEditor";
 import { CustomSectionWizard } from "./CustomSectionWizard";
-import { renderUrlInput } from "./helpers";
+import { renderUrlInput, CustomSelect } from "./helpers";
 import { toast } from "sonner";
 import { ConfirmModal } from "./ConfirmModal";
 
@@ -31,69 +31,7 @@ function setNestedValue(obj: any, path: string, value: any): any {
   return newObj;
 }
 
-function CustomSelect({
-  value,
-  onChange,
-  options,
-  onOpenChange
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  options: { value: string; label: string }[];
-  onOpenChange?: (open: boolean) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    onOpenChange?.(isOpen);
-  }, [isOpen, onOpenChange]);
-
-  const selectedOpt = options.find(o => o.value === value) || options[0];
-
-  return (
-    <div ref={containerRef} className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between cyber-input text-[10px] font-sans bg-[#050505] border-white/10 hover:border-[#00ff88]/20 text-white cursor-pointer py-1.5 px-2 rounded-lg transition-all"
-      >
-        <span className="truncate">{selectedOpt?.label}</span>
-        <span className="text-[8px] text-muted-foreground ml-1">▼</span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 right-0 mt-1 bg-[#0a0a0a]/95 border border-[#00ff88]/20 rounded-lg shadow-[0_4px_20px_rgba(0,255,136,0.1)] z-50 py-1 max-h-48 overflow-y-auto backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-150">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-3 py-1.5 text-[10px] font-sans transition-all hover:bg-[#00ff88]/10 hover:text-[#00ff88] block truncate cursor-pointer ${
-                opt.value === value ? "text-[#00ff88] bg-[#00ff88]/5 font-bold" : "text-white/70"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface CustomSectionPanelProps {
   activeTab: string;
