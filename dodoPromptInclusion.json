@@ -1,7 +1,5 @@
 {
   "included_datasets": {
-    "certifications": false,
-    "systemMetadata": false,
-    "test": false
+    "certifications": false
   }
 }
