@@ -45,6 +45,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     return "";
   });
   const turnstileWidgetIdRef = useRef<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Chat States
   const [messages, setMessages] = useState<Message[]>([]);
@@ -96,13 +97,13 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     let interval: ReturnType<typeof setInterval>;
     const initTurnstile = () => {
       const turnstile = (window as any).turnstile;
-      const container = document.getElementById("dodo-turnstile");
+      const container = turnstileContainerRef.current;
       if (turnstile && container) {
         clearInterval(interval);
         if (turnstileWidgetIdRef.current === null) {
           try {
             container.innerHTML = ""; // Clear any leftover widgets before rendering
-            turnstileWidgetIdRef.current = turnstile.render("#dodo-turnstile", {
+            turnstileWidgetIdRef.current = turnstile.render(container, {
               // Dev or Localhost: dummy key (always passes, no domain restriction)
               // Prod: real key (only works on rathoreatri03.github.io)
               sitekey: (import.meta.env.DEV || 
@@ -382,7 +383,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
   return (
     <div className="relative size-full flex flex-col items-center justify-center">
       {/* Invisible Turnstile container element for security validation */}
-      <div id="dodo-turnstile" style={{ width: 0, height: 0, opacity: 0, pointerEvents: "none" }} />
+      <div ref={turnstileContainerRef} style={{ width: 0, height: 0, opacity: 0, pointerEvents: "none" }} />
 
       {/* Custom self-contained cognitive animation styles */}
       <style>{`
