@@ -154,7 +154,7 @@
       {
         "key": "orcidid",
         "label": "OrcidID",
-        "type": "string"
+        "type": "url"
       }
     ],
     "isStandard": true
