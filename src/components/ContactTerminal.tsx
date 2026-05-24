@@ -18,7 +18,7 @@ export function ContactTerminal() {
     setSending(true);
     
     try {
-      const response = await fetch(`https://formspree.io/f/${links.formspree_ID}`, {
+      const response = await fetch("https://formspree.io/f/xpwzelbd", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, message }),

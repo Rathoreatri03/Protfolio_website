@@ -20,7 +20,8 @@ export type Links = {
   github: string;
   linkedin: string;
   email: string;
-  formspree_ID: string;
+  orcidid: string;
+  linkdien: string;
 };
 export type SystemMetadata = {
   version: string;
@@ -49,9 +50,9 @@ export type Logo = { logo_url: string };
 
 const FALLBACK = {
   banner: {
-    titles: ["AI Architect Engineer"],
-    description: "Solving real-world problems with AI.",
-    imgUrl: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1740682112/header-img_wq7c5m.svg",
+    titles: ["AI Engineer"],
+    description: "",
+    imgUrl: "",
   } as Banner,
   skills: [] as SkillCategory[],
   projects: [] as Project[],
@@ -59,37 +60,38 @@ const FALLBACK = {
   successStories: [] as SuccessStory[],
   researchInsights: [] as ResearchInsight[],
   links: {
-    resume_PDF: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf", 
-    visume_video: "https://res.cloudinary.com/dxh9tugzx/video/upload/v1734293129/Visume_io0vmq.mp4", 
-    github: "https://github.com/Rathoreatri03", 
-    linkedin: "https://www.linkedin.com/in/rathoreatri03/",
-    email: "rathoreatri03@gmail.com", 
-    formspree_ID: "xpwzelbd"
+    resume_PDF: "", 
+    visume_video: "", 
+    github: "", 
+    linkedin: "",
+    email: "", 
+    orcidid: "",
+    linkdien: ""
   } as Links,
   metadata: {
-    version: "STABLE",
-    systemID: "Atri_Rathore",
-    userName: "Atri Rathore",
-    terminalUser: "rathoreatri03@lab",
-    kernel: "X-Matrix_64",
-    status: "OPTIMAL",
-    efficiency: "98.4%",
-    uptime: "99.99%",
-    latency: "12ms",
-    deployment_tag: "Deployment_Stream",
-    intelligence_tag: "Tactical_Intelligence",
-    achievement_tag: "Achievement_Stream",
-    operational_log_tag: "Operational_Log",
+    version: "1.0.0",
+    systemID: "Core_System",
+    userName: "Developer",
+    terminalUser: "guest@lab",
+    kernel: "Matrix_Kernel",
+    status: "BOOTING",
+    efficiency: "100%",
+    uptime: "100%",
+    latency: "0ms",
+    deployment_tag: "",
+    intelligence_tag: "",
+    achievement_tag: "",
+    operational_log_tag: "",
     pages: {
-      work: { title1: "Experiments in", title2: "Motion" },
-      skills: { title1: "The", title2: "Matrix" },
-      achievements: { title1: "Victory", title2: "Archives", subtitle: "A CHRONOLOGICAL LOG OF HACKATHON WINS AND INNOVATION CHALLENGES" },
-      log: { title1: "Neural", title2: "Milestones", subtitle: "CHRONOLOGICAL ARCHIVE OF ACHIEVEMENTS AND SYSTEM UPGRADES" },
-      research: { title1: "Scientific", title2: "Insights", subtitle: "PATENTS, PUBLICATIONS, AND DISRUPTIVE DESIGN EXPLORATIONS" }
+      work: { title1: "", title2: "" },
+      skills: { title1: "", title2: "" },
+      achievements: { title1: "", title2: "", subtitle: "" },
+      log: { title1: "", title2: "", subtitle: "" },
+      research: { title1: "", title2: "", subtitle: "" }
     },
-    footer: { copyright_text: "ALL_SYSTEMS_DODO" }
+    footer: { copyright_text: "ALL_SYSTEMS_OPERATIONAL" }
   } as SystemMetadata,
-  techStack: ["AI", "ML", "CV", "PYTHON", "PYTORCH"],
+  techStack: [] as string[],
   logo: { logo_url: "" } as Logo
 };
 

@@ -4,7 +4,7 @@ import { usePortfolioData } from "@/hooks/usePortfolioData";
 import { useRef, useState, useEffect } from "react";
 import { DodoAI } from "@/components/dodo/DodoAI";
 import { Menu, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { initDeveloperConsole } from "@/lib/developerConsole";
 
@@ -24,6 +24,26 @@ export function Layout() {
   const { links, metadata, loaded, logo } = usePortfolioData();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const dynamicLinks = [
+    { label: "GITHUB", url: links.github },
+    { label: "LINKEDIN", url: links.linkdien || links.linkedin },
+    { label: "ORCID ID", url: links.orcidid },
+    { label: "RESUME", url: links.resume_PDF },
+    { label: "VISUME", url: links.visume_video },
+  ].filter(item => item.url);
+
+  const [activeLinkIndex, setActiveLinkIndex] = useState(0);
+
+  useEffect(() => {
+    if (dynamicLinks.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveLinkIndex((prev) => (prev + 1) % dynamicLinks.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [dynamicLinks.length]);
+
+  const activeLink = dynamicLinks[activeLinkIndex] || { label: "GITHUB", url: links.github };
 
   // Resolve relative client path by stripping the base URL prefix (e.g. "/Protfolio_website")
   const basepath = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
@@ -243,7 +263,7 @@ export function Layout() {
 
       {/* ── NAVBAR ── */}
       <header className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-2rem)] sm:w-fit pointer-events-none max-w-[95vw]">
-        <nav className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 pl-2.5 pr-4 sm:pr-8 py-2 bg-background/40 backdrop-blur-3xl rounded-full border border-primary/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)] pointer-events-auto font-display text-[10px] tracking-widest text-muted-foreground font-medium">
+        <nav className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 pl-2.5 pr-4 sm:pr-6 py-2 bg-background/40 backdrop-blur-3xl rounded-full border border-primary/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)] pointer-events-auto font-display text-[10px] tracking-widest text-muted-foreground font-medium">
           {/* Logo */}
           {logo?.logo_url && (
             <img src={logo.logo_url} alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-primary/20 object-cover shrink-0" />
@@ -263,7 +283,23 @@ export function Layout() {
               </Link>
             ))}
             <div className="w-[1px] h-3 bg-white/10 mx-1" />
-            <a href={links.github} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GITHUB</a>
+            <div className="relative h-4 overflow-hidden flex items-center w-fit justify-start select-none">
+              <AnimatePresence mode="wait">
+                <motion.a
+                  key={activeLink.label}
+                  href={activeLink.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  initial={{ y: 8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -8, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="hover:text-primary transition-colors text-primary uppercase font-bold tracking-widest block text-left"
+                >
+                  {activeLink.label}
+                </motion.a>
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Mobile Hamburger */}
@@ -294,15 +330,24 @@ export function Layout() {
               </Link>
             ))}
             <div className="w-12 h-[1px] bg-white/10 my-2" />
-            <a
-              href={links.github}
-              target="_blank"
-              rel="noreferrer"
-              className="text-lg tracking-[0.3em] uppercase text-white/30 hover:text-primary transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              GITHUB
-            </a>
+            <div className="h-8 flex items-center justify-center select-none w-[200px]">
+              <AnimatePresence mode="wait">
+                <motion.a
+                  key={activeLink.label}
+                  href={activeLink.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  initial={{ y: 12, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -12, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="text-lg tracking-[0.3em] uppercase text-primary font-bold hover:text-primary transition-colors block text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {activeLink.label}
+                </motion.a>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       )}
