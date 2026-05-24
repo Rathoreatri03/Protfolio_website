@@ -81,6 +81,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
         clearInterval(interval);
         if (turnstileWidgetIdRef.current === null) {
           try {
+            container.innerHTML = ""; // Clear any leftover widgets before rendering
             turnstileWidgetIdRef.current = turnstile.render("#dodo-turnstile", {
               // Dev: dummy key (always passes, no domain restriction)
               // Prod: real key (only works on rathoreatri03.github.io)
@@ -228,6 +229,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
       const turnstile = (window as any).turnstile;
       if (turnstile && turnstileWidgetIdRef.current !== null) {
         try {
+          turnstile.reset(turnstileWidgetIdRef.current);
           turnstile.execute(turnstileWidgetIdRef.current);
         } catch (err) {}
       }

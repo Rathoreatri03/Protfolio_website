@@ -6,6 +6,8 @@ import { DodoAI } from "@/components/dodo/DodoAI";
 import { Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { initDeveloperConsole } from "@/lib/developerConsole";
+
 const ROUTES = ["/", "/work", "/skills", "/research", "/achievements", "/log", "/contact"];
 
 const NAV_LINKS = [
@@ -50,6 +52,11 @@ export function Layout() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [cleanPathname]);
+
+  // Initialize developer console greeting and info
+  useEffect(() => {
+    initDeveloperConsole();
+  }, []);
 
   // Automatically redirect back to the home page on initial load / refresh
   useEffect(() => {
