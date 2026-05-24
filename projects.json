@@ -1,5 +1,17 @@
 [
   {
+    "title": "MGSNet: Multimodal Grammar Scoring Network",
+    "description": " Developed a deep learning-based scoring system leveraging multimodal inputs (speech audio and text transcripts) to automatically evaluate grammatical proficiency",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1779649451/MsgNet_qy9vv8.jpg",
+    "link": "https://github.com/Rathoreatri03/SHL_Intern_task"
+  },
+  {
+    "title": "VisEraseNet:  AI-Powered Object & Logo Removal Framework",
+    "description": "VisEraseNet is an advanced AI framework designed for automatic logo and textual data removal from videos and images. It combines YOLO-based detection, segmentation models, and inpainting techniques to erase unwanted elements seamlessly while preserving visual integrity.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1779649331/VisEraseNet_j9lcqu.jpg",
+    "link": "https://github.com/Rathoreatri03/VisEraseNet"
+  },
+  {
     "title": "AstroTerra",
     "description": "High-precision lunar boulder detection and analysis system for safe landing site selection. Integrates real-time image processing pipelines with machine learning to generate landing safety diagnostics.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734274123/AsstroTerra_oo1cew.png",
