@@ -86,6 +86,24 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
   useEffect(() => {
     if (typeof window !== "undefined" && sessionStorage.getItem("dodo_session_token")) {
       setTurnstileToken("session-verified");
+      // If widget is currently rendered, clean it up
+      if (turnstileWidgetIdRef.current !== null && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.remove(turnstileWidgetIdRef.current);
+        } catch (e) {}
+        turnstileWidgetIdRef.current = null;
+      }
+      return;
+    }
+
+    if (turnstileToken === "session-verified") {
+      // If widget is currently rendered, clean it up to prevent background challenges and debugger pauses
+      if (turnstileWidgetIdRef.current !== null && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.remove(turnstileWidgetIdRef.current);
+        } catch (e) {}
+        turnstileWidgetIdRef.current = null;
+      }
       return;
     }
 
@@ -141,10 +159,9 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
           (window as any).turnstile.remove(turnstileWidgetIdRef.current);
         } catch (e) {}
         turnstileWidgetIdRef.current = null;
-        setTurnstileToken("");
       }
     };
-  }, []);
+  }, [turnstileToken]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -269,6 +286,8 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    let isSessionVerified = false;
+
     try {
       const response = await fetch(API_ENDPOINT, {
         method: "POST",
@@ -291,6 +310,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
       const sessionHeader = response.headers.get("x-dodo-session");
       if (sessionHeader) {
         sessionStorage.setItem("dodo_session_token", sessionHeader);
+        isSessionVerified = true;
         setTurnstileToken("session-verified");
       }
 
@@ -358,7 +378,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
       setLoading(false);
 
       // Reset Turnstile token and widget for next message request
-      if (ENABLE_TURNSTILE && turnstileToken !== "session-verified") {
+      if (ENABLE_TURNSTILE && !isSessionVerified && turnstileToken !== "session-verified") {
         setTurnstileToken("");
         const turnstile = (window as any).turnstile;
         if (turnstile && turnstileWidgetIdRef.current !== null) {
