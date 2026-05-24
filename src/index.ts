@@ -73,30 +73,47 @@ app.post("/api/chat", async (c) => {
 
     // 3a. Cloudflare Turnstile Verification Check
     const turnstileToken = c.req.header("cf-turnstile-response") || c.req.header("x-turnstile-token") || "";
-    if (!turnstileToken) {
-      return c.json({ error: "Security check failed: Verification token is missing." }, 403);
-    }
-
     const turnstileSecret = c.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA";
-    try {
-      const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          secret: turnstileSecret,
-          response: turnstileToken,
-          remoteip: c.req.header("CF-Connecting-IP") || "",
-        }),
-      });
+    const isDummySecret = turnstileSecret === "1x0000000000000000000000000000000AA";
 
-      const verifyData = await verifyRes.json() as { success: boolean; "error-codes"?: string[] };
-      if (!verifyData.success) {
-        return c.json({ error: "Security verification failed. Please complete the security check." }, 403);
+    // If we are in production (real secret key), we MUST verify Turnstile and DO NOT allow "bypass" or empty tokens.
+    // If we are in development (dummy secret key), we allow "bypass" or empty tokens to facilitate local developer testing.
+    if (!isDummySecret) {
+      if (!turnstileToken || turnstileToken === "bypass") {
+        return c.json({ error: "Security check failed: Verification token is missing." }, 403);
       }
-    } catch (e: any) {
-      return c.json({ error: `Security check error: ${e.message || e}` }, 500);
+
+      try {
+        const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            secret: turnstileSecret,
+            response: turnstileToken,
+            remoteip: c.req.header("CF-Connecting-IP") || "",
+          }),
+        });
+
+        const verifyData = await verifyRes.json() as { success: boolean; "error-codes"?: string[] };
+        if (!verifyData.success) {
+          return c.json({ error: "Security verification failed. Please complete the security check." }, 403);
+        }
+      } catch (e: any) {
+        return c.json({ error: `Security check error: ${e.message || e}` }, 500);
+      }
+    } else {
+      // In local development/testing, try to verify only if a real-looking token is provided, otherwise let it pass
+      if (turnstileToken && turnstileToken !== "bypass") {
+        try {
+          await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ secret: turnstileSecret, response: turnstileToken }),
+          });
+        } catch (e) {}
+      }
     }
 
     const apiKey = c.env.GENAI_KEY;
