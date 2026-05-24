@@ -1,11 +1,101 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ContactTerminal } from "@/components/ContactTerminal";
+import { usePortfolioData } from "@/hooks/usePortfolioData";
+import { useState } from "react";
 
 export const Route = createFileRoute("/contact")({
   component: Contact,
 });
 
 function Contact() {
+  const { links, metadata } = usePortfolioData();
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const getDisplayValue = (key: string, url: string) => {
+    if (key === "email") return url;
+    
+    try {
+      const trimmedUrl = url.trim();
+      if (trimmedUrl.startsWith("http")) {
+        const parsed = new URL(trimmedUrl);
+        const pathSegments = parsed.pathname.split("/").filter(Boolean);
+        
+        if (key === "github") return `@${pathSegments[0] || "Rathoreatri03"}`;
+        if (key === "linkedin" || key === "linkdien") return `/in/${pathSegments[1] || pathSegments[0] || "rathoreatri03"}`;
+        if (key === "orcidid") {
+          const orcidParam = parsed.searchParams.get("orcid");
+          if (orcidParam) return orcidParam;
+          return pathSegments[pathSegments.length - 1] || "0009-0009-0342-227X";
+        }
+        if (key === "huggingface") return `@${pathSegments[0] || "Rathoreatri03"}`;
+        if (key === "kaggle") return `@${pathSegments[0] || "rathoreatri03"}`;
+        if (key === "medium") return `${pathSegments[0] || "@rathoreatri03"}`;
+        if (key === "scholar") {
+          const userParam = parsed.searchParams.get("user");
+          return userParam || "rathoreatri03";
+        }
+        if (key === "resume_PDF") return "ATRI_RESUME.PDF";
+        if (key === "visume_video") return "VISUME_VIDEO.MOV";
+
+        // Dynamic fallback for any future custom URL
+        if (pathSegments.length > 0) {
+          return `@${pathSegments[pathSegments.length - 1]}`;
+        }
+        return parsed.hostname;
+      }
+    } catch (e) {
+      // ignore
+    }
+    
+    if (key === "github") return "@Rathoreatri03";
+    if (key === "linkedin" || key === "linkdien") return "/in/rathoreatri03";
+    if (key === "orcidid") return "0009-0009-0342-227X";
+    return "ACCESS_LINK";
+  };
+
+  const getIcon = (key: string) => {
+    switch (key) {
+      case "email": return "✉";
+      case "github": return "◆";
+      case "linkedin":
+      case "linkdien": return "▣";
+      case "orcidid": return "❖";
+      case "resume_PDF": return "📄";
+      case "visume_video": return "▶";
+      default: return "⬢";
+    }
+  };
+
+  const priority = ["email", "github", "linkedin", "linkdien", "orcidid", "resume_PDF", "visume_video"];
+
+  const contactLinks = Object.entries(links)
+    .filter(([key, val]) => val && typeof val === "string" && val.trim() !== "")
+    .sort(([keyA], [keyB]) => {
+      const idxA = priority.indexOf(keyA);
+      const idxB = priority.indexOf(keyB);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return keyA.localeCompare(keyB);
+    })
+    .map(([key, val]) => {
+      const url = val.trim();
+      let label = key.toUpperCase().replace(/_PDF$/i, "").replace(/_VIDEO$/i, "").replace(/_/g, " ");
+      if (label === "LINKDIEN") label = "LINKEDIN";
+      if (label === "ORCIDID") label = "ORCID ID";
+      
+      const valueText = getDisplayValue(key, url);
+      const icon = getIcon(key);
+      const href = key === "email" ? `mailto:${url}` : url;
+
+      return { label, valueText, href, icon };
+    })
+    .filter((item, index, self) => self.findIndex((t) => t.label === item.label) === index);
+
+  const itemsPerPage = 3;
+  const totalPages = Math.ceil(contactLinks.length / itemsPerPage);
+  const displayedLinks = contactLinks.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
   return (
     <section
       id="contact"
@@ -39,28 +129,59 @@ function Contact() {
           </div>
 
           <div className="space-y-2 max-w-sm">
-            {[
-              ["MAIL", "rathoreatri03@gmail.com", "mailto:rathoreatri03@gmail.com", "✉"],
-              ["GIT", "@Rathoreatri03", "https://github.com/Rathoreatri03", "◆"],
-              ["INTEL", "/in/rathoreatri03", "https://www.linkedin.com/in/rathoreatri03/", "▣"],
-            ].map(([k, v, h, icon]) => (
-              <a
-                key={k}
-                href={h}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-between border border-white/5 bg-white/[0.01] px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg group hover:border-primary/20 hover:bg-primary/[0.02] transition-all duration-300"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-primary/30 group-hover:text-primary transition-colors text-sm sm:text-base">{icon}</span>
-                  <div className="space-y-0">
-                    <p className="text-[7px] font-mono text-primary/20 tracking-[0.3em] uppercase">{k}</p>
-                    <p className="text-[11px] sm:text-[12px] font-display font-bold group-hover:text-primary transition-colors">{v}</p>
+            <div className="space-y-2 min-h-[174px] sm:min-h-[200px] flex flex-col justify-start">
+              {displayedLinks.map(({ label, valueText, href, icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between border border-white/5 bg-white/[0.01] px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg group hover:border-primary/20 hover:bg-primary/[0.02] transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-primary/30 group-hover:text-primary transition-colors text-sm sm:text-base">{icon}</span>
+                    <div className="space-y-0">
+                      <p className="text-[7px] font-mono text-primary/20 tracking-[0.3em] uppercase">{label}</p>
+                      <p className="text-[11px] sm:text-[12px] font-display font-bold group-hover:text-primary transition-colors">{valueText}</p>
+                    </div>
                   </div>
+                  <span className="opacity-0 group-hover:opacity-100 translate-x-[-5px] group-hover:translate-x-0 transition-all text-primary text-[10px]">→</span>
+                </a>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2 px-1 font-mono text-[9px] text-muted-foreground select-none">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                  disabled={currentPage === 0}
+                  className="px-2 py-1 bg-white/5 border border-white/10 hover:border-primary/40 hover:text-primary transition-all disabled:opacity-20 disabled:pointer-events-none rounded cursor-pointer"
+                >
+                  &lt; PREV
+                </button>
+                <div className="flex gap-2 items-center">
+                  {Array.from({ length: totalPages }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx)}
+                      className={`size-2 rounded-full border transition-all cursor-pointer ${
+                        idx === currentPage
+                          ? "bg-primary border-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                          : "bg-transparent border-white/20 hover:border-white/40"
+                      }`}
+                      aria-label={`Page ${idx + 1}`}
+                    />
+                  ))}
                 </div>
-                <span className="opacity-0 group-hover:opacity-100 translate-x-[-5px] group-hover:translate-x-0 transition-all text-primary text-[10px]">→</span>
-              </a>
-            ))}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                  disabled={currentPage === totalPages - 1}
+                  className="px-2 py-1 bg-white/5 border border-white/10 hover:border-primary/40 hover:text-primary transition-all disabled:opacity-20 disabled:pointer-events-none rounded cursor-pointer"
+                >
+                  NEXT &gt;
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

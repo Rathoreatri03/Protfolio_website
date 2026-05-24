@@ -25,13 +25,19 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const dynamicLinks = [
-    { label: "GITHUB", url: links.github },
-    { label: "LINKEDIN", url: links.linkdien || links.linkedin },
-    { label: "ORCID ID", url: links.orcidid },
-    { label: "RESUME", url: links.resume_PDF },
-    { label: "VISUME", url: links.visume_video },
-  ].filter(item => item.url);
+  const dynamicLinks = Object.entries(links)
+    .filter(([key, val]) => {
+      // Filter out empty links and the email key (email is mailto:, not a browsing profile)
+      return val && typeof val === "string" && val.trim() !== "" && key !== "email";
+    })
+    .map(([key, val]) => {
+      // Map keys to pretty labels
+      let label = key.toUpperCase().replace(/_PDF$/i, "").replace(/_VIDEO$/i, "").replace(/_/g, " ");
+      if (label === "LINKDIEN") label = "LINKEDIN";
+      if (label === "ORCIDID") label = "ORCID ID";
+      return { label, url: val.trim() };
+    })
+    .filter((item, index, self) => self.findIndex((t) => t.label === item.label) === index);
 
   const [activeLinkIndex, setActiveLinkIndex] = useState(0);
 
@@ -43,7 +49,7 @@ export function Layout() {
     return () => clearInterval(interval);
   }, [dynamicLinks.length]);
 
-  const activeLink = dynamicLinks[activeLinkIndex] || { label: "GITHUB", url: links.github };
+  const activeLink = dynamicLinks[activeLinkIndex] || dynamicLinks[0] || { label: "GITHUB", url: "https://github.com/Rathoreatri03" };
 
   // Resolve relative client path by stripping the base URL prefix (e.g. "/Protfolio_website")
   const basepath = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");

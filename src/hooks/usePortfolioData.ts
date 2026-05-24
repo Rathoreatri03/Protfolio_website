@@ -22,6 +22,7 @@ export type Links = {
   email: string;
   orcidid: string;
   linkdien: string;
+  [key: string]: string;
 };
 export type SystemMetadata = {
   version: string;

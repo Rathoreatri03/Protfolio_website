@@ -73,13 +73,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Atri's Portfolio" },
-      { name: "description", content: "Personal portfolio of an AI Architect & ML Engineer" },
+      { title: "Atri Rathore | AI & Computer Vision Engineer" },
+      { name: "description", content: "AI / Machine Learning / Computer Vision portfolio and research log of Atri Rathore." },
       { name: "author", content: "Atri Rathore" },
-      { property: "og:title", content: "AI Architect Portfolio" },
-      { property: "og:description", content: "Personal portfolio of an AI Architect & ML Engineer" },
+      { property: "og:title", content: "Atri Rathore | AI & Computer Vision Engineer" },
+      { property: "og:description", content: "AI / Machine Learning / Computer Vision portfolio and research log of Atri Rathore." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://rathoreatri03.github.io/Portfolio_website/" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Atri Rathore | AI & Computer Vision Engineer" },
+      { name: "twitter:description", content: "AI / Machine Learning / Computer Vision portfolio and research log of Atri Rathore." },
     ],
     links: [
       {
