@@ -83,9 +83,12 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
           try {
             container.innerHTML = ""; // Clear any leftover widgets before rendering
             turnstileWidgetIdRef.current = turnstile.render("#dodo-turnstile", {
-              // Dev: dummy key (always passes, no domain restriction)
+              // Dev or Localhost: dummy key (always passes, no domain restriction)
               // Prod: real key (only works on rathoreatri03.github.io)
-              sitekey: import.meta.env.DEV
+              sitekey: (import.meta.env.DEV || 
+                (typeof window !== "undefined" && 
+                  (window.location.hostname === "localhost" || 
+                   window.location.hostname === "127.0.0.1")))
                 ? "1x00000000000000000000BB"
                 : "0x4AAAAAADVT0-mghklCbuqQ",
               theme: "dark",

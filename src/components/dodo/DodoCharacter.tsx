@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 
 type DodoCharacterProps = {
   look: { x: number; y: number };
@@ -10,7 +10,7 @@ type DodoCharacterProps = {
   streamingText: string;
 };
 
-export function DodoCharacter({
+export const DodoCharacter = memo(function DodoCharacter({
   look,
   tilt,
   speaking,
@@ -110,4 +110,4 @@ export function DodoCharacter({
       </svg>
     </div>
   );
-}
+});

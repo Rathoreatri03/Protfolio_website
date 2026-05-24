@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { RefreshCw, Maximize2, Minus } from "lucide-react";
 import RotatingText from "../RotatingText";
@@ -17,7 +17,7 @@ type DodoSpeechBubbleProps = {
   showContent: boolean;
 };
 
-export function DodoSpeechBubble({
+export const DodoSpeechBubble = memo(function DodoSpeechBubble({
   bubbleScrollRef,
   loading,
   streamingText,
@@ -150,4 +150,4 @@ export function DodoSpeechBubble({
       </motion.div>
     </motion.div>
   );
-}
+});
