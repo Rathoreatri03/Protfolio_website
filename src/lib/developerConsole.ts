@@ -1,8 +1,20 @@
-export function initDeveloperConsole() {
+export type LinksArg = {
+  github?: string;
+  linkedin?: string;
+  email?: string;
+  resume_PDF?: string;
+};
+
+export function initDeveloperConsole(links?: LinksArg) {
   if (typeof window === "undefined") return;
 
   // Clear developer console to remove any warning noises
   console.clear();
+
+  const githubLink = links?.github || "https://github.com/Rathoreatri03";
+  const linkedinLink = links?.linkedin || "https://www.linkedin.com/in/rathoreatri03/";
+  const emailLink = links?.email || "rathoreatri03@gmail.com";
+  const cvLink = links?.resume_PDF || "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf";
 
   // Vibrant custom styled console statements matching the matrix theme
   const titleStyle = `
@@ -70,10 +82,10 @@ export function initDeveloperConsole() {
   console.log(`%c[CORE_ROLE]:     %cAI Architect & Computer Vision Specialist`, labelStyle, valueStyle);
   console.log(`%c[METADATA]:      %cMachine Learning // Deep Learning // 3D Mesh Rendering`, labelStyle, valueStyle);
   console.log("");
-  console.log(`%c[GITHUB]:        %c👉 https://github.com/Rathoreatri03`, labelStyle, linkStyle);
-  console.log(`%c[LINKEDIN]:      %c👉 https://www.linkedin.com/in/rathoreatri03/`, labelStyle, linkStyle);
-  console.log(`%c[EMAIL]:         %c👉 rathoreatri03@gmail.com`, labelStyle, linkStyle);
-  console.log(`%c[OFFICIAL_CV]:   %c👉 https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf`, labelStyle, linkStyle);
+  console.log(`%c[GITHUB]:        %c👉 ${githubLink}`, labelStyle, linkStyle);
+  console.log(`%c[LINKEDIN]:      %c👉 ${linkedinLink}`, labelStyle, linkStyle);
+  console.log(`%c[EMAIL]:         %c👉 ${emailLink}`, labelStyle, linkStyle);
+  console.log(`%c[OFFICIAL_CV]:   %c👉 ${cvLink}`, labelStyle, linkStyle);
   console.log("");
   console.log(`%c"The matrix is everywhere. Pushing the boundaries of Artificial Intelligence."`, footerStyle);
 }

@@ -226,13 +226,6 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     // Verify Turnstile verification is complete before submitting
     if (!turnstileToken) {
       setSpeechText("Security check in progress. Please send again in a moment.");
-      const turnstile = (window as any).turnstile;
-      if (turnstile && turnstileWidgetIdRef.current !== null) {
-        try {
-          turnstile.reset(turnstileWidgetIdRef.current);
-          turnstile.execute(turnstileWidgetIdRef.current);
-        } catch (err) {}
-      }
       return;
     }
 

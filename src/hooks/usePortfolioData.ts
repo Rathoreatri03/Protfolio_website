@@ -18,6 +18,7 @@ export type Links = {
   resume_PDF: string; 
   visume_video: string;
   github: string;
+  linkedin: string;
   email: string;
   formspree_ID: string;
 };
@@ -61,6 +62,7 @@ const FALLBACK = {
     resume_PDF: "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734172167/Atri_Resume.pdf", 
     visume_video: "https://res.cloudinary.com/dxh9tugzx/video/upload/v1734293129/Visume_io0vmq.mp4", 
     github: "https://github.com/Rathoreatri03", 
+    linkedin: "https://www.linkedin.com/in/rathoreatri03/",
     email: "rathoreatri03@gmail.com", 
     formspree_ID: "xpwzelbd"
   } as Links,

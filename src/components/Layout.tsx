@@ -55,8 +55,10 @@ export function Layout() {
 
   // Initialize developer console greeting and info
   useEffect(() => {
-    initDeveloperConsole();
-  }, []);
+    if (loaded) {
+      initDeveloperConsole(links);
+    }
+  }, [loaded, links]);
 
   // Automatically redirect back to the home page on initial load / refresh
   useEffect(() => {
