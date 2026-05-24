@@ -129,6 +129,12 @@ export function DodoTerminal({
           type="text"
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
           disabled={loading}
           placeholder={loading ? "Waiting for response..." : "Ask DODO about Atri..."}
           className="flex-1 bg-white/[0.02] border border-white/5 rounded-lg px-3 py-2.5 outline-none focus:border-primary/20 transition-all text-white placeholder:text-white/20 disabled:opacity-40"

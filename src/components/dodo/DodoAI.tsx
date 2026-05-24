@@ -502,7 +502,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
         <form 
           onSubmit={sendMessage}
           className={`animate-in slide-in-from-bottom-2 fade-in duration-500 z-30 transition-opacity duration-300 ${
-            showContent ? "opacity-100" : "opacity-0 pointer-events-none"
+            showContent ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           } ${
             mini 
               ? "absolute top-[96%] left-1/2 -translate-x-1/2 w-[160px] max-w-[80vw] sm:w-[200px]" 
@@ -514,6 +514,12 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
               disabled={loading}
               placeholder="Ask DODO..."
               className="w-full bg-transparent text-white placeholder:text-white/30 text-[10px] sm:text-xs outline-none pr-12 pl-1"
@@ -543,7 +549,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
       )}
 
       {showTerminal && (
-        <div className="absolute bottom-[-15px] -right-2 md:-right-4 w-[85vw] max-w-[260px] md:max-w-[320px] h-[360px] md:h-[460px] bg-[#050505]/95 backdrop-blur-2xl border border-primary/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 z-50 font-mono text-xs text-left origin-bottom-right">
+        <div className="absolute bottom-[-15px] -right-2 md:-right-4 w-[85vw] max-w-[260px] md:max-w-[320px] h-[360px] md:h-[460px] bg-[#050505]/95 backdrop-blur-2xl border border-primary/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 z-50 font-mono text-xs text-left origin-bottom-right pointer-events-auto">
           <DodoTerminal
             messages={messages}
             streamingText={streamingText}

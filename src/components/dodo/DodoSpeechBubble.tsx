@@ -34,7 +34,7 @@ export function DodoSpeechBubble({
       layoutId={mini ? "dodo-bubble-mini" : "dodo-bubble-full"}
       transition={{ type: "spring", stiffness: 100, damping: 22 }}
       onClick={(e) => e.stopPropagation()}
-      className={`absolute z-50 bottom-[82%] left-1/2 -translate-x-1/2 max-w-[85vw] ${
+      className={`absolute z-50 bottom-[82%] left-1/2 -translate-x-1/2 max-w-[85vw] pointer-events-auto ${
       mini 
         ? "w-[180px] md:w-[220px]" 
         : "w-[250px] md:w-[300px]"
