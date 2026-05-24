@@ -32,6 +32,10 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
   const [mood, setMood] = useState<"neutral" | "sleepy" | "happy" | "petting">("neutral");
   const [speechText, setSpeechText] = useState("");
 
+  // Turnstile security states
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileWidgetIdRef = useRef<string | null>(null);
+
   // Chat States
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputVal, setInputVal] = useState("");
@@ -50,6 +54,67 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     } else {
       setShowContent(false);
     }
+  }, [speaking]);
+
+  // Load Cloudflare Turnstile Script
+  useEffect(() => {
+    const scriptId = "cloudflare-turnstile-script";
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Initialize invisible Cloudflare Turnstile verification widget when chat is active
+  useEffect(() => {
+    if (!speaking) return;
+
+    let interval: ReturnType<typeof setInterval>;
+    const initTurnstile = () => {
+      const turnstile = (window as any).turnstile;
+      const container = document.getElementById("dodo-turnstile");
+      if (turnstile && container) {
+        clearInterval(interval);
+        if (turnstileWidgetIdRef.current === null) {
+          try {
+            turnstileWidgetIdRef.current = turnstile.render("#dodo-turnstile", {
+              sitekey: "0x4AAAAAAADVT0-mghklCbuq", // Cloudflare Turnstile Production Site Key
+              theme: "dark",
+              size: "invisible",
+              callback: (token: string) => {
+                setTurnstileToken(token);
+              },
+              "expired-callback": () => {
+                setTurnstileToken("");
+              },
+              "error-callback": () => {
+                setTurnstileToken("");
+              }
+            });
+          } catch (e) {
+            console.error("Turnstile render error:", e);
+          }
+        }
+      }
+    };
+
+    interval = setInterval(initTurnstile, 300);
+    initTurnstile();
+
+    return () => {
+      clearInterval(interval);
+      if (turnstileWidgetIdRef.current !== null && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.remove(turnstileWidgetIdRef.current);
+        } catch (e) {}
+        turnstileWidgetIdRef.current = null;
+        setTurnstileToken("");
+      }
+    };
   }, [speaking]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -153,6 +218,18 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     if (e) e.preventDefault();
     if (!inputVal.trim() || loading) return;
 
+    // Verify Turnstile verification is complete before submitting
+    if (!turnstileToken) {
+      setSpeechText("Security check in progress. Please send again in a moment.");
+      const turnstile = (window as any).turnstile;
+      if (turnstile && turnstileWidgetIdRef.current !== null) {
+        try {
+          turnstile.execute(turnstileWidgetIdRef.current);
+        } catch (err) {}
+      }
+      return;
+    }
+
     setMinimized(false);
 
     const userPrompt = inputVal.trim();
@@ -172,7 +249,10 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     try {
       const response = await fetch(API_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "cf-turnstile-response": turnstileToken
+        },
         body: JSON.stringify({
           messages: updatedHistory,
           model: "google/gemma-3-12b"
@@ -246,6 +326,15 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     } finally {
       abortControllerRef.current = null;
       setLoading(false);
+
+      // Reset Turnstile token and widget for next message request
+      setTurnstileToken("");
+      const turnstile = (window as any).turnstile;
+      if (turnstile && turnstileWidgetIdRef.current !== null) {
+        try {
+          turnstile.reset(turnstileWidgetIdRef.current);
+        } catch (err) {}
+      }
     }
   };
 
@@ -257,6 +346,9 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
 
   return (
     <div className="relative size-full flex flex-col items-center justify-center">
+      {/* Invisible Turnstile container element for security validation */}
+      <div id="dodo-turnstile" style={{ width: 0, height: 0, opacity: 0, pointerEvents: "none" }} />
+
       {/* Custom self-contained cognitive animation styles */}
       <style>{`
         @keyframes dodo-bar-bounce {
