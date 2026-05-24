@@ -282,11 +282,7 @@ sequenceDiagram
 
     Browser->>Worker: POST /api/chat
 
-    Note over Browser,Worker:
-    Includes:
-    - messages
-    - model
-    - cf-turnstile-response
+    Note over Browser,Worker: Includes messages, model, cf-turnstile-response
 
     Worker->>Turnstile: Verify token
 
