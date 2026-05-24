@@ -82,7 +82,11 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
         if (turnstileWidgetIdRef.current === null) {
           try {
             turnstileWidgetIdRef.current = turnstile.render("#dodo-turnstile", {
-              sitekey: "0x4AAAAAAADVT0-mghklCbuq", // Cloudflare Turnstile Production Site Key
+              // Dev: dummy key (always passes, no domain restriction)
+              // Prod: real key (only works on rathoreatri03.github.io)
+              sitekey: import.meta.env.DEV
+                ? "1x00000000000000000000BB"
+                : "0x4AAAAAAADVT0-mghklCbuq",
               theme: "dark",
               size: "invisible",
               callback: (token: string) => {
