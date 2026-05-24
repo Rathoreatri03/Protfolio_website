@@ -14,4 +14,7 @@ export default defineConfig({
     tailwindcss(),
     tsConfigPaths(),
   ],
+  optimizeDeps: {
+    include: ["use-sync-external-store/shim/with-selector"],
+  },
 });

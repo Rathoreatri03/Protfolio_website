@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { usePortfolioData } from "@/hooks/usePortfolioData";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useActiveOnScroll } from "@/hooks/useActiveOnScroll";
 
 export const Route = createFileRoute("/log")({
   component: Log,
@@ -7,6 +9,8 @@ export const Route = createFileRoute("/log")({
 
 function Log() {
   const { experience, metadata } = usePortfolioData();
+  const isMobile = useIsMobile();
+  const activeCardIndex = useActiveOnScroll(".mobile-timeline-card", isMobile);
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col min-h-[calc(100vh-140px)] animate-fade-up py-2 px-2 sm:px-6">
@@ -36,21 +40,43 @@ function Log() {
           {experience.map((ex, i) => {
             const isLeft = i % 2 === 0;
             const idStr = String(i + 1).padStart(2, "0");
+            const isActive = activeCardIndex === i;
 
             return (
-              <div key={i} className="relative flex flex-col md:flex-row items-start md:items-center w-full group">
+              <div 
+                key={i} 
+                className="mobile-timeline-card relative flex flex-col md:flex-row items-start md:items-center w-full group"
+              >
                 {/* Timeline dot */}
                 <div className="absolute left-4 sm:left-8 md:left-1/2 top-0 md:top-1/2 size-4 transform -translate-x-1/2 md:-translate-y-1/2 z-30">
                   <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
-                  <div className="absolute inset-[-4px] rounded-full border border-primary/20 group-hover:border-primary transition-colors" />
+                  <div 
+                    className={`absolute inset-[-4px] rounded-full border transition-colors ${
+                      isActive ? "border-primary" : "border-primary/20 group-hover:border-primary"
+                    }`} 
+                  />
                   <div className="absolute inset-[4px] rounded-full bg-primary shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
                 </div>
 
                 {/* Mobile layout: single column, offset from spine */}
                 <div className="flex flex-col gap-4 pl-10 sm:pl-16 md:hidden w-full">
                   {/* Image */}
-                  <div className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-black/40 shadow-2xl group-hover:border-primary/30 transition-all duration-700">
-                    <img src={ex.imgUrl} alt={ex.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-105 grayscale group-hover:grayscale-0" />
+                  <div 
+                    className={`relative aspect-video rounded-xl overflow-hidden border bg-black/40 shadow-2xl transition-all duration-700 ${
+                      isActive
+                        ? "border-primary/30"
+                        : "border-white/5 group-hover:border-primary/30"
+                    }`}
+                  >
+                    <img 
+                      src={ex.imgUrl} 
+                      alt={ex.title} 
+                      className={`w-full h-full object-cover transition-all duration-1000 ${
+                        isActive
+                          ? "opacity-100 scale-105 grayscale-0"
+                          : "opacity-50 scale-100 grayscale group-hover:opacity-100 group-hover:scale-105 group-hover:grayscale-0"
+                      }`} 
+                    />
                     <div className="absolute top-3 left-3 py-0.5 px-2 border border-white/10 bg-black/60 backdrop-blur-md rounded-full text-[7px] font-mono text-primary/60 tracking-widest uppercase">
                       Ref_id // {idStr}
                     </div>
@@ -64,9 +90,21 @@ function Log() {
                           <span className="text-[8px] font-mono text-white/30 tracking-widest uppercase border-l border-white/10 pl-3">{ex.duration}</span>
                         )}
                       </div>
-                      <h3 className="text-xl font-display font-bold tracking-tight leading-none group-hover:text-primary transition-all text-white">{ex.title}</h3>
+                      <h3 
+                        className={`text-xl font-display font-bold tracking-tight leading-none transition-all ${
+                          isActive ? "text-primary" : "text-white group-hover:text-primary"
+                        }`}
+                      >
+                        {ex.title}
+                      </h3>
                     </div>
-                    <p className="text-[11px] text-muted-foreground/60 leading-relaxed font-light group-hover:text-foreground transition-colors duration-500 line-clamp-4">{ex.description}</p>
+                    <p 
+                      className={`text-[11px] leading-relaxed font-light transition-colors duration-500 line-clamp-4 ${
+                        isActive ? "text-foreground" : "text-muted-foreground/60 group-hover:text-foreground"
+                      }`}
+                    >
+                      {ex.description}
+                    </p>
                     <div className="flex items-center gap-4 pt-3 border-t border-white/5">
                       {ex.link && (
                         <a href={ex.link} target="_blank" className="text-[8px] font-display font-bold tracking-widest text-primary border border-primary/20 px-3 py-1 rounded-full hover:bg-primary/10 transition-all">

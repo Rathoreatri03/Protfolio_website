@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { usePortfolioData } from "@/hooks/usePortfolioData";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useActiveOnScroll } from "@/hooks/useActiveOnScroll";
 
 export const Route = createFileRoute("/work")({
   component: Work,
@@ -7,6 +9,8 @@ export const Route = createFileRoute("/work")({
 
 function Work() {
   const { projects, metadata } = usePortfolioData();
+  const isMobile = useIsMobile();
+  const activeCardIndex = useActiveOnScroll(".project-card", isMobile);
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col min-h-[calc(100vh-140px)] animate-fade-up py-2 px-2 sm:px-6">
@@ -35,18 +39,42 @@ function Work() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-8">
           {projects.map((proj, i) => {
             const idStr = String(i + 1).padStart(3, "0");
+            const isActive = activeCardIndex === i;
             return (
               <a
                 key={i}
                 href={proj.link?.trim() || "#"}
                 target={proj.link?.trim() ? "_blank" : undefined}
                 rel="noreferrer"
-                className="group relative flex flex-col border border-white/5 hover:border-primary/30 bg-white/[0.02] backdrop-blur-md overflow-hidden transition-all duration-500 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.1)] h-full"
+                className={`project-card group relative flex flex-col border bg-white/[0.02] backdrop-blur-md overflow-hidden transition-all duration-500 h-full ${
+                  isActive
+                    ? "border-primary/30 shadow-[0_10px_40px_-10px_rgba(var(--primary),0.1)]"
+                    : "border-white/5 hover:border-primary/30 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.1)]"
+                }`}
               >
-                <div className="absolute top-0 left-0 h-[1px] w-0 bg-primary group-hover:w-full transition-all duration-1000 z-20" />
+                <div 
+                  className={`absolute top-0 left-0 h-[1px] bg-primary transition-all duration-1000 z-20 ${
+                    isActive ? "w-full" : "w-0 group-hover:w-full"
+                  }`} 
+                />
                 <div className="relative w-full aspect-video overflow-hidden bg-black/60 border-b border-white/5">
-                  <img src={proj.imgUrl} alt={proj.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-all duration-[1.2s] group-hover:scale-110 opacity-70 group-hover:opacity-30 grayscale group-hover:grayscale-0" />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                  <img 
+                    src={proj.imgUrl} 
+                    alt={proj.title} 
+                    loading="lazy" 
+                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-[1.2s] ${
+                      isActive
+                        ? "scale-110 opacity-30 grayscale-0"
+                        : "scale-100 opacity-70 grayscale group-hover:scale-110 group-hover:opacity-30 group-hover:grayscale-0"
+                    }`} 
+                  />
+                  <div 
+                    className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
+                      isActive
+                        ? "opacity-100 scale-100"
+                        : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
+                    }`}
+                  >
                     <div className="px-4 py-1.5 border border-primary bg-primary/10 text-primary font-display text-[8px] tracking-[0.4em] uppercase backdrop-blur-md">
                       ACCESS_SOURCE
                     </div>
@@ -64,15 +92,33 @@ function Work() {
                       Neural_Module :: 0{i + 1}
                     </span>
                   </div>
-                  <h3 className="font-display text-lg sm:text-xl font-bold mb-2 tracking-tighter group-hover:text-primary transition-all duration-500 text-white">{proj.title}</h3>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed mb-6 line-clamp-3 group-hover:text-foreground/80 transition-colors duration-500 font-light opacity-60 group-hover:opacity-100">{proj.description}</p>
+                  <h3 
+                    className={`font-display text-lg sm:text-xl font-bold mb-2 tracking-tighter transition-all duration-500 ${
+                      isActive ? "text-primary" : "text-white group-hover:text-primary"
+                    }`}
+                  >
+                    {proj.title}
+                  </h3>
+                  <p 
+                    className={`text-[11px] text-muted-foreground leading-relaxed mb-6 line-clamp-3 transition-colors duration-500 font-light ${
+                      isActive
+                        ? "text-foreground/80 opacity-100"
+                        : "opacity-60 group-hover:opacity-100 group-hover:text-foreground/80"
+                    }`}
+                  >
+                    {proj.description}
+                  </p>
                   <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
                     <div className="flex flex-wrap gap-2">
                       {["ML", "CV", "AI"].map((tag) => (
                         <span key={tag} className="text-[7px] font-mono px-2 py-0.5 border border-white/10 text-muted-foreground/40 uppercase">{tag}</span>
                       ))}
                     </div>
-                    <div className="size-6 rounded-full border border-primary/20 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500">
+                    <div 
+                      className={`size-6 rounded-full border border-primary/20 flex items-center justify-center transition-all duration-500 ${
+                        isActive ? "bg-primary/10" : "group-hover:bg-primary/10"
+                      }`}
+                    >
                       <svg className="size-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
