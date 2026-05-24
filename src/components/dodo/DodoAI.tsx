@@ -37,7 +37,13 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
   const [speechText, setSpeechText] = useState("");
 
   // Turnstile security states
-  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("dodo_session_token");
+      if (cached) return "session-verified";
+    }
+    return "";
+  });
   const turnstileWidgetIdRef = useRef<string | null>(null);
 
   // Chat States
@@ -63,6 +69,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
   // Load Cloudflare Turnstile Script
   useEffect(() => {
     if (!ENABLE_TURNSTILE) return;
+    if (typeof window !== "undefined" && sessionStorage.getItem("dodo_session_token")) return;
     const scriptId = "cloudflare-turnstile-script";
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
@@ -74,9 +81,12 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
     }
   }, []);
 
-  // Initialize invisible Cloudflare Turnstile verification widget when chat is active
+  // Initialize invisible Cloudflare Turnstile verification widget on page load (pre-fetching)
   useEffect(() => {
-    if (!speaking) return;
+    if (typeof window !== "undefined" && sessionStorage.getItem("dodo_session_token")) {
+      setTurnstileToken("session-verified");
+      return;
+    }
 
     if (!ENABLE_TURNSTILE) {
       setTurnstileToken("bypass");
@@ -133,7 +143,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
         setTurnstileToken("");
       }
     };
-  }, [speaking]);
+  }, []);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -263,7 +273,8 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "cf-turnstile-response": turnstileToken
+          "cf-turnstile-response": turnstileToken,
+          "x-dodo-session": typeof window !== "undefined" ? sessionStorage.getItem("dodo_session_token") || "" : ""
         },
         body: JSON.stringify({
           messages: updatedHistory,
@@ -274,6 +285,12 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
 
       if (!response.ok) {
         throw new Error("Relay offline. Connection failed.");
+      }
+
+      const sessionHeader = response.headers.get("x-dodo-session");
+      if (sessionHeader) {
+        sessionStorage.setItem("dodo_session_token", sessionHeader);
+        setTurnstileToken("session-verified");
       }
 
       const reader = response.body?.getReader();
@@ -340,7 +357,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
       setLoading(false);
 
       // Reset Turnstile token and widget for next message request
-      if (ENABLE_TURNSTILE) {
+      if (ENABLE_TURNSTILE && turnstileToken !== "session-verified") {
         setTurnstileToken("");
         const turnstile = (window as any).turnstile;
         if (turnstile && turnstileWidgetIdRef.current !== null) {
@@ -348,8 +365,10 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
             turnstile.reset(turnstileWidgetIdRef.current);
           } catch (err) {}
         }
-      } else {
+      } else if (!ENABLE_TURNSTILE) {
         setTurnstileToken("bypass");
+      } else {
+        setTurnstileToken("session-verified");
       }
     }
   };
