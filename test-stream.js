@@ -1,12 +1,18 @@
 /**
  * Diagnostic Streaming Test Script (Modern Fetch Version)
  * Simulates a client call and prints the real-time token stream.
- * Pre-configured for your active, live Cloudflare Edge deployment!
- * Run using: node test-stream.js
+ *
+ * ⚠️  IMPORTANT: This script ONLY works against the LOCAL wrangler dev server.
+ *     It cannot call production because production requires a real browser-generated
+ *     Turnstile token. The dummy token below only passes the LOCAL dummy secret key.
+ *
+ * HOW TO USE:
+ *   1. Start local backend:  npm run dev  (in AI-Portfolio_backend folder)
+ *   2. Run this script:      node test-stream.js
  */
 
-// --- 🌐 LIVE TARGET ENDPOINT ---
-const API_URL = "https://dodo-ai-agent.dodoai.workers.dev/api/chat"; 
+// --- 🖥️ LOCAL DEV ENDPOINT (do NOT change to production URL) ---
+const API_URL = "http://127.0.0.1:8787/api/chat";
 
 const payload = {
   messages: [
@@ -14,6 +20,28 @@ const payload = {
   ],
   model: "google/gemma-3-12b"
 };
+
+// Read TURNSTILE_TEST_TOKEN from .dev.vars (gitignored — never committed to GitHub)
+import { readFileSync } from "fs";
+
+const devVars = Object.fromEntries(
+  readFileSync(new URL("./.dev.vars", import.meta.url), "utf-8")
+    .split("\n")
+    .filter(line => line.includes("=") && !line.startsWith("#"))
+    .map(line => {
+      const [key, ...rest] = line.split("=");
+      // Strip surrounding quotes and any inline comments
+      const value = rest.join("=").split(" #")[0].trim().replace(/^"|"$/g, "");
+      return [key.trim(), value];
+    })
+);
+
+const DUMMY_TEST_TOKEN = devVars.TURNSTILE_TEST_TOKEN;
+if (!DUMMY_TEST_TOKEN) {
+  console.error("[!] TURNSTILE_TEST_TOKEN not found in .dev.vars. Aborting.");
+  process.exit(1);
+}
+
 
 async function startStreamTest() {
   console.log("--- Initializing Diagnostic Chat Stream Session ---");
@@ -25,7 +53,7 @@ async function startStreamTest() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "cf-turnstile-response": "1x0000000000000000000000000000000AA"
+        "cf-turnstile-response": DUMMY_TEST_TOKEN
       },
       body: JSON.stringify(payload)
     });
