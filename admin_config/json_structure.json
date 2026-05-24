@@ -150,6 +150,11 @@
         "key": "formspree_ID",
         "label": "Formspree ID",
         "type": "string"
+      },
+      {
+        "key": "orcidid",
+        "label": "OrcidID",
+        "type": "string"
       }
     ],
     "isStandard": true
