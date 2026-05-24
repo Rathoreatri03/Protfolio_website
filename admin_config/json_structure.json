@@ -155,6 +155,11 @@
         "key": "orcidid",
         "label": "OrcidID",
         "type": "url"
+      },
+      {
+        "key": "linkdien",
+        "label": "Linkdien",
+        "type": "url"
       }
     ],
     "isStandard": true
