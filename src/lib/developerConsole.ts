@@ -80,7 +80,6 @@ export function initDeveloperConsole(links?: LinksArg) {
   console.log(`%c[SYSTEM_STATUS]: %cONLINE // COGNITIVE AGENTS ACTIVE`, labelStyle, valueStyle);
   console.log(`%c[ENGINEER]:      %cAtri Rathore`, labelStyle, valueStyle);
   console.log(`%c[CORE_ROLE]:     %cAI Architect & Computer Vision Specialist`, labelStyle, valueStyle);
-  console.log(`%c[METADATA]:      %cMachine Learning // Deep Learning // 3D Mesh Rendering`, labelStyle, valueStyle);
   console.log("");
   console.log(`%c[GITHUB]:        %c👉 ${githubLink}`, labelStyle, linkStyle);
   console.log(`%c[LINKEDIN]:      %c👉 ${linkedinLink}`, labelStyle, linkStyle);
