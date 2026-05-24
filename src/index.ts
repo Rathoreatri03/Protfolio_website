@@ -31,7 +31,7 @@ app.use(
       return "https://rathoreatri03.github.io"; // Default fallback
     },
     allowMethods: ["POST", "GET", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "cf-turnstile-response"],
     exposeHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400,
     credentials: true,
