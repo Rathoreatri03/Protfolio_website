@@ -86,7 +86,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
               // Prod: real key (only works on rathoreatri03.github.io)
               sitekey: import.meta.env.DEV
                 ? "1x00000000000000000000BB"
-                : "0x4AAAAAAADVT0-mghklCbuq",
+                : "0x4AAAAAADVT0-mghklCbuqQ",
               theme: "dark",
               size: "invisible",
               callback: (token: string) => {

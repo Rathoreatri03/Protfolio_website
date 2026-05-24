@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist/client"
+    "deploy": "gh-pages -d dist/client -r https://github.com/Rathoreatri03/Portfolio_website.git"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
