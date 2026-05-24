@@ -1,5 +1,13 @@
 [
   {
+    "title": " DeepErase: A Generative AI Approach for Automated Logo Detection and Removal in Video Content",
+    "description": "We present DeepErase, a novel end-to-end framework for automatic logo removal in videos that combines advanced object detection with state-of-the-art inpainting techniques. Our approach leverages a hybrid neural architecture integrating YOLO-based logo detection with Large Mask (LaMa) inpainting, enhanced by a proprietary layer masking system.",
+    "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1779624323/Deeperase_sitqit.jpg",
+    "link": "https://ieeexplore.ieee.org/document/11032076",
+    "year": "2025",
+    "type": "LITERATURE"
+  },
+  {
     "title": "Book Chapter: Printing a Sustainable Future",
     "description": "Co-authored a chapter in 'Hybrid Metal Additive Manufacturing' on revolutionizing waste management through additive manufacturing. Published by CRC Press in 2023.",
     "imgUrl": "https://res.cloudinary.com/dxh9tugzx/image/upload/v1734283497/bookchapter_yx60hp.jpg",
