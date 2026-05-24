@@ -25,6 +25,7 @@ async function startStreamTest() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "cf-turnstile-response": "1x0000000000000000000000000000000AA"
       },
       body: JSON.stringify(payload)
     });

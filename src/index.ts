@@ -9,6 +9,7 @@ type Bindings = {
   LLM_MODEL_NAME?: string;
   CMS_AUTH_TOKEN?: string;
   GITHUB_PAT?: string;
+  TURNSTILE_SECRET_KEY?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -68,6 +69,34 @@ app.post("/api/chat", async (c) => {
 
     if (!messages || !Array.isArray(messages)) {
       return c.json({ error: "Invalid parameters. 'messages' array is required." }, 400);
+    }
+
+    // 3a. Cloudflare Turnstile Verification Check
+    const turnstileToken = c.req.header("cf-turnstile-response") || c.req.header("x-turnstile-token") || "";
+    if (!turnstileToken) {
+      return c.json({ error: "Security check failed: Verification token is missing." }, 403);
+    }
+
+    const turnstileSecret = c.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA";
+    try {
+      const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          secret: turnstileSecret,
+          response: turnstileToken,
+          remoteip: c.req.header("CF-Connecting-IP") || "",
+        }),
+      });
+
+      const verifyData = await verifyRes.json() as { success: boolean; "error-codes"?: string[] };
+      if (!verifyData.success) {
+        return c.json({ error: "Security verification failed. Please complete the security check." }, 403);
+      }
+    } catch (e: any) {
+      return c.json({ error: `Security check error: ${e.message || e}` }, 500);
     }
 
     const apiKey = c.env.GENAI_KEY;
