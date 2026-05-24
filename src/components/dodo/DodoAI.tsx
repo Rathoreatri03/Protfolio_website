@@ -14,6 +14,10 @@ const GLOBAL_GREETINGS = [
   "Hello there! 👋 DODO is booted up. How may I assist you in navigating Atri's expertise today?"
 ];
 
+const ENABLE_TURNSTILE = typeof window !== "undefined" && 
+  window.location.hostname !== "localhost" && 
+  window.location.hostname !== "127.0.0.1";
+
 export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingChange?: (speaking: boolean) => void }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -58,6 +62,7 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
 
   // Load Cloudflare Turnstile Script
   useEffect(() => {
+    if (!ENABLE_TURNSTILE) return;
     const scriptId = "cloudflare-turnstile-script";
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
@@ -72,6 +77,11 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
   // Initialize invisible Cloudflare Turnstile verification widget when chat is active
   useEffect(() => {
     if (!speaking) return;
+
+    if (!ENABLE_TURNSTILE) {
+      setTurnstileToken("bypass");
+      return;
+    }
 
     let interval: ReturnType<typeof setInterval>;
     const initTurnstile = () => {
@@ -330,12 +340,16 @@ export function DodoAI({ mini, onSpeakingChange }: { mini?: boolean; onSpeakingC
       setLoading(false);
 
       // Reset Turnstile token and widget for next message request
-      setTurnstileToken("");
-      const turnstile = (window as any).turnstile;
-      if (turnstile && turnstileWidgetIdRef.current !== null) {
-        try {
-          turnstile.reset(turnstileWidgetIdRef.current);
-        } catch (err) {}
+      if (ENABLE_TURNSTILE) {
+        setTurnstileToken("");
+        const turnstile = (window as any).turnstile;
+        if (turnstile && turnstileWidgetIdRef.current !== null) {
+          try {
+            turnstile.reset(turnstileWidgetIdRef.current);
+          } catch (err) {}
+        }
+      } else {
+        setTurnstileToken("bypass");
       }
     }
   };
