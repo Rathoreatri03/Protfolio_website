@@ -12,6 +12,52 @@ type Bindings = {
   TURNSTILE_SECRET_KEY?: string;
 };
 
+async function signSession(secret: string, expiry: number) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    enc.encode(JSON.stringify({ expiry }))
+  );
+  const hashArray = Array.from(new Uint8Array(signature));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${expiry}.${hashHex}`;
+}
+
+async function verifySession(token: string, secret: string) {
+  try {
+    const [expiryStr, hashHex] = token.split('.');
+    const expiry = parseInt(expiryStr);
+    if (Date.now() > expiry) return false;
+
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const signature = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      enc.encode(JSON.stringify({ expiry }))
+    );
+    const hashArray = Array.from(new Uint8Array(signature));
+    const expectedHashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex === expectedHashHex;
+  } catch (e) {
+    return false;
+  }
+}
+
 const app = new Hono<{ Bindings: Bindings }>();
 
 // 1. Configure CORS dynamically to allow your portfolio domain and local dev environment
@@ -31,8 +77,8 @@ app.use(
       return "https://rathoreatri03.github.io"; // Default fallback
     },
     allowMethods: ["POST", "GET", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "cf-turnstile-response"],
-    exposeHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "cf-turnstile-response", "x-dodo-session"],
+    exposeHeaders: ["Content-Type", "Authorization", "x-dodo-session"],
     maxAge: 86400,
     credentials: true,
   })
@@ -71,14 +117,22 @@ app.post("/api/chat", async (c) => {
       return c.json({ error: "Invalid parameters. 'messages' array is required." }, 400);
     }
 
+    const apiKey = c.env.GENAI_KEY;
+    if (!apiKey) {
+      return c.json({ error: "System Configuration Error: Server API credentials are not initialized." }, 500);
+    }
+
+    // Check if the request contains a valid, active session token
+    const sessionToken = c.req.header("x-dodo-session") || "";
+    const hasValidSession = sessionToken && await verifySession(sessionToken, apiKey);
+
     // 3a. Cloudflare Turnstile Verification Check
     const turnstileToken = c.req.header("cf-turnstile-response") || c.req.header("x-turnstile-token") || "";
     const turnstileSecret = c.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA";
     const isDummySecret = turnstileSecret === "1x0000000000000000000000000000000AA";
 
-    // If we are in production (real secret key), we MUST verify Turnstile and DO NOT allow "bypass" or empty tokens.
-    // If we are in development (dummy secret key), we allow "bypass" or empty tokens to facilitate local developer testing.
-    if (!isDummySecret) {
+    // If we have a cryptographically verified session or are in local development mode, we skip Turnstile
+    if (!isDummySecret && !hasValidSession) {
       if (!turnstileToken || turnstileToken === "bypass") {
         return c.json({ error: "Security check failed: Verification token is missing." }, 403);
       }
@@ -105,7 +159,7 @@ app.post("/api/chat", async (c) => {
       }
     } else {
       // In local development/testing, try to verify only if a real-looking token is provided, otherwise let it pass
-      if (turnstileToken && turnstileToken !== "bypass") {
+      if (turnstileToken && turnstileToken !== "bypass" && turnstileToken !== "session-verified") {
         try {
           await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
             method: "POST",
@@ -114,11 +168,6 @@ app.post("/api/chat", async (c) => {
           });
         } catch (e) {}
       }
-    }
-
-    const apiKey = c.env.GENAI_KEY;
-    if (!apiKey) {
-      return c.json({ error: "System Configuration Error: Server API credentials are not initialized." }, 500);
     }
 
     const baseURL = c.env.LLM_BASE_URL || "https://your-domain.com/genAI/v1"; 
@@ -195,12 +244,15 @@ app.post("/api/chat", async (c) => {
       }
     });
 
+    const newSessionToken = await signSession(apiKey, Date.now() + 2 * 60 * 60 * 1000);
+
     return new Response(body, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         "Connection": "keep-alive",
         "X-Content-Type-Options": "nosniff",
+        "x-dodo-session": newSessionToken,
       }
     });
 
