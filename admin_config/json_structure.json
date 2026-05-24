@@ -147,11 +147,6 @@
         "type": "string"
       },
       {
-        "key": "formspree_ID",
-        "label": "Formspree ID",
-        "type": "string"
-      },
-      {
         "key": "orcidid",
         "label": "OrcidID",
         "type": "url"
